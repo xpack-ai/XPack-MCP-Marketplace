@@ -1,15 +1,43 @@
 # XPack-MCP-Market
-![fc52a21a-0ee9-4c95-a1c7-981ae1b397c9](https://github.com/user-attachments/assets/eb14b798-5717-4eab-b7d3-26addb2fa7ff)
+![b1](https://github.com/user-attachments/assets/3d50cd9a-9d28-4ec8-bb5f-d3668475b49e)
 
-## Hardware Requirements
-**Recommended Configuration**
+**XPack** is a lightweight, open-source marketplace framework for MCP (Model Context Protocol) services.  
+It allows you to transform any OpenAPI into a monetizable MCP service and build your own API store in just minutes.
+
+- ✅ **One-click OpenAPI → MCP service config**
+- 🧾 **Service homepage + pricing model**
+- 💳 **Built-in billing (per-call / token-based)**
+- 📊 **Call logs and usage analytics**
+- 👥 **User account management**
+- 🌐 **Multi-tenant ready**
+- 🛠 **Support Stripe, Alipay, WeChat Pay**
+- 🔐 **Email & Google OAuth
+
+Everything is open-source and licensed under **Apache 2.0** — ready for commercial use.
+
+# 📸 Screenshots
+![b2](https://github.com/user-attachments/assets/c8cc89a4-ab5f-4c90-8c97-9207b5c9f5c1)
+![b3](https://github.com/user-attachments/assets/16f74c8a-b35e-40a7-8471-a5736de8e904)
+![b4](https://github.com/user-attachments/assets/fc76c215-7544-4267-bc6f-22a719edec00)
+![b5](https://github.com/user-attachments/assets/db40ea77-58c3-472d-ba94-35dc9716a980)
+
+<img width="1415" height="797" alt="image" src="https://github.com/user-attachments/assets/5f71bfcf-c128-42ab-8077-3f2ede549f80" />
+
+<img width="1415" height="797" alt="image" src="https://github.com/user-attachments/assets/d7c0b40d-182e-47a6-bcdf-bd36970f5ee6" />
+
+<img width="1415" height="797" alt="image" src="https://github.com/user-attachments/assets/ae40f659-87ad-42d4-8379-b47a48eb6a29" />
+
+<img width="1415" height="797" alt="image" src="https://github.com/user-attachments/assets/1049f4e5-ec3f-4520-8480-6d6432d6f5d2" />
+
+## Deployment
+**Recommended Hardware**
 - CPU: 8 cores
 - Memory: 16GB
 - Storage: 200GB
 - Operating System: Linux
 - System Architecture: AMD64
 
-**Minimum Requirements**
+**Minimum Hardware**
 - CPU: 2 cores
 - Memory: 4GB
 - Storage: 200GB
@@ -21,8 +49,7 @@
 - **MySQL:** >= 5.7.x
 - **Redis:** >= 6.2.x
 - **RabbitMQ:** >=4.0
-
-## Deployment
+- 
 ### Quick Start Script
 > Supported Systems:
 > - CentOS 7.9 (representing 7.x)
@@ -32,7 +59,8 @@
 > - Debian 12.4
 > - Alibaba Cloud Linux 3.2104
 > - Alibaba Cloud Linux 2.1903
-Currently, installation has only been tested on the above systems. If you need one-click deployment for other systems, please submit an [Issue](https://github.com/xpack-ai/XPack-MCP-Market/issues).
+
+If you need one-click deployment for other systems, please submit an [Issue](https://github.com/xpack-ai/XPack-MCP-Market/issues).
 ```
 curl -sSO https://download.xpack.com/install/quick-start.sh; bash quick-start.sh
 ```
@@ -189,3 +217,7 @@ uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --reload &
 ```
 docker build -t xpack-mcp-market --build-arg APP=xpack-mcp-market --build-arg VERSION=1.0.0 -f ./scripts/Dockerfile ./
 ```
+
+# 🌍 License
+This project is licensed under the Apache 2.0 License.
+You are free to use it for commercial or personal projects.
