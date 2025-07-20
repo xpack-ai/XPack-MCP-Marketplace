@@ -20,7 +20,7 @@ docker tag "${ImageName}:${Version}" "${ImageName}:latest"
 echo "docker push \"${ImageName}:latest\""
 docker push "${ImageName}:latest"
 
-if [[ $3 == "upload_qiniu" ]];then
+if [[ $2 == "upload_qiniu" ]];then
   echo "Upload QINIU Cloud..."
   ./scripts/qiniu_publish.sh ${Version} ${ImageName}
 fi
