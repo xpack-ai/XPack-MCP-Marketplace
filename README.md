@@ -11,7 +11,7 @@ It allows you to transform any OpenAPI into a monetizable MCP service and build 
 - 👥 **User account management**
 - 🌐 **Multi-tenant ready**
 - 🛠 **Support Stripe, Alipay, WeChat Pay**
-- 🔐 **Email & Google OAuth
+- 🔐 **Email & Google OAuth Sign in**
 
 Everything is open-source and licensed under **Apache 2.0** — ready for commercial use.
 
