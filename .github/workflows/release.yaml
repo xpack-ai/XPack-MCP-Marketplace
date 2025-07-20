@@ -1,0 +1,46 @@
+name: release
+#触发机制，当创建tag时
+on:
+  release:
+    types:
+      - published
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name:  release
+    steps:
+      - name: SetOutput
+        id: vars
+        run: echo "tag=${GITHUB_REF#refs/*/v}" >> $GITHUB_OUTPUT
+      - name: Checkout  #Checkout代码
+        uses: actions/checkout@v3
+      - name: Set up Node
+        uses: actions/setup-node@v3.0.0
+        with:
+          node-version: '22.16'
+      - name: Pnpm install and build
+        run: |
+          npm install -g pnpm
+          ./scripts/frontend_build.sh
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login Docker   #登录docker
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Setup qshell
+        uses: foxundermoon/setup-qshell@v5
+        with:
+          version: '2.9.0'
+      - name: build
+        run: |
+          cd scripts && ./docker_build.sh ${{ secrets.DOCKER_USERNAME }}
+      - name: publish
+        env:
+          AccessKey: ${{ secrets.AK }}
+          SecretKey: ${{ secrets.SK }}
+          QINIU_BUCKET: ${{ secrets.QINIU_BUCKET }}
+          QINIU_NAME: ${{ secrets.QINIU_NAME }}
+        run: cd scripts && ./docker_publish.sh ${{ secrets.DOCKER_USERNAME }} 
+  

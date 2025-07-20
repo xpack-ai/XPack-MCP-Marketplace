@@ -1,0 +1,64 @@
+version: '3'
+services:
+  xpack-mysql:
+    image: mysql:8.0.37
+    privileged: true
+    restart: always
+    container_name: xpack-mysql
+    hostname: xpack-mysql
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    ports:
+      - "33306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql_ZTdhRB
+      - MYSQL_DATABASE=xpack
+    volumes:
+      - /var/lib/xpack/mysql:/var/lib/mysql
+    networks:
+      - xpack
+  xpack-mcp-market:
+    image: xpackai/xpack-mcp-market
+    container_name: xpack-mcp-market
+    privileged: true
+    restart: always
+    networks:
+      - xpack
+    ports:
+      - "3000:3000"
+    depends_on:
+      - xpack-mysql
+      - xpack-redis
+      - xpack-rabbitmq
+  xpack-redis:
+    container_name: xpack-redis
+    image: redis:7.2.4
+    hostname: xpack-redis
+    privileged: true
+    restart: always
+    ports:
+      - 6379:6379
+    command:
+      - bash
+      - -c
+      - "redis-server --protected-mode yes --logfile redis.log --appendonly no --port 6379 --requirepass redis_6sJZDm"
+    networks:
+      - xpack
+  xpack-rabbitmq:
+    image: rabbitmq:4.1.2-alpine
+    container_name: xpack-rabbitmq
+    privileged: true
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbitmq
+      - RABBITMQ_DEFAULT_PASS=rabbitmq_Gs123dA
+    networks:
+      - xpack
+networks:
+  xpack:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.101.0.0/24

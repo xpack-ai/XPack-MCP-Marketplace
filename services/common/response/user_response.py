@@ -1,0 +1,13 @@
+import datetime
+from services.common.response.user_wallet_response import UserWalletResponse
+from pydantic import BaseModel
+from typing import Optional
+
+
+class UserResponse(BaseModel):
+    user_id: Optional[str] = None
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
+    role_id: Optional[int] = None
+    created_at: Optional[datetime.datetime] = None
+    wallet: Optional[UserWalletResponse] = None

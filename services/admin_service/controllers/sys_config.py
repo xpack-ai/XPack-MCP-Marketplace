@@ -1,0 +1,208 @@
+from fastapi import APIRouter, Depends, Body
+from sqlalchemy import false, table
+from sqlalchemy.orm import Session
+from services.common.database import get_db
+from services.common.utils.response_utils import ResponseUtils
+from services.common.utils.email_utils import EmailUtils
+from services.admin_service.services.sys_config_service import SysConfigService
+from services.admin_service.services.user_service import UserService
+from services.admin_service.constants import sys_config_key
+
+router = APIRouter()
+
+
+def get_sysconfig_service(db: Session = Depends(get_db)) -> SysConfigService:
+    return SysConfigService(db)
+
+
+def get_user_service(db: Session = Depends(get_db)) -> UserService:
+    return UserService(db)
+
+
+@router.get("/info")
+def get_sysconfig(
+    sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
+    user_service: UserService = Depends(get_user_service),
+):
+    """Get all system configuration settings."""
+    admin_user = user_service.get_admin_user()
+
+    platform_name = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_NAME)
+    platform_logo = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_LOGO)
+    platform_url = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_URL)
+    website_title = sysconfig_service.get_value_by_key(sys_config_key.KEY_WEBSITE_TITLE)
+    headline = sysconfig_service.get_value_by_key(sys_config_key.KEY_HEADLINE)
+    subheadline = sysconfig_service.get_value_by_key(sys_config_key.KEY_SUBHEADLINE)
+    language = sysconfig_service.get_value_by_key(sys_config_key.KEY_LANGUAGE)
+    admin_username = ""
+    if admin_user and admin_user.name:
+        admin_username = admin_user.name
+    login_google_client = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_CLIENT)
+    login_google_secret = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_SECRET)
+    login_google_enable = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_ENABLE)
+    if not login_google_enable:
+        login_google_enable = False
+    else:
+        login_google_enable = bool(login_google_enable)
+
+    # Get email configuration
+    email_smtp_host = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_HOST)
+    email_smtp_port = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PORT)
+    email_smtp_user = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_USER)
+    email_smtp_password = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PASSWORD)
+    email_smtp_sender = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_SENDER)
+
+    return ResponseUtils.success(
+        data={
+            "platform": {
+                "name": platform_name,
+                "logo": platform_logo,
+                "url": platform_url,
+                "website_title": website_title,
+                "headline": headline,
+                "subheadline": subheadline,
+                "language": language,
+            },
+            "account": {
+                "username": admin_username,
+            },
+            "email": {
+                "smtp_host": email_smtp_host,
+                "smtp_port": email_smtp_port,
+                "smtp_user": email_smtp_user,
+                "smtp_password": email_smtp_password,
+                "smtp_sender": email_smtp_sender,
+            },
+            "login": {
+                "google": {
+                    "client_id": login_google_client,
+                    "client_secret": login_google_secret,
+                    "is_enabled": login_google_enable,
+                },
+            },
+        }
+    )
+
+
+@router.put("/info")
+def set_sysconfig(
+    body: dict = Body(...),
+    user_service: UserService = Depends(get_user_service),
+    sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
+):
+    """Update system configuration settings."""
+    try:
+        platform_name = ""
+        platform_logo = ""
+        platform_url = ""
+        website_title = ""
+        headline = ""
+        subheadline = ""
+        language = ""
+        admin_username = ""
+        admin_password = ""
+        login_google_client = ""
+        login_google_secret = ""
+        login_google_enable = ""
+        email_smtp_host = ""
+        email_smtp_port = ""
+        email_smtp_user = ""
+        email_smtp_password = ""
+        email_smtp_sender = ""
+
+        # 使用 get 方法安全地获取嵌套值
+        platform = body.get("platform", {})
+        platform_name = platform.get("name")
+        platform_logo = platform.get("logo")
+        platform_url = platform.get("url")
+        website_title = platform.get("website_title")
+        headline = platform.get("headline")
+        subheadline = platform.get("subheadline")
+        language = platform.get("language")
+
+        account = body.get("account", {})
+        admin_username = account.get("username")
+        admin_password = account.get("password")
+
+        login = body.get("login", {})
+        google_config = login.get("google", {})
+        login_google_client = google_config.get("client_id")
+        login_google_secret = google_config.get("client_secret")
+        login_google_enable = google_config.get("is_enabled", False)  # 设置默认值为 False
+
+        # 获取邮件配置 - 现在从外层获取
+        email_config = body.get("email", {})
+        email_smtp_host = email_config.get("smtp_host")
+        email_smtp_port = email_config.get("smtp_port")
+        email_smtp_user = email_config.get("smtp_user")
+        email_smtp_password = email_config.get("smtp_password")
+        email_smtp_sender = email_config.get("smtp_sender")
+
+        if not login_google_enable or login_google_enable == "false":
+            login_google_enable = "False"
+        else:
+            login_google_enable = "True"
+        # 批量更新配置
+        configs = [
+            (sys_config_key.KEY_PLATFORM_NAME, platform_name, "Platform name"),
+            (sys_config_key.KEY_PLATFORM_LOGO, platform_logo, "Platform logo"),
+            (sys_config_key.KEY_PLATFORM_URL, platform_url, "Platform URL"),
+            (sys_config_key.KEY_WEBSITE_TITLE, website_title, "Website title"),
+            (sys_config_key.KEY_HEADLINE, headline, "Homepage title"),
+            (sys_config_key.KEY_SUBHEADLINE, subheadline, "Subtitle"),
+            (sys_config_key.KEY_LANGUAGE, language, "Language"),
+            (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "Google login client ID"),
+            (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "Google login client secret"),
+            (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "谷歌登录是否启用"),
+            (sys_config_key.KEY_EMAIL_SMTP_HOST, email_smtp_host, "邮件SMTP主机"),
+            (sys_config_key.KEY_EMAIL_SMTP_PORT, email_smtp_port, "邮件SMTP端口"),
+            (sys_config_key.KEY_EMAIL_SMTP_USER, email_smtp_user, "邮件SMTP用户名"),
+            (sys_config_key.KEY_EMAIL_SMTP_PASSWORD, email_smtp_password, "邮件SMTP密码"),
+            (sys_config_key.KEY_EMAIL_SMTP_SENDER, email_smtp_sender, "邮件发送者地址"),
+        ]
+
+        # 更新管理员用户名和密码
+        user_service.update_admin(name=admin_username, password=admin_password)
+
+        for key, value, desc in configs:
+            if value is not None:  # 只更新有值的配置
+                sysconfig_service.set_value_by_key(key, value, desc)
+
+        return get_sysconfig(sysconfig_service, user_service)
+
+    except Exception as e:
+        return ResponseUtils.error(f"更新系统配置失败：{str(e)}")
+
+
+@router.post("/test_email")
+def test_email_config(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+):
+    """Test email configuration with a test message."""
+    try:
+        test_email = body.get("email")
+        if not test_email:
+            return ResponseUtils.error("请提供测试邮箱地址")
+
+        # 测试连接配置
+        success, message = EmailUtils.test_email_config(db)
+        if not success:
+            return ResponseUtils.error(message)
+
+        # 发送测试邮件
+        test_success = EmailUtils.send_email(
+            db, "XPack 邮件配置测试", "这是一封测试邮件，用于验证邮件配置是否正确。如果您收到这封邮件，说明配置成功！", test_email, False
+        )
+
+        if test_success:
+            return ResponseUtils.success(data={"message": "测试邮件发送成功，请检查收件箱"})
+        else:
+            return ResponseUtils.error("测试邮件发送失败")
+
+    except Exception as e:
+        return ResponseUtils.error(f"测试邮件配置失败：{str(e)}")
+
+
+def str_to_bool(s):
+    return s.lower() in ("true", "t", "yes", "y", "1")

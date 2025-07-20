@@ -1,0 +1,197 @@
+"use client";
+
+import React, { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useGlobalStore } from "@/shared/store/global";
+import DashboardSidebar from "@/shared/components/DashboardSidebar";
+import { SidebarItem, TabKey } from "@/shared/types/dashboard";
+import { useSharedStore } from "@/shared/store/share";
+import { formatCurrency } from '@/shared/utils/currency';
+
+// Import dashboard content components
+import DashboardOverview from "@/components/dashboard/DashboardOverview";
+import WalletManagement from "@/components/wallet/WalletManagement";
+import { Home, Wallet } from "lucide-react";
+import { Avatar, Card, CardBody, Button, Divider } from "@nextui-org/react";
+import { RechargeModal } from "@/shared/components/modal/RechargeModal";
+import { useTranslation } from "@/shared/lib/useTranslation";
+
+const DashboardContent: React.FC = () => {
+  const { t } = useTranslation();
+  const router = useRouter();
+
+  const searchParams = useSearchParams();
+  const [user_token, user] = useSharedStore((state) => [state.user_token, state.user]);
+
+  const [logOut, useGetUser] = useGlobalStore((state) => [
+    state.logOut,
+    state.useGetUser,
+  ]);
+  const { data } = useGetUser();
+
+  // Recharge modal state
+  const [isRechargeModalOpen, setIsRechargeModalOpen] = useState(false);
+  const getInitialTab = (): TabKey => {
+    const tabFromUrl = searchParams.get("tab") as TabKey;
+    if (
+      tabFromUrl &&
+      [
+        "overview",
+        "wallet"
+      ].includes(tabFromUrl)
+    ) {
+      return tabFromUrl;
+    }
+    return "overview";
+  };
+
+  const [activeTab, setActiveTab] = useState<TabKey>(getInitialTab);
+
+  useEffect(() => {
+    if (!data) return;
+    if (data.code === "1000001") {
+      console.warn("user not found");
+      return;
+    }
+  }, [data]);
+
+
+
+  // If user is not logged in, redirect to login page
+  useEffect(() => {
+    if (!user_token) {
+      window.location.href = "/";
+    }
+  }, [user_token]);
+
+
+  const handleLogout = () => {
+    // use global store logout method
+    logOut();
+    window.location.href = "/";
+  };
+
+  // handle recharge with proper error handling and loading states
+  const handleRecharge = async () => {
+    setIsRechargeModalOpen(true);
+  };
+
+  const sidebarItems: SidebarItem[] = [
+    {
+      key: "overview",
+      icon: <Home className="w-5 h-5" />,
+      label: "Dashboard",
+      description: "Manage your integration and auth key",
+    },
+
+    // {
+    //   key: "wallet",
+    //   icon: <Wallet className="w-5 h-5" />,
+    //   label: "My Wallet",
+    //   description: "Manage your balance and recharge history",
+    // },
+  ];
+
+  const handleTabNavigate = (tab: TabKey) => {
+    setActiveTab(tab);
+    // update url params
+    if (tab === "overview") {
+      // when switch to dashboard, clear all query params, only keep base path
+      router.push("/dashboard", { scroll: false });
+    } else {
+      // other tabs set corresponding tab params
+      const params = new URLSearchParams();
+      params.set("tab", tab);
+      router.push(`/dashboard?${params.toString()}`, { scroll: false });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        {/* Sidebar */}
+        <DashboardSidebar
+          activeTab={activeTab}
+          onTabNavigate={handleTabNavigate}
+          onLogout={handleLogout}
+          sidebarItems={sidebarItems}
+          userProfilePanel={
+            user && (
+              <div className="mb-6 space-y-3">
+                {/* User Information Card */}
+                <Card className="border-1 bg-default-100" shadow="none">
+                  <CardBody className="p-4 gap-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar
+                        isBordered
+                        src={user?.avatar || ""}
+                        name={user.user_name || "User"}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {user.user_name || "Jack Liu"}
+                        </p>
+                        <p className="text-tiny text-default-600">
+                          {user.user_name
+                            ? `${user.user_name.toLowerCase()}@gmail.com`
+                            : "xpack@gmail.com"}
+                        </p>
+                      </div>
+                    </div>
+                    <Divider />
+                    <div className="flex justify-between text-xs">
+                      <div className="flex gap-2 items-center">
+                        <Wallet size={16} />
+                        <span>{t("Balance: {{amount}}", { amount: formatCurrency(user?.wallet?.balance || 0) })}</span>
+                      </div>
+
+                      <Button
+                        variant="bordered"
+                        onPress={handleRecharge}
+                        aria-label="Recharge wallet"
+                        size="sm"
+                      >
+                        {t("Recharge")}
+                      </Button>
+                    </div>
+                  </CardBody>
+                </Card>
+
+              </div>
+            )
+          }
+        />
+
+        {/* Main Content */}
+        <div className="flex-1 h-screen overflow-y-auto">
+          {activeTab === "overview" && <DashboardOverview />}
+          {activeTab === "wallet" && (
+            <WalletManagement onRecharge={() => setIsRechargeModalOpen(true)} />
+          )}
+        </div>
+      </div>
+
+      {/* recharge modal */}
+      <RechargeModal
+        isOpen={isRechargeModalOpen}
+        onClose={() => setIsRechargeModalOpen(false)}
+      />
+    </div>
+  );
+};
+
+const DashboardMain: React.FC = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
+  );
+};
+
+export default DashboardMain;

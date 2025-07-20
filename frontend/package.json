@@ -1,0 +1,61 @@
+{
+  "name": "@xpack/webui",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./shared/*": "./src/shared/*"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "stop": "lsof -ti:3000 | xargs kill -9 2>/dev/null || echo 'No process running on port 3000'",
+    "lint": "next lint",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.3.4",
+    "@iconify/react": "^5.0.2",
+    "@nextui-org/react": "^2.6.11",
+    "@nextui-org/theme": "^2.4.5",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/crypto-js": "^4.2.2",
+    "@uiw/react-md-editor": "^4.0.7",
+    "animejs": "^4.0.2",
+    "crypto-js": "^4.2.0",
+    "framer-motion": "^11.5.6",
+    "i18next": "^23.8.0",
+    "i18next-browser-languagedetector": "^7.2.0",
+    "i18next-http-backend": "^2.4.2",
+    "immer": "^10.0.3",
+    "lottie-react": "^2.4.1",
+    "lucide-react": "^0.475.0",
+    "next": "^15.3.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.49.3",
+    "react-hot-toast": "^2.4.1",
+    "react-hover-video-player": "^10.0.2",
+    "react-i18next": "^14.0.1",
+    "react-icons": "^5.3.0",
+    "react-markdown": "^10.1.0",
+    "recharts": "^2.15.1",
+    "simplex-noise": "^4.0.3",
+    "swr": "^2.2.4",
+    "three": "^0.177.0",
+    "zod": "^3.22.4",
+    "zustand": "^4.5.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@types/three": "^0.177.0",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "15.0.3",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.3.3"
+  }
+}

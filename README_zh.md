@@ -1,50 +1,53 @@
 # XPack-MCP-Market
 ![fc52a21a-0ee9-4c95-a1c7-981ae1b397c9](https://github.com/user-attachments/assets/eb14b798-5717-4eab-b7d3-26addb2fa7ff)
 
-## Hardware Requirements
-**Recommended Configuration**
-- CPU: 8 cores
-- Memory: 16GB
-- Storage: 200GB
-- Operating System: Linux
-- System Architecture: AMD64
+## 硬件要求
+**推荐配置**
+- CPU：8核
+- 内存：16G
+- 硬盘存储：200G
+- 操作系统：Linux
+- 系统架构：AMD64
 
-**Minimum Requirements**
-- CPU: 2 cores
-- Memory: 4GB
-- Storage: 200GB
-- Operating System: Linux / Mac
-- System Architecture: AMD64 / ARM64
+**最低配置**
+- CPU：2核
+- 内存：4G
+- 硬盘存储：200G
+- 操作系统：Linux / Mac
+- 系统架构：AMD64 / ARM64
 
-**Dependencies**
-**XPack-MCP-Market** requires `MySQL, Redis, RabbitMQ` with the following versions:
+**程序依赖**
+**XPack** 依赖 `MySQL、Redis、RabbitMQ`，所需版本如下：
 - **MySQL:** >= 5.7.x
 - **Redis:** >= 6.2.x
-- **RabbitMQ:** >=4.0
+- **RabbitMQ:** >= 4.0
 
-## Deployment
-### Quick Start Script
-> Supported Systems:
-> - CentOS 7.9 (representing 7.x)
-> - CentOS 8.5 (representing 8.x)
+## 部署
+### 脚本一键部署
+> 支持的系统列表：
+> - CentOS 7.9（7.x为代表）
+> - CentOS 8.5（8.x为代表）
 > - Ubuntu 20.04
 > - Ubuntu 22.04
 > - Debian 12.4
 > - Alibaba Cloud Linux 3.2104
 > - Alibaba Cloud Linux 2.1903
-Currently, installation has only been tested on the above systems. If you need one-click deployment for other systems, please submit an [Issue](https://github.com/xpack-ai/XPack-MCP-Market/issues).
-```
+
+当前仅测试了上述部署的安装，若需要其他系统的一键部署，可给我们提交[Issue](https://github.com/xpack-ai/XPack-MCP-Market/issues)。
+```bash
 curl -sSO https://download.xpack.com/install/quick-start.sh; bash quick-start.sh
 ```
 
-### Docker-Compose Deployment
-To install XPack-MCP-Market using this method, you need to have [Docker](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/install/standalone/) installed.
-1. Edit the `docker-compose.yml` file
-```
+### Docker-Compose部署
+使用此方法安装 **XPack-MCP-Market**，你需要安装 [Docker](https://docs.docker.com/engine/install/) 和 [Docker Compose](https://docs.docker.com/compose/install/standalone/)。
+
+1. 编辑 `docker-compose.yml` 文件
+```bash
 vi docker-compose.yml
 ```
-2. Modify the configuration, you can reference the original file at [docker-compose.yml](https://github.com/xpack-ai/XPack-MCP-Market/blob/main/scripts/docker-compose.yml)
-```
+
+2. 修改文件配置，原文件可参考 [docker-compose.yml](https://github.com/xpack-ai/XPack-MCP-Market/blob/main/scripts/docker-compose.yml)
+```yaml
 version: '3'
 services:
   xpack-mysql:
@@ -110,82 +113,94 @@ networks:
       config:
         - subnet: 172.101.0.0/24
 ```
-3. Start XPack-MCP-Market
-```
-docker-compose up -d
-``` 
-4. Access `XPack-MCP-Market` in your browser at port 3000
 
-## Build Guide
-### Prerequisites
-1. Clone the XPack repository.
+3. 启动XPack-MCP-Market
+```bash
+docker-compose up -d
 ```
+
+4. 浏览器访问XPack-MCP-Market，端口号默认为：3000
+[图片]
+
+## 编译指南
+### 前期准备
+1. 拉取XPack-MCP-Market仓库
+```bash
 git clone https://github.com/xpack-ai/XPack-MCP-Market.git
 ```
-2. Enter the project directory.
-```
+
+2. 进入项目目录
+```bash
 cd XPack-MCP-Market
 ```
-### Frontend Build
-> Requirements:
+
+### 编译前端
+> 环境要求：
 > - Node >= 22.x
 > - Pnpm >= 10.x
 
-1. Execute the frontend build script
-```
+1. 执行前端编译脚本
+```bash
 cd scripts && ./frontend_build.sh && cd ../
 ```
-After compilation, the frontend code will be built into the `frontend/out` directory.
+编译完成后，前端代码将编译进 `frontend/out` 目录。
 
-2. Start the UI interface
-```
+2. 启动UI界面
+```bash
 cd frontend/out && node server.js
 ```
-### Backend Build
-> Requirements:
+
+### 编译后端
+> 环境要求：
 > - Python >= 3.11
 
-#### Using`uv` (Recommended)
-1. Create virtual environment
-```
+#### 使用 `uv`（推荐）
+1. 创建虚拟环境
+```bash
 uv venv
 ```
-2. Activate virtual environment
-```
+
+2. 激活虚拟环境
+```bash
 source .venv/bin/activate
 ```
-3. Install dependencies
-```
+
+3. 安装依赖
+```bash
 uv pip install -r requirements.txt
 ```
-4. Copy environment variable file
-```
+
+4. 复制环境变量文件
+```bash
 cp .env.example .env
 ```
-5. Edit environment variables
-```
+
+5. 编辑环境变量
+```bash
 vi .env
 ```
-6. Start admin backend service
-**Foreground**
-```
+
+6. 启动管理后台服务
+**前台运行**
+```bash
 uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reload
 ```
-**Background**
-```
+**后台运行**
+```bash
 uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reload &
 ```
 
-7. Start API to MCP service
-**Foreground**
-```
+7. 启动API转MCP服务
+**前台运行**
+```bash
 uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --reload
-``` 
-**Background**
 ```
+**后台运行**
+```bash
 uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --reload &
 ```
-### Docker Build
-```
-docker build -t xpack-mcp-market --build-arg APP=xpack-mcp-market --build-arg VERSION=1.0.0 -f ./scripts/Dockerfile ./
+
+### Docker编译
+```bash
+docker build -t xpack --build-arg APP=xpack --build-arg VERSION=1.0.0 -f ./scripts/Dockerfile ./
 ```

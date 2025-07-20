@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: "Red Hat Display", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* NextUI integration */
+[data-theme] {
+  --nextui-background: hsl(0 0% 100%);
+  --nextui-foreground: hsl(240 10% 3.9%);
+}
+
+[data-theme="dark"] {
+  --nextui-background: hsl(240 10% 3.9%);
+  --nextui-foreground: hsl(0 0% 98%);
+}
+
+/* Ensure proper line clamping */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* Hide scrollbar for horizontal scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.xpack-checkerboard-img {
+  background-color: #fff; /* 给一层白色底 */
+  background-image:
+    linear-gradient(
+      45deg,
+      rgb(227 227 227 / 30%) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgb(227 227 227 / 30%) 75%,
+      rgb(227 227 227 / 30%)
+    ),
+    linear-gradient(
+      45deg,
+      rgb(227 227 227 / 30%) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgb(227 227 227 / 30%) 75%,
+      rgb(227 227 227 / 30%)
+    );
+  background-position:
+    0 0,
+    8px 8px; /* 调整两层背景的偏移 */
+  background-size: 16px 16px; /* 每个格子的尺寸 */
+  background-repeat: repeat;
+}
