@@ -13,7 +13,14 @@ It allows you to transform any OpenAPI into a monetizable MCP service and build 
 - 🛠 **Support Stripe, Alipay, WeChat Pay**
 - 🔐 **Email & Google OAuth Sign in**
 
-Everything is open-source and licensed under **Apache 2.0** — ready for commercial use.
+
+🚀You can launch XPack in minutes with this single-line installer:
+
+```bash
+curl -sSO https://download.xpack.com/install/quick-start.sh; bash quick-start.sh
+```
+
+📘Everything is open-source and licensed under **Apache 2.0** — ready for commercial use.
 
 # 📸 Screenshots
 ![b2](https://github.com/user-attachments/assets/c8cc89a4-ab5f-4c90-8c97-9207b5c9f5c1)
@@ -61,6 +68,7 @@ Everything is open-source and licensed under **Apache 2.0** — ready for commer
 > - Alibaba Cloud Linux 2.1903
 
 If you need one-click deployment for other systems, please submit an [Issue](https://github.com/xpack-ai/XPack-MCP-Market/issues).
+
 ```
 curl -sSO https://download.xpack.com/install/quick-start.sh; bash quick-start.sh
 ```
@@ -144,79 +152,6 @@ docker-compose up -d
 ``` 
 4. Access `XPack-MCP-Market` in your browser at port 3000
 
-## Build Guide
-### Prerequisites
-1. Clone the XPack repository.
-```
-git clone https://github.com/xpack-ai/XPack-MCP-Market.git
-```
-2. Enter the project directory.
-```
-cd XPack-MCP-Market
-```
-### Frontend Build
-> Requirements:
-> - Node >= 22.x
-> - Pnpm >= 10.x
-
-1. Execute the frontend build script
-```
-cd scripts && ./frontend_build.sh && cd ../
-```
-After compilation, the frontend code will be built into the `frontend/out` directory.
-
-2. Start the UI interface
-```
-cd frontend/out && node server.js
-```
-### Backend Build
-> Requirements:
-> - Python >= 3.11
-
-#### Using`uv` (Recommended)
-1. Create virtual environment
-```
-uv venv
-```
-2. Activate virtual environment
-```
-source .venv/bin/activate
-```
-3. Install dependencies
-```
-uv pip install -r requirements.txt
-```
-4. Copy environment variable file
-```
-cp .env.example .env
-```
-5. Edit environment variables
-```
-vi .env
-```
-6. Start admin backend service
-**Foreground**
-```
-uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reload
-```
-**Background**
-```
-uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reload &
-```
-
-7. Start API to MCP service
-**Foreground**
-```
-uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --reload
-``` 
-**Background**
-```
-uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --reload &
-```
-### Docker Build
-```
-docker build -t xpack-mcp-market --build-arg APP=xpack-mcp-market --build-arg VERSION=1.0.0 -f ./scripts/Dockerfile ./
-```
 
 # 🌍 License
 This project is licensed under the Apache 2.0 License.
