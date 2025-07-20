@@ -77,6 +77,7 @@ services:
       - xpack
     ports:
       - "3000:3000"
+      - "8002:8002"
     depends_on:
       - xpack-mysql
       - xpack-redis
@@ -120,7 +121,7 @@ docker-compose up -d
 ```
 
 4. 浏览器访问XPack-MCP-Market，端口号默认为：3000
-[图片]
+
 
 ## 编译指南
 ### 前期准备

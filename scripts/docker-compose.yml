@@ -27,6 +27,7 @@ services:
       - xpack
     ports:
       - "3000:3000"
+      - "8002:8002"
     depends_on:
       - xpack-mysql
       - xpack-redis

@@ -1,0 +1,36 @@
+{
+  "version": "v0.1",
+  "releaseDate": "2025-07-20",
+  "description": "This is the latest release of the application.",
+  "downloads": {
+    "program": {
+      "xpack_mcp_market": {
+        "version": "v0.1.0",
+        "docker": "xpackai/xpack-mcp-market",
+        "tar": "xpack-mcp-market.tar.gz",
+        "url": "https://public.eolinker.com/xpack/images/xpack-mcp-market.${VERSION}.${ARCH}.tar.gz"
+      }
+    },
+    "dependencies": {
+      "mysql": {
+        "version": "8.0.37",
+        "docker": "mysql",
+        "tar": "mysql.tar.gz",
+        "url": "https://public.eolinker.com/basic/images/mysql.${VERSION}.${ARCH}.tar.gz"
+      },
+      "redis":
+      {
+        "version": "7.2.4",
+        "docker": "redis",
+        "tar": "redis.tar.gz",
+        "url": "https://public.eolinker.com/basic/images/redis.${VERSION}.${ARCH}.tar.gz"
+      },
+      "rabbitmq": {
+        "version": "4.1.2-alpine",
+        "docker": "rabbitmq",
+        "tar": "rabbitmq.tar.gz",
+        "url": "https://public.eolinker.com/basic/images/rabbitmq.${VERSION}.${ARCH}.tar.gz"
+      }
+    }
+  }
+}
