@@ -183,6 +183,7 @@ curl -sSO http://xpack.ai/install/quick-start.sh; bash quick-start.sh
 
 <details>
   <summary><h4>🔖Build</h4></summary>
+  
   1. Clone the XPack repository.
   ```
   git clone https://github.com/xpack-ai/XPack-MCP-Market.git
