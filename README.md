@@ -4,7 +4,7 @@
 <p align="center">
   <a href="/README.md">English</a>
   | 
-  <a href="/readme/readme-zh-cn.md">简体中文</a>
+  <a href="/README-zh-cn.md">简体中文</a>
 </p>
 
 **XPack** is a lightweight, open-source marketplace framework for MCP (Model Context Protocol) services.  
