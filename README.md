@@ -1,4 +1,4 @@
-# XPack-MCP-Market
+# XPack
 ![b1](https://github.com/user-attachments/assets/3d50cd9a-9d28-4ec8-bb5f-d3668475b49e)
 
 <p align="center">
