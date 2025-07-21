@@ -268,12 +268,11 @@ curl -sSO http://xpack.ai/install/quick-start.sh; bash quick-start.sh
 <br>
 
 # 🧾 License
-APIPark uses the Apache 2.0 License. For more details, please refer to the LICENSE file.
+XPack-MCP-Market is licensed under the Apache 2.0 License.  
+For details, please see the [LICENSE](./LICENSE) file.
 
 <br>
 
-# 💌 Contact Us
-- Website: https://xpack.ai
-- Email: contact@xpack.com
-
-<br>
+# 📬 Contact
+- 🌐 Website: [https://xpack.ai](https://xpack.ai)
+- 📧 Email: [contact@xpack.com](mailto:contact@xpack.com)
