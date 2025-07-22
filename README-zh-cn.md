@@ -172,5 +172,4 @@ XPack-MCP-Market 遵循 [Apache 2.0 License](./LICENSE)，支持商业用途与�
 
 - 官网: [https://xpack.ai](https://xpack.ai)  
 - 邮箱: [contact@xpack.com](mailto:contact@xpack.com)
-
-<br>
+- Discord：[Link](https://discord.gg/cyZfcdCXkW)
