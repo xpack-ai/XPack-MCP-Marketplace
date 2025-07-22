@@ -280,3 +280,4 @@ For details, please see the [LICENSE](./LICENSE) file.
 # 📬 Contact
 - 🌐 Website: [https://xpack.ai](https://xpack.ai)
 - 📧 Email: [contact@xpack.com](mailto:contact@xpack.com)
+- 💬 Discord：[Link](https://discord.gg/cyZfcdCXkW)
