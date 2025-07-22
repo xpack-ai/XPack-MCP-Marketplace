@@ -1,4 +1,4 @@
-# XPack（全球首个开源 MCP 交易平台）
+# XPack（全球首个开源 MCP 交易计费平台）
 
 ![b1](https://github.com/user-attachments/assets/3d50cd9a-9d28-4ec8-bb5f-d3668475b49e)
 
