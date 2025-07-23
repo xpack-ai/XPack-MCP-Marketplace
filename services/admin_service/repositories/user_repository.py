@@ -16,6 +16,7 @@ class UserRepository:
 
     def get_by_account(self, name: str) -> Optional[User]:
         return self.db.query(User).filter(User.name == name).first()
+
     def update_password(self,user_id:str, password:str) -> Optional[User]:
         user = self.get_by_id(user_id)
         if not user:

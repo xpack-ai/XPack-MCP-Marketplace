@@ -127,6 +127,7 @@ async def validation_exception_handler(request, exc):
         message=error_msg.VALIDATION_FAILED["message"], 
         code=422
     )
+
     return JSONResponse(
         status_code=422,
         content=error_response,

@@ -46,5 +46,5 @@ async def upload(
         shutil.copyfileobj(img.file, f)
     
     return ResponseUtils.success(data={
-        "file_path": file_path
+        "file_path": f"/{file_path}",
     })
