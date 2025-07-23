@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `avatar` VARCHAR(255) DEFAULT NULL COMMENT 'User avatar URL',
   `is_active` TINYINT NOT NULL DEFAULT 1 COMMENT 'User status: 0 (inactive), 1 (active)',
   `is_deleted` TINYINT NOT NULL DEFAULT 0 COMMENT 'Logical deletion: 0 (normal), 1 (deleted)',
-  `register_type` ENUM('google', 'email') NOT NULL COMMENT 'Registration method: google or email',
+  `register_type` ENUM('google', 'email','inner') NOT NULL COMMENT 'Registration method: google or email',
   `role_id` INT NOT NULL COMMENT 'Role ID: 1 (admin), 2 (user)',
   `last_login_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Last login timestamp',
   `last_login_ip` VARCHAR(255) DEFAULT NULL COMMENT 'Last login IP address',
@@ -260,10 +260,29 @@ CREATE TABLE IF NOT EXISTS `mcp_call_log` (
   FOREIGN KEY (`wallet_history_id`) REFERENCES `user_wallet_history` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Stores API call logs';
 
+CREATE TABLE `sys_config_large` (
+  `id` char(36) NOT NULL COMMENT '主键，UUID',
+  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置键名',
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置值',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置项描述',
+  `created_at` timestamp NULL DEFAULT NULL COMMENT '记录创建时间',
+  `updated_at` timestamp NULL DEFAULT NULL COMMENT '记录最后更新时间',
+PRIMARY KEY (`id`) USING BTREE,
+UNIQUE KEY `uk_key` (`key`) USING BTREE COMMENT '配置键名唯一索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='系统参数配置表，用于存储系统级配置信息';
+
 # 判断用户是否存在，若不存在则插入
 INSERT INTO `user` (`id`, `name`, `email`, `password`, `is_active`, `is_deleted`, `register_type`, `role_id`, `created_at`, `updated_at`)
-SELECT 'admin', 'admin', 'admin@xpack.com', '25f9e794323b453885f5181f1b624d0b', 1, 0, 'email', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM `user` WHERE `id` = 'admin');
+VALUES ('admin', 'admin', 'admin@xpack.com', '25f9e794323b453885f5181f1b624d0b', 1, 0, 'inner', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON DUPLICATE KEY UPDATE
+    `name` = VALUES(`name`),
+    `email` = VALUES(`email`),
+    `password` = VALUES(`password`),
+    `is_active` = VALUES(`is_active`),
+    `is_deleted` = VALUES(`is_deleted`),
+    `register_type` = VALUES(`register_type`),
+    `role_id` = VALUES(`role_id`),
+    `updated_at` = CURRENT_TIMESTAMP;
 
 # 判断用户钱包是否存在，若不存在则插入
 INSERT INTO `user_wallet` (`id`, `user_id`, `balance`, `frozen_balance`, `created_at`, `updated_at`)
