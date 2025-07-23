@@ -1,10 +1,11 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import asyncio
 import threading
-import logging
+import os
 from contextlib import asynccontextmanager
 
 from services.common.config import Config
@@ -163,7 +164,13 @@ app.include_router(email_test.router, prefix="/api/email_test")
 app.include_router(upload.router, prefix="/api/upload")
 
 # Logging is already configured by setup_logging("admin_service")
+# 创建uploads目录（如果不存在）
+uploads_dir = "uploads"
+if not os.path.exists(uploads_dir):
+    os.makedirs(uploads_dir)
 
+# 挂载静态文件目录
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 @app.get("/")
 def read_root():

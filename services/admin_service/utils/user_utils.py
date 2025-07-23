@@ -8,6 +8,11 @@ class UserUtils:
         return request.scope.get("user")
 
     @staticmethod
+    def get_request_user_token(request) -> str:
+        """Get user token from request"""
+        return request.scope.get("user_token", "")
+
+    @staticmethod
     def get_request_user_id(request) -> str:
         """Get user ID from request"""
         user = UserUtils.get_request_user(request)

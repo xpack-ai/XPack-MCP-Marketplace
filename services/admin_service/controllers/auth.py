@@ -95,6 +95,6 @@ def google_login(request: Request, body: dict = Body(...), auth_service: AuthSer
 @router.delete("/logout", response_model=dict)
 def logout(request: Request, auth_service: AuthService = Depends(get_auth_service)):
     """Log out current authenticated user."""
-    user_id = UserUtils.get_request_user_id(request)
-    auth_service.logout(user_id)
+    user_token = UserUtils.get_request_user_token(request)
+    auth_service.logout(user_token)
     return ResponseUtils.success(message="Logout successful")

@@ -6,12 +6,16 @@ from services.common.response.user_response import UserResponse
 from services.common.response.user_wallet_response import UserWalletResponse
 from services.admin_service.utils.user_utils import UserUtils
 from services.admin_service.services.user_wallet_service import UserWalletService
+from services.admin_service.services.auth_service import AuthService
 
 router = APIRouter()
 
 
 def get_user_wallet(db: Session = Depends(get_db)) -> UserWalletService:
     return UserWalletService(db)
+
+def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
+    return AuthService(db)
 
 
 @router.get("/info", response_model=dict)
@@ -32,5 +36,28 @@ def get_user(request: Request, db: Session = Depends(get_db), user_wallet: UserW
         user_response.user_email = user.email
         user_response.created_at = getattr(user, "created_at", None)
         user_response.wallet = user_wallet_resp
+        print("register_type",user.register_type)
+        if user.register_type:
+            user_response.register_type = user.register_type.value
+        
         return ResponseUtils.success(user_response)
     return ResponseUtils.error(message="not found user", code=500)
+
+@router.put("/password",response_model=dict)
+def update_password(
+    request: Request, 
+    password: str,
+    auth_service: AuthService = Depends(get_auth_service),
+    ):
+    """Update user password."""
+    user = UserUtils.get_request_user(request)
+    if user:
+        token = auth_service.update_password(user.id, password)
+        if token is None:
+            return ResponseUtils.error(message="update password failed", code=403)
+        user_token = UserUtils.get_request_user_token(request)
+        auth_service.logout(user_token)
+        return ResponseUtils.success(data={"user_token":token})
+
+    return ResponseUtils.error(message="not found user", code=404)
+
