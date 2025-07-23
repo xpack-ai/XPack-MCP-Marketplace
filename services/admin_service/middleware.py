@@ -36,7 +36,11 @@ class AuthMiddleware:
                 logger.debug(f"Skipping authentication for path: {path}")
                 await self.app(scope, receive, send)
                 return
-
+            for prefix_path in Config.NO_AUTH_PREFIX_PATH:
+                if path.startswith(prefix_path):
+                    logger.debug(f"Skipping authentication for path prefix: {prefix_path}")
+                    await self.app(scope, receive, send)
+                    return
             # Get headers
             headers = scope.get("headers", [])
             auth_header = None
@@ -63,6 +67,7 @@ class AuthMiddleware:
 
                 # Add user information to request state
                 scope["user"] = user
+                scope["user_token"] = token
 
             except Exception as e:
                 logger.error(f"Authentication error: {str(e)}")

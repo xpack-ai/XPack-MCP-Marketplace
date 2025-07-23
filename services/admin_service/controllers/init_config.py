@@ -41,7 +41,7 @@ def get_config(db: Session = Depends(get_db)):
         subheadline = sys_config_service.get_value_by_key(KEY_SUBHEADLINE) or ""
         language = sys_config_service.get_value_by_key(KEY_LANGUAGE) or ""
         theme = sys_config_service.get_value_by_key(KEY_THEME) or ""
-        about_page = sys_config_service.get_value_by_key(KEY_ABOUT_PAGE) or ""
+        about_page = sys_config_service.get_value_by_key(KEY_ABOUT_PAGE,True) or ""
 
         # Get login config
         google_client_id = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT) or ""

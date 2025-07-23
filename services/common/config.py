@@ -69,3 +69,6 @@ class Config:
     NO_AUTH_PATHS = (
         [path.strip() for path in _env_no_auth_paths.split(",") if path.strip()] if _env_no_auth_paths else _default_no_auth_paths
     )
+    NO_AUTH_PREFIX_PATH=[
+        "/uploads/"
+    ]

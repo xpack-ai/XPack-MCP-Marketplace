@@ -11,3 +11,4 @@ class UserResponse(BaseModel):
     role_id: Optional[int] = None
     created_at: Optional[datetime.datetime] = None
     wallet: Optional[UserWalletResponse] = None
+    register_type: Optional[str] = None

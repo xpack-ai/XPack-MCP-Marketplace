@@ -49,6 +49,7 @@ def verify_token(token: str, db: Session) -> Optional[User]:
             user = (
                 db.query(User).filter(User.id == user_access_token.user_id and User.is_deleted == False and User.is_active == True).first()
             )
+            print("user is",user.register_type)
             if not user:
                 logger.warning(f"User not found for token: {token}, user_id: {user_access_token.user_id}")
                 return None
@@ -63,3 +64,13 @@ def verify_token(token: str, db: Session) -> Optional[User]:
     except Exception as e:
         logger.error(f"Token verification failed for token {token}: {e}", exc_info=True)
         return None
+
+def delete_token(token: str) -> bool:
+    """Delete token from database and cache"""
+    try:
+        token_cache_key = RedisKeys.user_access_token_key(token)
+        delete_cache(token_cache_key)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to delete token {token}: {e}", exc_info=True)
+        return False

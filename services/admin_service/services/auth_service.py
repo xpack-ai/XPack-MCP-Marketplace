@@ -2,12 +2,6 @@ import random
 import logging
 from sqlalchemy.orm import Session
 from typing import Optional
-from services.common.models.user import User
-from services.common.models.user_wallet import UserWallet
-from services.common.models.user_access_token import UserAccessToken
-
-from services.common.redis import redis_client
-from services.common.redis_keys import RedisKeys
 from services.common.database import SessionLocal
 from services.common.utils.email_utils import EmailUtils
 from services.common.utils.cache_utils import CacheUtils
@@ -19,9 +13,8 @@ from services.admin_service.services.sys_config_service import SysConfigService
 from services.admin_service.constants.sys_config_key import (
     KEY_LOGIN_GOOGLE_CLIENT,
     KEY_LOGIN_GOOGLE_SECRET,
-    KEY_LOGIN_GOOGLE_REDIRECT_URI,
-    KEY_LOGIN_GOOGLE_ENABLE,
 )
+from services.common.utils.auth import delete_token
 
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
@@ -105,6 +98,16 @@ class AuthService:
             logger.warning(f"Failed to create user token for email: {email}")
             return None
         return token
+    def update_password(self, user_id: str, password: str) -> Optional[str]:
+        user = self.user_repository.get_by_id(user_id)
+        if user is None:
+            logger.warning(f"not found user, user_id: {user_id}")
+            return None
+        user = self.user_repository.update_password(user.id,password)
+        if user is None:
+            logger.warning(f"Failed to update user password with user_id: {user_id}")
+            return None
+        return self.create_user_token(user.id)
 
     def create_user_token(self, user_id: str) -> Optional[str]:
         user_access_token = self.user_access_token_repository.create(user_id)
@@ -132,6 +135,7 @@ class AuthService:
         """
         try:
             self.user_access_token_repository.delete_by_token(token)
+            delete_token(token)  # Clear token from cache
             return True
         except Exception as e:
             logger.error(f"Failed to logout user with token {token}: {e}")
