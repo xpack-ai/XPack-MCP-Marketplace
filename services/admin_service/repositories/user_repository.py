@@ -16,8 +16,16 @@ class UserRepository:
 
     def get_by_account(self, name: str) -> Optional[User]:
         return self.db.query(User).filter(User.name == name).first()
+    def update_password(self,user_id:str, password:str) -> Optional[User]:
+        user = self.get_by_id(user_id)
+        if not user:
+            return None
+        user.password = password
+        self.db.commit()
+        self.db.refresh(user)
+        return user
 
-    def create(self, email: str, register_type: str, role_id: int = 2) -> Optional[User]:
+    def create(self, email: str, register_type: str, role_id: int = 2, password: Optional[str] = None) -> Optional[User]:
         from uuid import uuid4
         from services.common.models.user import RegisterType
 
@@ -27,6 +35,7 @@ class UserRepository:
             id=str(uuid4()),
             name=name,
             email=email,
+            password=password,
             avatar=None,
             is_active=1,
             is_deleted=0,

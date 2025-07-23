@@ -13,8 +13,12 @@ from services.admin_service.constants.sys_config_key import (
     KEY_HEADLINE,
     KEY_SUBHEADLINE,
     KEY_LANGUAGE,
+    KEY_THEME,
+    KEY_ABOUT_PAGE,
     KEY_LOGIN_GOOGLE_CLIENT,
     KEY_LOGIN_GOOGLE_ENABLE,
+    KEY_LOGIN_EMAIL_ENABLE,
+    KEY_LOGIN_EMAIL_MODE,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,16 +40,27 @@ def get_config(db: Session = Depends(get_db)):
         headline = sys_config_service.get_value_by_key(KEY_HEADLINE) or ""
         subheadline = sys_config_service.get_value_by_key(KEY_SUBHEADLINE) or ""
         language = sys_config_service.get_value_by_key(KEY_LANGUAGE) or ""
+        theme = sys_config_service.get_value_by_key(KEY_THEME) or ""
+        about_page = sys_config_service.get_value_by_key(KEY_ABOUT_PAGE) or ""
 
         # Get login config
         google_client_id = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT) or ""
         google_is_enabled_raw = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_ENABLE) or "false"
         # Convert to boolean
         google_is_enabled = google_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
-
+        
+        # Get login email config
+        email_is_enabled_raw = sys_config_service.get_value_by_key(KEY_LOGIN_EMAIL_ENABLE) or "false"
+        # Convert to boolean
+        email_is_enabled = email_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
+        email_mode = sys_config_service.get_value_by_key(KEY_LOGIN_EMAIL_MODE) or "password"
+        
         # Build response data
         config_data = {
-            "login": {"google": {"client_id": google_client_id, "is_enabled": google_is_enabled}},
+            "login": {
+                "google": {"client_id": google_client_id, "is_enabled": google_is_enabled},
+                "email": {"is_enabled": email_is_enabled, "mode": email_mode},
+            },
             "platform": {
                 "name": platform_name,
                 "logo": platform_logo,
@@ -53,6 +68,8 @@ def get_config(db: Session = Depends(get_db)):
                 "headline": headline,
                 "subheadline": subheadline,
                 "language": language,
+                "theme": theme,
+                "about_page": about_page,
             },
         }
 

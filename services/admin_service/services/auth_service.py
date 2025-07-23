@@ -57,7 +57,7 @@ class AuthService:
         # Send verification code using HTML email template
         return EmailUtils.send_register_code_email(self.db, email, captcha)
 
-    def email_login(self, email: str, captcha: str) -> Optional[str]:
+    def email_login_by_captcha(self, email: str, captcha: str) -> Optional[str]:
         cache_value = CacheUtils.get_cache(RedisKeys.email_login_captcha(email))
         if cache_value is None:
             logger.warning(f"not found captcha, email: {email}")
@@ -82,6 +82,29 @@ class AuthService:
             CacheUtils.set_cache(RedisKeys.email_login_captcha(email), None)
             return token
         return None
+    def email_login_by_password(self, email: str, password: str) -> Optional[str]:
+        user = self.user_repository.get_by_email(email)
+        # User doesn't exist, register first
+        if user is None:
+            user = self.user_repository.create(email=email, register_type="email", role_id=2,password=password)
+
+        if user is None:
+            logger.warning(f"Failed to register user with email: {email}")
+            return None
+        if user.password is None or user.password == "":
+            user = self.user_repository.update_password(user.id,password)
+            if user is None:
+                logger.warning(f"Failed to update user password with email: {email}")
+                return None
+        if user.password != password:
+            logger.warning("password not match")
+            return None
+        # Create user access token
+        token = self.create_user_token(user.id)
+        if token is None:
+            logger.warning(f"Failed to create user token for email: {email}")
+            return None
+        return token
 
     def create_user_token(self, user_id: str) -> Optional[str]:
         user_access_token = self.user_access_token_repository.create(user_id)

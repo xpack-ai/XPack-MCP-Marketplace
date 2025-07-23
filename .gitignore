@@ -40,3 +40,4 @@ htmlcov/
 # Ignore local config
 local_settings.py 
 /.secrets
+/uploads/
