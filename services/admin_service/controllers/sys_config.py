@@ -34,16 +34,27 @@ def get_sysconfig(
     headline = sysconfig_service.get_value_by_key(sys_config_key.KEY_HEADLINE)
     subheadline = sysconfig_service.get_value_by_key(sys_config_key.KEY_SUBHEADLINE)
     language = sysconfig_service.get_value_by_key(sys_config_key.KEY_LANGUAGE)
+    theme = sysconfig_service.get_value_by_key(sys_config_key.KEY_THEME)
+    about_page = sysconfig_service.get_value_by_key(sys_config_key.KEY_ABOUT_PAGE,True)
+
     admin_username = ""
     if admin_user and admin_user.name:
         admin_username = admin_user.name
     login_google_client = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_CLIENT)
     login_google_secret = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_SECRET)
-    login_google_enable = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_ENABLE)
-    if not login_google_enable:
-        login_google_enable = False
-    else:
-        login_google_enable = bool(login_google_enable)
+    
+    google_is_enabled_raw = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_ENABLE) or "false"
+    # Convert to boolean
+    login_google_enable = google_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
+    
+    # Get login email config
+    email_is_enabled_raw = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_EMAIL_ENABLE) or "false"
+    # Convert to boolean
+    login_email_enable = email_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
+    login_email_mode = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_EMAIL_MODE)
+    if not login_email_mode:
+        login_email_mode = "password"
+    
 
     # Get email configuration
     email_smtp_host = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_HOST)
@@ -62,6 +73,8 @@ def get_sysconfig(
                 "headline": headline,
                 "subheadline": subheadline,
                 "language": language,
+                "theme": theme,
+                "about_page": about_page,
             },
             "account": {
                 "username": admin_username,
@@ -79,6 +92,10 @@ def get_sysconfig(
                     "client_secret": login_google_secret,
                     "is_enabled": login_google_enable,
                 },
+                "email":{
+                    "is_enabled": login_email_enable,
+                    "mode": login_email_mode,
+                }
             },
         }
     )
@@ -119,6 +136,8 @@ def set_sysconfig(
         headline = platform.get("headline")
         subheadline = platform.get("subheadline")
         language = platform.get("language")
+        theme = platform.get("theme")
+        about_page = platform.get("about_page")
 
         account = body.get("account", {})
         admin_username = account.get("username")
@@ -128,8 +147,11 @@ def set_sysconfig(
         google_config = login.get("google", {})
         login_google_client = google_config.get("client_id")
         login_google_secret = google_config.get("client_secret")
-        login_google_enable = google_config.get("is_enabled", False)  # 设置默认值为 False
-
+        login_google_enable = google_config.get("is_enabled")  # 设置默认值为 False
+        login_email_config = login.get("email", {})
+        login_email_mode = login_email_config.get("mode")
+        login_email_is_enable = login_email_config.get("is_enabled")  # 设置默认值为 False
+        print("email info:",login_email_is_enable,login_email_mode)
         # 获取邮件配置 - 现在从外层获取
         email_config = body.get("email", {})
         email_smtp_host = email_config.get("smtp_host")
@@ -138,19 +160,27 @@ def set_sysconfig(
         email_smtp_password = email_config.get("smtp_password")
         email_smtp_sender = email_config.get("smtp_sender")
 
-        if not login_google_enable or login_google_enable == "false":
-            login_google_enable = "False"
-        else:
-            login_google_enable = "True"
+        # if  login_google_enable: 
+        #     if login_google_enable == "false":
+        #         login_google_enable = "False"
+        #     else:
+        #         login_google_enable = "True"
+        # if login_email_is_enable:
+        #     if login_email_is_enable == "false":
+        #         login_email_is_enable = "False"
+        #     else:
+        #         login_email_is_enable = "True"
         # 批量更新配置
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "Platform name"),
-            (sys_config_key.KEY_PLATFORM_LOGO, platform_logo, "Platform logo"),
+            (sys_config_key.KEY_PLATFORM_LOGO, platform_logo, "Platform logo",),
             (sys_config_key.KEY_PLATFORM_URL, platform_url, "Platform URL"),
             (sys_config_key.KEY_WEBSITE_TITLE, website_title, "Website title"),
             (sys_config_key.KEY_HEADLINE, headline, "Homepage title"),
             (sys_config_key.KEY_SUBHEADLINE, subheadline, "Subtitle"),
             (sys_config_key.KEY_LANGUAGE, language, "Language"),
+            (sys_config_key.KEY_THEME, theme, "Theme"),
+            (sys_config_key.KEY_ABOUT_PAGE, about_page, "About page"),
             (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "Google login client ID"),
             (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "Google login client secret"),
             (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "谷歌登录是否启用"),
@@ -159,6 +189,8 @@ def set_sysconfig(
             (sys_config_key.KEY_EMAIL_SMTP_USER, email_smtp_user, "邮件SMTP用户名"),
             (sys_config_key.KEY_EMAIL_SMTP_PASSWORD, email_smtp_password, "邮件SMTP密码"),
             (sys_config_key.KEY_EMAIL_SMTP_SENDER, email_smtp_sender, "邮件发送者地址"),
+            (sys_config_key.KEY_LOGIN_EMAIL_ENABLE, login_email_is_enable, "邮件是否启用"),
+            (sys_config_key.KEY_LOGIN_EMAIL_MODE, login_email_mode, "邮件模式"),
         ]
 
         # 更新管理员用户名和密码
@@ -166,7 +198,10 @@ def set_sysconfig(
 
         for key, value, desc in configs:
             if value is not None:  # 只更新有值的配置
-                sysconfig_service.set_value_by_key(key, value, desc)
+                is_large = False
+                if key == sys_config_key.KEY_ABOUT_PAGE:
+                    is_large = True
+                sysconfig_service.set_value_by_key(key, value, desc,is_large)
 
         return get_sysconfig(sysconfig_service, user_service)
 

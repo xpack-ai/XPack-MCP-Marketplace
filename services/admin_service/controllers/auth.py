@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.auth_service import AuthService
+from services.admin_service.services.sys_config_service import SysConfigService
 from services.admin_service.utils.user_utils import UserUtils
+from services.admin_service.constants import sys_config_key
 
 router = APIRouter()
 
@@ -11,15 +13,36 @@ router = APIRouter()
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     return AuthService(db)
 
+def get_sys_config_service(db: Session = Depends(get_db)) -> SysConfigService:
+    return SysConfigService(db)
+
 
 @router.post("/email/sign", response_model=dict)
-def email_login(body: dict = Body(...), auth_service: AuthService = Depends(get_auth_service)):
+def email_login(
+    body: dict = Body(...), 
+    auth_service: AuthService = Depends(get_auth_service), 
+    sys_config_service: SysConfigService = Depends(get_sys_config_service),
+    ):
     """Authenticate user via email and captcha code."""
+    email_is_enabled_raw = sys_config_service.get_value_by_key(sys_config_key.KEY_LOGIN_EMAIL_ENABLE) or "false"
+    # Convert to boolean
+    email_is_enabled = email_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
+    if not email_is_enabled:
+        return ResponseUtils.error(message="email login not enabled", code=400)
+    email_mode = sys_config_service.get_value_by_key(sys_config_key.KEY_LOGIN_EMAIL_MODE) or "password"
     email = body.get("user_email")
-    captcha = body.get("captcha")
-    if not email or not captcha:
-        return ResponseUtils.error(message="email and captcha required", code=400)
-    token = auth_service.email_login(email, captcha)
+    token = None
+    match email_mode:
+        case "password":
+            password = body.get("password")
+            if not email or not password:
+                return ResponseUtils.error(message="email and password required", code=400)
+            token = auth_service.email_login_by_password(email=email, password=password)
+        case "captcha":
+            captcha = body.get("captcha")
+            if not email or not captcha:
+                return ResponseUtils.error(message="email and captcha required", code=400)
+            token = auth_service.email_login_by_captcha(email=email, captcha=captcha)
     if token:
         return ResponseUtils.success({"user_token": token})
     else:

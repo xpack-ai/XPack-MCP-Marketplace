@@ -7,20 +7,27 @@ import logging
 
 from services.common.models.sys_config import SysConfig
 from services.admin_service.repositories.sys_config_repository import SysConfigRepository
+from services.admin_service.repositories.sys_config_large_repository import SysConfigLargeRepository
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) 
 
 
 class SysConfigService:
     def __init__(self, db: Session = SessionLocal()):
         self.sys_config_repository = SysConfigRepository(db)
+        self.sys_config_large_repository = SysConfigLargeRepository(db)
         try:
             self.redis_client = RedisClient()
         except Exception as e:
             logger.warning(f"Redis connection failed, cache will be disabled: {e}")
             self.redis_client = None
 
-    def get_value_by_key(self, key: str) -> str:
+    def get_value_by_key(self, key: str, is_large:bool = False) -> str:
+        if is_large:
+            sys_config = self.sys_config_large_repository.get_by_key(key)
+            if sys_config:
+                return sys_config.value
+            return ""
         """Get config value, prioritize cache, fallback to database if cache miss"""
         cache_key = RedisKeys.sys_config_key(key)
 
@@ -56,12 +63,15 @@ class SysConfigService:
             self._clear_cache(key)
         return result
 
-    def set_value_by_key(self, key: str, value: str, description: str) -> Optional[SysConfig]:
+    def set_value_by_key(self, key: str, value: str, description: str, is_large:bool = False):
+        if is_large:
+            self.sys_config_large_repository.set_value_by_key(key=key, value=value, description=description)
+            return 
         """Set config value and clear cache"""
         result = self.sys_config_repository.set_value_by_key(key=key, value=value, description=description)
         if result:
             self._clear_cache(key)
-        return result
+        return
 
     def _clear_cache(self, key: str) -> None:
         """Clear cache for specified config"""
