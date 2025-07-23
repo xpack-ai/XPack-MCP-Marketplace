@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request,Body
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
@@ -19,7 +19,7 @@ def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
 
 
 @router.get("/info", response_model=dict)
-def get_user(request: Request, db: Session = Depends(get_db), user_wallet: UserWalletService = Depends(get_user_wallet)):
+def get_user(request: Request, user_wallet: UserWalletService = Depends(get_user_wallet)):
     """Get current user information and wallet balance."""
     user_response = UserResponse()
     user_wallet_resp = UserWalletResponse()
@@ -45,11 +45,14 @@ def get_user(request: Request, db: Session = Depends(get_db), user_wallet: UserW
 
 @router.put("/password",response_model=dict)
 def update_password(
-    request: Request, 
-    password: str,
+    request: Request,
+    body: dict = Body(...),
     auth_service: AuthService = Depends(get_auth_service),
-    ):
+    ) -> dict:
     """Update user password."""
+    password = body.get("password")
+    if not password:
+        return ResponseUtils.error(message="password is required", code=400)
     user = UserUtils.get_request_user(request)
     if user:
         token = auth_service.update_password(user.id, password)

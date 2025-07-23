@@ -49,7 +49,6 @@ def verify_token(token: str, db: Session) -> Optional[User]:
             user = (
                 db.query(User).filter(User.id == user_access_token.user_id and User.is_deleted == False and User.is_active == True).first()
             )
-            print("user is",user.register_type)
             if not user:
                 logger.warning(f"User not found for token: {token}, user_id: {user_access_token.user_id}")
                 return None
