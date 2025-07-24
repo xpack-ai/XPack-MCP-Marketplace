@@ -95,7 +95,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
                 {t("Platform Information")}
               </h3>
               <p className="text-sm text-gray-500">
-                {t("Configure platform logo, name, titles, and language")}
+                {t("Configure platform logo, name, titles, language")}
               </p>
             </div>
           }
