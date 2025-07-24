@@ -16,6 +16,9 @@ import { Avatar, Card, CardBody, Button, Divider } from "@nextui-org/react";
 import { RechargeModal } from "@/shared/components/modal/RechargeModal";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { ChangePasswordModal } from "@/components/common/ChangePasswordModal";
+import { usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
+import { RegisterType } from "@/shared/store/User";
+import { EmailMode } from "@/shared/types/system";
 
 const DashboardContent: React.FC = () => {
   const { t } = useTranslation();
@@ -26,6 +29,7 @@ const DashboardContent: React.FC = () => {
     state.user_token,
     state.user,
   ]);
+  const { loginConfig } = usePlatformConfig();
 
   const [logOut, useGetUser] = useGlobalStore((state) => [
     state.logOut,
@@ -113,15 +117,19 @@ const DashboardContent: React.FC = () => {
           onLogout={handleLogout}
           sidebarItems={sidebarItems}
           bottomPanel={
-            <Button
-              variant="light"
-              color="default"
-              startContent={<Key className="w-4 h-4" />}
-              className="w-full justify-start mb-2"
-              onPress={handleChangePassword}
-            >
-              {t("Change Password")}
-            </Button>
+            loginConfig?.email?.is_enabled &&
+            loginConfig?.email?.mode === EmailMode.PASSWORD &&
+            user?.register_type === RegisterType.EMAIL && (
+              <Button
+                variant="light"
+                color="default"
+                startContent={<Key className="w-4 h-4" />}
+                className="w-full justify-start mb-2"
+                onPress={handleChangePassword}
+              >
+                {t("Change Password")}
+              </Button>
+            )
           }
           userProfilePanel={
             user && (

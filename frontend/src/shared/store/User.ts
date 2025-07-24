@@ -4,6 +4,11 @@ interface APIKey {
   create_time: number;
   apikey_id: string;
 }
+export enum RegisterType {
+  EMAIL = "email",
+  GOOGLE = "google",
+  INNER = "inner",
+}
 export interface User {
   user_id: string;
   user_email: string;
@@ -26,4 +31,5 @@ export interface User {
   wallet?: {
     balance: number;
   };
+  register_type: RegisterType;
 }
