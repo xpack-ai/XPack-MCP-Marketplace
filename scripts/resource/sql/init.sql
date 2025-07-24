@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS `user` (
   UNIQUE INDEX `uk_email` (`email`) COMMENT 'Unique email index'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Stores user information and status';
 
+ALTER TABLE `user` 
+MODIFY COLUMN `register_type` ENUM('google', 'email', 'inner') NOT NULL COMMENT 'Registration method';
 -- ----------------------------
 -- Table structure for user_access_token
 -- ----------------------------
@@ -260,7 +262,7 @@ CREATE TABLE IF NOT EXISTS `mcp_call_log` (
   FOREIGN KEY (`wallet_history_id`) REFERENCES `user_wallet_history` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Stores API call logs';
 
-CREATE TABLE `sys_config_large` (
+CREATE TABLE IF NOT EXISTS `sys_config_large` (
   `id` char(36) NOT NULL COMMENT '主键，UUID',
   `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置键名',
   `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置值',
@@ -271,7 +273,6 @@ PRIMARY KEY (`id`) USING BTREE,
 UNIQUE KEY `uk_key` (`key`) USING BTREE COMMENT '配置键名唯一索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='系统参数配置表，用于存储系统级配置信息';
 
-# 判断用户是否存在，若不存在则插入
 INSERT INTO `user` (`id`, `name`, `email`, `password`, `is_active`, `is_deleted`, `register_type`, `role_id`, `created_at`, `updated_at`)
 VALUES ('admin', 'admin', 'admin@xpack.com', '25f9e794323b453885f5181f1b624d0b', 1, 0, 'inner', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON DUPLICATE KEY UPDATE
@@ -284,12 +285,10 @@ ON DUPLICATE KEY UPDATE
     `role_id` = VALUES(`role_id`),
     `updated_at` = CURRENT_TIMESTAMP;
 
-# 判断用户钱包是否存在，若不存在则插入
 INSERT INTO `user_wallet` (`id`, `user_id`, `balance`, `frozen_balance`, `created_at`, `updated_at`)
 SELECT UUID(), 'admin', 0.00, 0.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 WHERE NOT EXISTS (SELECT 1 FROM `user_wallet` WHERE `user_id` = 'admin');
 
-# 判断支付渠道是否存在，若不存在则插入
 INSERT INTO `payment_channel` (`id`, `name`, `status`, `config`, `updated_at`)
 SELECT 'stripe', 'Stripe', 1, '{\"secret\": \"\", \"webhook_secret\": \"\"}', '2025-07-17 06:42:55'
 WHERE NOT EXISTS (SELECT 1 FROM `payment_channel` WHERE `id` = 'stripe');

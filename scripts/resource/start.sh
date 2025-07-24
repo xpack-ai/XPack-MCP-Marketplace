@@ -27,8 +27,6 @@ fi
 # 执行环境检查
 check_uv_env
 
-echo $VERSION > .version
-
 if [ -f .env.example ]; then
    cp .env.example .env
 fi
@@ -38,10 +36,12 @@ python ./init_db.py
 
 nohup uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reload > ${LOG_DIR}/admin_service.log 2>&1 &
 
+sleep 5s
+
 nohup uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --reload > ${LOG_DIR}/api_service.log 2>&1 &
 
 cd frontend/ && nohup node server.js > ${LOG_DIR}//frontend.log 2>&1 &
 
-sleep 5s
+sleep 2s
 
 tail -F ${LOG_DIR}/*.log
