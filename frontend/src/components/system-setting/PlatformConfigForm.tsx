@@ -194,6 +194,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
           base: "shadow-none border-1",
         }}
         className="px-0"
+        defaultExpandedKeys={["about-config"]}
       >
         <AccordionItem
           key="about-config"
@@ -306,6 +307,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
         itemClasses={{
           base: "shadow-none border-1",
         }}
+        defaultExpandedKeys={["theme-config"]}
         className="px-0"
       >
         <AccordionItem
