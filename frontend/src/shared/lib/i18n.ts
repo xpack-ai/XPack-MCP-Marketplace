@@ -3,10 +3,17 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 import { getDefaultLanguage } from "@/shared/utils/i18n";
-import en from "../../../public/locales/en/translation.json";
-import enConfig from "../../../public/locales/en/config.json";
-import zhCN from "../../../public/locales/zh-CN/translation.json";
-import zhCNConfig from "../../../public/locales/zh-CN/config.json";
+let resources = {};
+if(typeof window !== "undefined" && !window._BACKEND_LOAD_LANG__){
+  let en=require("../../../public/locales/en/translation.json");
+  let enConfig=require("../../../public/locales/en/config.json");
+  let zhCN=require("../../../public/locales/zh-CN/translation.json");
+  let zhCNConfig=require("../../../public/locales/zh-CN/config.json");
+  resources = {
+    en: { translation: en, config: enConfig },
+    "zh-CN": { translation: zhCN, config: zhCNConfig },
+  };
+}
 
 // Try to read the preferred language from multiple sources:
 // 1. URL parameters (lang=zh-CN)
@@ -25,10 +32,20 @@ export const i18nPromise = i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: {
-      en: { translation: en, config: enConfig },
-      "zh-CN": { translation: zhCN, config: zhCNConfig },
-    },
+    ...(typeof window !== "undefined" && window._BACKEND_LOAD_LANG__
+      ? {
+          backend: {
+            // Allow loading multiple namespaces (e.g. translation.json, config.json)
+            loadPath: `${process.env.NEXT_PUBLIC_STATIC_URL_PREFIX || ""}/locales/{{lng}}/{{ns}}.json`,
+            // add request options to improve loading speed
+            requestOptions: {
+              cache: "default",
+            },
+          },
+        }
+      : {
+          resources,
+        }),
     ns: ["translation", "config"],
     defaultNS: "translation",
     fallbackNS: "config",

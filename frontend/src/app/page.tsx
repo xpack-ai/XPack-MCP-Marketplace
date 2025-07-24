@@ -6,6 +6,7 @@ import { Navigation } from "@/shared/components/Navigation";
 import { Footer } from "@/shared/components/Footer";
 import { fetchServices } from "@/services/marketplaceService";
 import type { ServiceData } from "@/shared/types/marketplace";
+import { ThemeSelector } from "@/components/theme/ThemeSelector";
 
 export async function generateMetadata(): Promise<Metadata> {
   const title = await getDynamicTitle("Marketplace");
@@ -43,23 +44,13 @@ export default async function HomePage({
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-between">
-      <Navigation />
-      <main className="flex-1">
-        <Suspense>
-          <MarketplaceMain
-            initialServices={services}
-            initialTotal={total}
-            initialPage={page}
-            initialSearch={search}
-            pageSize={pageSize}
-            error={error}
-          />
-        </Suspense>
-      </main>
-      <div>
-        <Footer />
-      </div>
-    </div>
+    <ThemeSelector
+      initialServices={services}
+      initialTotal={total}
+      initialPage={page}
+      initialSearch={search}
+      pageSize={pageSize}
+      error={error}
+    />
   );
 }

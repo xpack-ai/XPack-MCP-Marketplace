@@ -6,22 +6,26 @@ import { useGlobalStore } from "@/shared/store/global";
 import DashboardSidebar from "@/shared/components/DashboardSidebar";
 import { SidebarItem, TabKey } from "@/shared/types/dashboard";
 import { useSharedStore } from "@/shared/store/share";
-import { formatCurrency } from '@/shared/utils/currency';
+import { formatCurrency } from "@/shared/utils/currency";
 
 // Import dashboard content components
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
 import WalletManagement from "@/components/wallet/WalletManagement";
-import { Home, Wallet } from "lucide-react";
+import { Home, Key, Wallet } from "lucide-react";
 import { Avatar, Card, CardBody, Button, Divider } from "@nextui-org/react";
 import { RechargeModal } from "@/shared/components/modal/RechargeModal";
 import { useTranslation } from "@/shared/lib/useTranslation";
+import { ChangePasswordModal } from "@/components/common/ChangePasswordModal";
 
 const DashboardContent: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
 
   const searchParams = useSearchParams();
-  const [user_token, user] = useSharedStore((state) => [state.user_token, state.user]);
+  const [user_token, user] = useSharedStore((state) => [
+    state.user_token,
+    state.user,
+  ]);
 
   const [logOut, useGetUser] = useGlobalStore((state) => [
     state.logOut,
@@ -33,20 +37,23 @@ const DashboardContent: React.FC = () => {
   const [isRechargeModalOpen, setIsRechargeModalOpen] = useState(false);
   const getInitialTab = (): TabKey => {
     const tabFromUrl = searchParams.get("tab") as TabKey;
-    if (
-      tabFromUrl &&
-      [
-        "overview",
-        "wallet"
-      ].includes(tabFromUrl)
-    ) {
+    if (tabFromUrl && [TabKey.OVERVIEW, TabKey.WALLET].includes(tabFromUrl)) {
       return tabFromUrl;
     }
-    return "overview";
+    return TabKey.OVERVIEW;
   };
 
   const [activeTab, setActiveTab] = useState<TabKey>(getInitialTab);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
+    React.useState(false);
 
+  const handleChangePassword = () => {
+    setIsChangePasswordModalOpen(true);
+  };
+
+  const handleChangePasswordClose = () => {
+    setIsChangePasswordModalOpen(false);
+  };
   useEffect(() => {
     if (!data) return;
     if (data.code === "1000001") {
@@ -55,15 +62,12 @@ const DashboardContent: React.FC = () => {
     }
   }, [data]);
 
-
-
   // If user is not logged in, redirect to login page
   useEffect(() => {
     if (!user_token) {
       window.location.href = "/";
     }
   }, [user_token]);
-
 
   const handleLogout = () => {
     // use global store logout method
@@ -78,24 +82,17 @@ const DashboardContent: React.FC = () => {
 
   const sidebarItems: SidebarItem[] = [
     {
-      key: "overview",
+      key: TabKey.OVERVIEW,
       icon: <Home className="w-5 h-5" />,
       label: "Dashboard",
       description: "Manage your integration and auth key",
     },
-
-    // {
-    //   key: "wallet",
-    //   icon: <Wallet className="w-5 h-5" />,
-    //   label: "My Wallet",
-    //   description: "Manage your balance and recharge history",
-    // },
   ];
 
   const handleTabNavigate = (tab: TabKey) => {
     setActiveTab(tab);
     // update url params
-    if (tab === "overview") {
+    if (tab === TabKey.OVERVIEW) {
       // when switch to dashboard, clear all query params, only keep base path
       router.push("/dashboard", { scroll: false });
     } else {
@@ -115,6 +112,17 @@ const DashboardContent: React.FC = () => {
           onTabNavigate={handleTabNavigate}
           onLogout={handleLogout}
           sidebarItems={sidebarItems}
+          bottomPanel={
+            <Button
+              variant="light"
+              color="default"
+              startContent={<Key className="w-4 h-4" />}
+              className="w-full justify-start mb-2"
+              onPress={handleChangePassword}
+            >
+              {t("Change Password")}
+            </Button>
+          }
           userProfilePanel={
             user && (
               <div className="mb-6 space-y-3">
@@ -142,7 +150,11 @@ const DashboardContent: React.FC = () => {
                     <div className="flex justify-between text-xs">
                       <div className="flex gap-2 items-center">
                         <Wallet size={16} />
-                        <span>{t("Balance: {{amount}}", { amount: formatCurrency(user?.wallet?.balance || 0) })}</span>
+                        <span>
+                          {t("Balance: {{amount}}", {
+                            amount: formatCurrency(user?.wallet?.balance || 0),
+                          })}
+                        </span>
                       </div>
 
                       <Button
@@ -156,7 +168,6 @@ const DashboardContent: React.FC = () => {
                     </div>
                   </CardBody>
                 </Card>
-
               </div>
             )
           }
@@ -164,8 +175,8 @@ const DashboardContent: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 h-screen overflow-y-auto">
-          {activeTab === "overview" && <DashboardOverview />}
-          {activeTab === "wallet" && (
+          {activeTab === TabKey.OVERVIEW && <DashboardOverview />}
+          {activeTab === TabKey.WALLET && (
             <WalletManagement onRecharge={() => setIsRechargeModalOpen(true)} />
           )}
         </div>
@@ -175,6 +186,11 @@ const DashboardContent: React.FC = () => {
       <RechargeModal
         isOpen={isRechargeModalOpen}
         onClose={() => setIsRechargeModalOpen(false)}
+      />
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={handleChangePasswordClose}
       />
     </div>
   );

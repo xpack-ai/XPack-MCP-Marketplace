@@ -11,9 +11,11 @@ import { usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
 
 // get redirect uri
 export const getGoogleRedirectUri = () => {
-  if (typeof window !== 'undefined') {
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const baseUrl = isDevelopment ? "http://localhost:3000" : window.location.origin;
+  if (typeof window !== "undefined") {
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const baseUrl = isDevelopment
+      ? "http://localhost:3000"
+      : window.location.origin;
     return `${baseUrl}/loginSuccess`;
   }
   return "";
@@ -21,7 +23,7 @@ export const getGoogleRedirectUri = () => {
 
 export const useLogin = () => {
   const [loading, setLoading] = useState(false);
-  const { googleAuthConfig } = usePlatformConfig();
+  const { loginConfig } = usePlatformConfig();
   const [user, setUserToken] = useSharedStore((state: any) => [
     state.user,
     state.setUserToken,
@@ -29,8 +31,6 @@ export const useLogin = () => {
   const [status, setStatus] = useState<"success" | "error">("success");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const router = useRouter();
-
-
 
   const login = () => {
     if (user) {
@@ -82,9 +82,13 @@ export const useLogin = () => {
 
   const googleLoginOrSignUp = () => {
     // check if google login is enabled and configured properly
-    if (!googleAuthConfig?.is_enabled || !googleAuthConfig?.client_id) {
+    if (!loginConfig?.google?.is_enabled || !loginConfig?.google?.client_id) {
       console.error("Google login is not enabled or not configured properly");
-      toast.error(i18n.t("Google login is not available. Please contact the administrator."));
+      toast.error(
+        i18n.t(
+          "Google login is not available. Please contact the administrator."
+        )
+      );
       return;
     }
 
@@ -94,7 +98,7 @@ export const useLogin = () => {
     form.setAttribute("action", oauth2Endpoint);
 
     const params: { [key: string]: string } = {
-      client_id: googleAuthConfig.client_id,
+      client_id: loginConfig.google.client_id,
       redirect_uri: getGoogleRedirectUri(),
       scope: "https://www.googleapis.com/auth/userinfo.email",
       state: new URLSearchParams({
@@ -118,7 +122,7 @@ export const useLogin = () => {
   const googleLoginRedirect = async () => {
     setLoading(true);
 
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       setLoading(false);
       return;
     }
@@ -180,17 +184,53 @@ export const useLogin = () => {
     }
   };
 
+  const emailPasswordLogin = async (data: {
+    user_email: string;
+    password: string;
+  }) => {
+    setLoading(true);
+
+    try {
+      const result = await fetchAPI("/api/auth/email/sign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      setLoading(false);
+
+      if (!result.success) {
+        setStatus("error");
+        toast.error(result.error_message || i18n.t("Login failed"));
+        return result;
+      }
+
+      const searchParams = new URLSearchParams(window.location.search);
+      afterLoginSuccess(searchParams, result.data);
+      toast.success(i18n.t("Login successful"));
+      return result;
+    } catch (error) {
+      setLoading(false);
+      setStatus("error");
+      console.error("Email password login error:", error);
+      toast.error(i18n.t("Login failed"));
+      return { success: false, error };
+    }
+  };
+
   return {
     loading,
     status,
     isOpen,
     onOpen,
     onClose,
-    googleAuthConfig,
     afterLoginSuccess,
     login,
     googleLoginOrSignUp,
     googleLoginRedirect,
     emailLoginOrSignUp,
+    emailPasswordLogin,
   };
 };

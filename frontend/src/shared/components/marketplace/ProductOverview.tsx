@@ -16,7 +16,7 @@ export const ProductOverview: React.FC<ProductOverviewProps> = ({
   const { t } = useTranslation();
 
   return (
-    <Card shadow="none">
+    <Card shadow="none" className="bg-transparent">
       <CardBody className="space-y-4">
         <div className="leading-relaxed prose prose-sm max-w-none">
           {product.long_description ? (

@@ -30,7 +30,7 @@
 
    ```env
    # Backend Service API URL Prefix
-   NEXT_PUBLIC_API_URL=http://127.0.0.1:8100
+   NEXT_PUBLIC_API_URL=http://127.0.0.1:8001
    ```
 
 3. **Start Development Server**

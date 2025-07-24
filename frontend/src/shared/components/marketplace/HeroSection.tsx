@@ -2,20 +2,23 @@ import React, { useState, useEffect, useRef } from "react";
 import { Input, Button } from "@nextui-org/react";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { _DefaultPlatformConfig, usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
+import {
+  _DefaultPlatformConfig,
+  usePlatformConfig,
+} from "@/shared/contexts/PlatformConfigContext";
 
 interface HeroSectionProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   onSearch?: () => void;
+  searchSuggestions?: string[];
 }
-
-
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   searchQuery,
   onSearchChange,
   onSearch,
+  searchSuggestions = [],
 }) => {
   const { platformConfig } = usePlatformConfig();
   const { t } = useTranslation();
@@ -24,22 +27,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
-  const searchSuggestions = [
-    t("get latest documentation for libraries"),
-    t("execute terminal commands safely"),
-    t("find latest scientific research papers"),
-    t("tools to enhance thinking and reasoning"),
-    t("find flight tickets and airbnb listings"),
-    t("automate web browser interactions"),
-    t("send messages and receive notifications")
-  ];
 
   useEffect(() => {
     if (isFocused || searchQuery) {
       return;
     }
 
-    const currentSuggestion = searchSuggestions[currentSuggestionIndex];
+    const currentSuggestion = t(searchSuggestions[currentSuggestionIndex]);
     let timeoutId: NodeJS.Timeout;
 
     if (isTyping) {
@@ -62,7 +56,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         }, 50);
       } else {
         // deleting completed, switch to next suggestion
-        setCurrentSuggestionIndex((prev) => (prev + 1) % searchSuggestions.length);
+        setCurrentSuggestionIndex(
+          (prev) => (prev + 1) % searchSuggestions.length
+        );
         setIsTyping(true);
       }
     }
@@ -71,7 +67,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   }, [animatedText, currentSuggestionIndex, isTyping, isFocused, searchQuery]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       onSearch?.();
     }
   };
@@ -84,10 +80,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     <div className="relative overflow-hidden mx-auto p-6 py-24 max-w-7xl">
       <div className="text-center mb-12">
         <h1 className="text-5xl lg:text-6xl font-bold mb-6 leading-tight text-primary">
-          {platformConfig.headline || t(_DefaultPlatformConfig.headline || "")}
+          {t(platformConfig.headline || _DefaultPlatformConfig.headline || "")}
         </h1>
         <p className="text-2xl font-medium max-w-3xl mx-auto leading-relaxed">
-          {platformConfig.subheadline || t(_DefaultPlatformConfig.subheadline || "")}
+          {t(
+            platformConfig.subheadline ||
+              _DefaultPlatformConfig.subheadline ||
+              ""
+          )}
         </p>
       </div>
 
@@ -96,7 +96,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <Input
           ref={inputRef}
           size="lg"
-          placeholder={isFocused || searchQuery ? "" : animatedText}
+          placeholder={
+            isFocused || searchQuery
+              ? ""
+              : searchSuggestions.length > 0
+                ? animatedText
+                : t("Search services...")
+          }
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           onFocus={() => setIsFocused(true)}

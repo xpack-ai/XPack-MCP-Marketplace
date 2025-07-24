@@ -12,15 +12,8 @@ const UserManagement: React.FC = () => {
   const { t } = useTranslation();
 
   // use custom hook to manage user data
-  const {
-    users,
-    loading,
-    searchQuery,
-    pagination,
-    handleDeleteUser,
-    setSearch,
-    setPage,
-  } = useUserManagement();
+  const { users, loading, pagination, handleDeleteUser, setPage } =
+    useUserManagement();
 
   // Modal states
   const [deleteModal, setDeleteModal] = useState({
@@ -57,15 +50,11 @@ const UserManagement: React.FC = () => {
   return (
     <DashboardDemoContent
       title={t("User Management")}
-      description={t("Manage registered users, view user information, and handle user operations")}
+      description={t(
+        "Manage registered users, view user information, and handle user operations"
+      )}
     >
       <div className="space-y-6 w-full">
-        {/* comming soon:Filters */}
-        {/* <UserFiltersBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearch}
-        /> */}
-
         <UserTable
           users={users}
           loading={loading}
@@ -80,9 +69,7 @@ const UserManagement: React.FC = () => {
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDelete}
         title={t("Delete User")}
-        description={t(
-          "Are you sure you want to delete this user? "
-        )}
+        description={t("Are you sure you want to delete this user? ")}
       />
     </DashboardDemoContent>
   );

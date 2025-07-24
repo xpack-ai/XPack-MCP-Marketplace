@@ -1,16 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { PlatformConfigForm } from '@/components/system-setting/PlatformConfigForm';
-import { AdminConfigForm } from '@/components/system-setting/AdminConfigForm';
-import { EmailConfigForm } from '@/components/system-setting/EmailConfigForm';
-import { GoogleAuthConfigForm } from '@/components/system-setting/GoogleAuthConfigForm';
-import { useSystemConfigManagement } from '@/hooks/useSystemConfigManagement';
-import { usePlatformConfig } from '@/shared/contexts/PlatformConfigContext';
-import i18n from '@/shared/lib/i18n';
+import React, { useState } from "react";
+import { PlatformConfigForm } from "@/components/system-setting/PlatformConfigForm";
+import { AdminConfigForm } from "@/components/system-setting/AdminConfigForm";
+import { EmailConfigForm } from "@/components/system-setting/EmailConfigForm";
+import { useSystemConfigManagement } from "@/hooks/useSystemConfigManagement";
+import { usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
+import { Theme } from "@/shared/types/system";
+import i18n from "@/shared/lib/i18n";
 
 export const SystemSettingsContent: React.FC = () => {
   const { updateClientConfig } = usePlatformConfig();
+  const [isAboutLoading, setIsAboutLoading] = useState(false);
 
   const {
     // platform config
@@ -28,11 +29,8 @@ export const SystemSettingsContent: React.FC = () => {
     emailLoading,
     saveEmailConfig,
 
-    // google auth config
-    googleAuthConfig,
-    googleAuthLoading,
-    saveGoogleAuthConfig,
-
+    // image upload
+    uploadImage,
   } = useSystemConfigManagement();
 
   // save admin config
@@ -45,22 +43,10 @@ export const SystemSettingsContent: React.FC = () => {
     await saveEmailConfig(config);
   };
 
-  // save google auth config
-  const handleSaveGoogleAuthConfig = async (config: typeof googleAuthConfig) => {
-    const result = await saveGoogleAuthConfig(config);
-    if (!result) return
-    updateClientConfig({
-      platform: platformConfig,
-      login: {
-        google: config,
-      },
-    });
-  };
-
   // save platform config
   const handleSavePlatformConfig = async (config: typeof platformConfig) => {
     const result = await savePlatformConfig(config);
-    if (!result) return
+    if (!result) return;
     updateClientConfig({
       platform: config,
     });
@@ -69,6 +55,27 @@ export const SystemSettingsContent: React.FC = () => {
     }
   };
 
+  // handle theme change
+  const handleThemeChange = async (theme: Theme) => {
+    const updatedConfig = { ...platformConfig, theme };
+    const result = await savePlatformConfig(updatedConfig, "theme");
+    if (!result) return;
+    updateClientConfig({
+      platform: updatedConfig,
+    });
+  };
+
+  // handle about save
+  const handleAboutSave = async (aboutContent: string) => {
+    setIsAboutLoading(true);
+    const updatedConfig = { ...platformConfig, about_page: aboutContent };
+    const result = await savePlatformConfig(updatedConfig, "about");
+    setIsAboutLoading(false);
+    if (!result) return;
+    updateClientConfig({
+      platform: updatedConfig,
+    });
+  };
 
   return (
     <div className="space-y-6 w-full">
@@ -76,7 +83,11 @@ export const SystemSettingsContent: React.FC = () => {
       <PlatformConfigForm
         config={platformConfig}
         onSave={handleSavePlatformConfig}
+        onThemeChange={handleThemeChange}
+        onAboutSave={handleAboutSave}
         isLoading={platformLoading}
+        isAboutLoading={isAboutLoading}
+        onImageUpload={uploadImage}
       />
 
       {/* admin config */}
@@ -91,13 +102,6 @@ export const SystemSettingsContent: React.FC = () => {
         config={emailConfig}
         onSave={handleSaveEmailConfig}
         isLoading={emailLoading}
-      />
-
-      {/* google auth config */}
-      <GoogleAuthConfigForm
-        config={googleAuthConfig}
-        onSave={handleSaveGoogleAuthConfig}
-        isLoading={googleAuthLoading}
       />
     </div>
   );

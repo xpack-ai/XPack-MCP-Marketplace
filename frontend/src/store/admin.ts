@@ -27,6 +27,7 @@ export type AdminStore = {
   // Admin operations
   adminLogOut: () => void;
   adminLogin: (username: string, password: string) => Promise<ApiResponse>;
+  getAdminUser: () => Promise<ApiResponse>;
 };
 
 const fn: StateCreator<AdminStore, []> = (set, get) => {
@@ -114,6 +115,14 @@ const fn: StateCreator<AdminStore, []> = (set, get) => {
           data: null,
         };
       }
+    },
+    getAdminUser: async () => {
+      const { setAdmin } = get();
+      const res = await fetchAdminAPI("/api/user/info");
+      if (res.success) {
+        setAdmin(res.data);
+      }
+      return res;
     },
   };
 };

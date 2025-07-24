@@ -57,7 +57,7 @@ Create `.env.local` file in the project root and configure your backend service 
 
 ```bash
 # Backend Service API URL Prefix
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8100
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8001
 
 ```
 

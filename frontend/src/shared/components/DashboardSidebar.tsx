@@ -2,23 +2,18 @@
 
 import React from "react";
 import { useTranslation } from "@/shared/lib/useTranslation";
-import {
-  Button,
-  Divider,
-  Link,
-} from "@nextui-org/react";
-import {
-  LogOut,
-} from "lucide-react";
+import { Button, Divider, Link } from "@nextui-org/react";
+import { LogOut } from "lucide-react";
 import { DashboardSidebarProps } from "@/shared/types/dashboard";
 import { DynamicLogo } from "@/shared/components/DynamicLogo";
-
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   activeTab,
   onTabNavigate,
   onLogout,
-  sidebarItems, userProfilePanel
+  bottomPanel,
+  sidebarItems,
+  userProfilePanel,
 }) => {
   const { t } = useTranslation();
 
@@ -29,10 +24,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         <div className="mb-8 flex flex-col gap-2">
           <div className="flex justify-between items-center gap-2">
             <Link href={process.env.NEXT_PUBLIC_DOMAIN || "/"}>
-              <DynamicLogo
-                alt="Platform Logo"
-                className="h-[20px]"
-              />
+              <DynamicLogo alt="Platform Logo" className="h-[20px]" />
             </Link>
           </div>
           <p className="text-default-600 text-sm">
@@ -64,16 +56,20 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         <Divider className="my-6" />
 
-        {/* Logout */}
-        <Button
-          variant="light"
-          color="danger"
-          startContent={<LogOut className="w-4 h-4" />}
-          className="w-full justify-start"
-          onPress={onLogout}
-        >
-          {t("Log Out")}
-        </Button>
+        <div className="space-y-2">
+          {bottomPanel}
+
+          {/* Logout */}
+          <Button
+            variant="light"
+            color="danger"
+            startContent={<LogOut className="w-4 h-4" />}
+            className="w-full justify-start"
+            onPress={onLogout}
+          >
+            {t("Log Out")}
+          </Button>
+        </div>
       </div>
     </div>
   );

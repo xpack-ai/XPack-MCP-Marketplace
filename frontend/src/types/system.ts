@@ -1,15 +1,17 @@
 // 系统设置相关类型定义
 
-import { GoogleAuthConfig, PlatformConfig } from "@/shared/types/system";
+import {
+  GoogleAuthConfig,
+  PlatformConfig,
+  LoginConfig,
+} from "@/shared/types/system";
 
 // API return system config data structure
 export interface SystemConfigApiData {
   platform: PlatformConfig;
   account: AdminConfig;
   email: EmailConfig;
-  login: {
-    google: GoogleAuthConfig;
-  };
+  login: LoginConfig;
 }
 // admin config
 export interface AdminConfig {

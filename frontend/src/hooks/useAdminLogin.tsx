@@ -44,7 +44,7 @@ export const useAdminLogin = () => {
     // call store logout method
     adminLogOut();
     // redirect to login page
-    router.push("/admin-signin");
+    router.push("/admin");
     toast.success(i18n.t("Logged out successfully"));
   };
 

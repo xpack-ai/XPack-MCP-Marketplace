@@ -59,7 +59,7 @@ pnpm dev
 
 ```bash
 # 后端服务 API URL 前缀
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8100
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8001
 
 ```
 
