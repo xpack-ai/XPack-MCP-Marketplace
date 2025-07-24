@@ -36,10 +36,11 @@ def get_user(request: Request, user_wallet: UserWalletService = Depends(get_user
         user_response.user_email = user.email
         user_response.created_at = getattr(user, "created_at", None)
         user_response.wallet = user_wallet_resp
-        print("register_type",user.register_type)
-        if user.register_type:
-            user_response.register_type = user.register_type.value
-        
+        user_response.register_type = user.register_type
+        # print("register_type",user.register_type)
+        # if user.register_type:
+        #     user_response.register_type = user.register_type.value
+
         return ResponseUtils.success(user_response)
     return ResponseUtils.error(message="not found user", code=500)
 
