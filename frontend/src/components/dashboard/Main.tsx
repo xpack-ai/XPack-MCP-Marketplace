@@ -140,9 +140,7 @@ const DashboardContent: React.FC = () => {
                           {user.user_name || "Jack Liu"}
                         </p>
                         <p className="text-tiny text-default-600">
-                          {user.user_name
-                            ? `${user.user_name.toLowerCase()}@gmail.com`
-                            : "xpack@gmail.com"}
+                          {user.user_email || "dev@xpack.ai"}
                         </p>
                       </div>
                     </div>
