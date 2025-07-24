@@ -4,7 +4,7 @@ export const SOURCE_TYPE = SourceType.SSG;
 
 // Define base URLs for API requests
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
 
 // Helper function for constructing API URLs
 export const getApiUrl = (endpoint: string) => {

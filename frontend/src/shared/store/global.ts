@@ -10,6 +10,7 @@ import {
 import { fetchAPI } from "../rpc/common-function";
 import { shallow } from "zustand/shallow";
 import { useSharedStore } from "./share";
+import { md5Encrypt } from "@/shared/utils/crypto";
 
 export const StorageGlobalName = "XPack_Global";
 
@@ -22,6 +23,7 @@ export type GlobalStore = {
   getUser: () => Promise<ApiResponse>;
   useGetUser: () => SWRResponse<any, any>;
   logOut: () => void;
+  changePassword: (password: string) => Promise<ApiResponse>;
 };
 
 export const useGlobalStore = createWithEqualityFn<GlobalStore>()(
@@ -98,6 +100,13 @@ export const useGlobalStore = createWithEqualityFn<GlobalStore>()(
             } catch (e) {
               console.error("log out error", e);
             }
+          },
+          changePassword: async (password: string) => {
+            const res = await fetchAPI("/api/user/password", {
+              method: "PUT",
+              body: { password: md5Encrypt(password) } as unknown as BodyInit,
+            });
+            return res;
           },
         })
       )

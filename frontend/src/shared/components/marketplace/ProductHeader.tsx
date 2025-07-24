@@ -2,11 +2,7 @@
 
 import React from "react";
 import { useTranslation } from "@/shared/lib/useTranslation";
-import {
-  Card,
-  CardBody,
-  Chip,
-} from "@nextui-org/react";
+import { Card, CardBody, Chip } from "@nextui-org/react";
 import { ChargeType, ServiceData } from "@/shared/types/marketplace";
 import Link from "next/link";
 import { Price } from "./Price";
@@ -15,7 +11,7 @@ interface ProductHeaderProps {
   product: ServiceData;
   breadcrumbs?: {
     link: string;
-    name: string
+    name: string;
   }[];
 }
 
@@ -48,9 +44,7 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({
         {/* Header with title and price */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">
-              {product.name}
-            </h1>
+            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
 
             {/* Tags */}
             {product.tags && product.tags.length > 0 && (
@@ -73,15 +67,15 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({
               {product.short_description || t("No description available")}
             </p>
           </div>
-
         </div>
 
         {/* Price section */}
-        <div className="flex gap-2 items-center">
-          <b className="text-xs">{t("Price")}:</b>
-          <Price price={product.price} charge_type={product.charge_type || ChargeType.Free} />
-
-        </div>
+        {product.charge_type && (
+          <div className="flex gap-2 items-center">
+            <b className="text-xs">{t("Price")}:</b>
+            <Price price={product.price} charge_type={product.charge_type} />
+          </div>
+        )}
       </CardBody>
     </Card>
   );

@@ -1,1 +1,13 @@
-{}
+{
+  "**XPack** is a lightweight, open-source marketplace framework for MCP (Model Context Protocol) services.": "**XPack** 是一个轻量级的开源 MCP（模型上下文协议）服务市场框架。",
+  "It allows you to transform any OpenAPI into a monetizable MCP service and build your own API store in just minutes.": "它允许您将任何 OpenAPI 转换为可盈利的 MCP 服务，并在几分钟内构建您自己的 API 商店。",
+  "✨ With XPack, you can:": "✨ 使用 XPack，您可以：",
+  "- ✅ **One-click OpenAPI → MCP service config**": "- ✅ **一键 OpenAPI → MCP 服务配置**",
+  "- 🧾 **SEO-friendly homepage + mcp service page**": "- 🧾 **SEO 友好的主页 + MCP 服务页面**",
+  "- 💳 **Built-in billing (per-call)**": "- 💳 **内置计费（按调用计费）**",
+  "- 👥 **User account management**": "- 👥 **用户账户管理**",
+  "- 🛠 **Support Stripe Payment**": "- 🛠 **支持 Stripe 支付**",
+  "- 🔐 **Support Email & Google OAuth Sign in**": "- 🔐 **支持邮箱和 Google OAuth 登录**",
+  "Everything is open-source and licensed under **Apache 2.0** — ready for commercial use.": "一切都是开源的，采用 **Apache 2.0** 许可证 — 可用于商业用途。",
+  "About Us": "关于我们"
+}

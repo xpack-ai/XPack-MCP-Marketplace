@@ -1,1 +1,13 @@
-{}
+{
+  "**XPack** is a lightweight, open-source marketplace framework for MCP (Model Context Protocol) services.": "**XPack** is a lightweight, open-source marketplace framework for MCP (Model Context Protocol) services.",
+  "It allows you to transform any OpenAPI into a monetizable MCP service and build your own API store in just minutes.": "It allows you to transform any OpenAPI into a monetizable MCP service and build your own API store in just minutes.",
+  "✨ With XPack, you can:": "✨ With XPack, you can:",
+  "- ✅ **One-click OpenAPI → MCP service config**": "- ✅ **One-click OpenAPI → MCP service config**",
+  "- 🧾 **SEO-friendly homepage + mcp service page**": "- 🧾 **SEO-friendly homepage + mcp service page**",
+  "- 💳 **Built-in billing (per-call)**": "- 💳 **Built-in billing (per-call)**",
+  "- 👥 **User account management**": "- 👥 **User account management**",
+  "- 🛠 **Support Stripe Payment**": "- 🛠 **Support Stripe Payment**",
+  "- 🔐 **Support Email & Google OAuth Sign in**": "- 🔐 **Support Email & Google OAuth Sign in**",
+  "Everything is open-source and licensed under **Apache 2.0** — ready for commercial use.": "Everything is open-source and licensed under **Apache 2.0** — ready for commercial use.",
+  "About Us": "About Us"
+}

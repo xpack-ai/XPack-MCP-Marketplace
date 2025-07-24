@@ -9,12 +9,11 @@ import { PlatformConfigResponse } from "@/shared/types/system";
 
 export default function ClientRootProviders({
   children,
-  initConfig
+  initConfig,
 }: {
   children: React.ReactNode;
-  initConfig: PlatformConfigResponse;
+  initConfig?: PlatformConfigResponse;
 }) {
-
   return (
     <ClientI18nProvider>
       <PlatformConfigProvider initConfig={initConfig}>

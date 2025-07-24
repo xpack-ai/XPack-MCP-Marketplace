@@ -15,21 +15,22 @@ import { useAuth } from "@/shared/lib/useAuth";
 import { ArrowRightIcon } from "lucide-react";
 import { DynamicLogo } from "@/shared/components/DynamicLogo";
 import Link from "next/link";
+export type NavigationItem = {
+  label: string;
+  href: string;
+  target?: string;
+};
 
 interface NavigationProps {
-  items?: {
-    label: string;
-    href: string;
-  }[];
+  items?: NavigationItem[];
+  langNode?: React.ReactNode;
 }
 
 // Client-side wrapper for interactive functionality
-function NavigationClient({ items = [] }: NavigationProps) {
+function NavigationClient({ items = [], langNode }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useTranslation();
   const { handleLogin } = useAuth();
-
-
 
   return (
     <>
@@ -53,10 +54,7 @@ function NavigationClient({ items = [] }: NavigationProps) {
           <div className="flex  justify-start bg-transparent w-max">
             {/* Logo using dynamic platform config */}
             <Link href="/">
-              <DynamicLogo
-                alt="Platform Logo"
-                className="h-[20px]"
-              />
+              <DynamicLogo alt="Platform Logo" className="h-[20px]" />
             </Link>
             <Link
               href="https://xpack.ai/techblog"
@@ -72,6 +70,8 @@ function NavigationClient({ items = [] }: NavigationProps) {
                   color="foreground"
                   href={item.href}
                   className="font-medium text-foreground-600 hover:text-foreground transition-colors px-2 py-1"
+                  target={item?.target || "_self"}
+                  prefetch={!item.target}
                 >
                   {t(item.label)}
                 </Link>
@@ -82,7 +82,7 @@ function NavigationClient({ items = [] }: NavigationProps) {
 
         {/* Right Side Actions */}
         <NavbarContent justify="end" className="items-center gap-2 sm:gap-4">
-
+          {langNode}
 
           {/* Desktop Auth Button */}
           <div className="hidden sm:block">
@@ -118,6 +118,8 @@ function NavigationClient({ items = [] }: NavigationProps) {
                 color="foreground"
                 href={item.href}
                 className="w-full py-2 font-medium text-sm"
+                target={item?.target || "_self"}
+                prefetch={!item.target}
               >
                 {t(item.label)}
               </Link>

@@ -35,8 +35,6 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
           <p className="text-xs text-gray-600 mb-4 line-clamp-2 leading-relaxed">
             {service.short_description || t("No description available")}
           </p>
-
-
         </CardBody>
         {/* Footer with tools count */}
         <CardFooter>
@@ -50,7 +48,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
               {t("{{count}} Tools", { count: service.tools.length })}
             </Chip>
             <div className="flex flex-col gap-1">
-              <Price price={service.price} charge_type={service.charge_type || ChargeType.Free} />
+              <Price price={service.price} charge_type={service.charge_type} />
             </div>
           </div>
         </CardFooter>

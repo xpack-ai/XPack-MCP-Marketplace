@@ -1,6 +1,6 @@
 import { fetchAdminAPI } from "@/rpc/admin-api";
 import i18n from "@/shared/lib/i18n";
-import { GoogleAuthConfig, PlatformConfig } from "@/shared/types/system";
+import { PlatformConfig, LoginConfig } from "@/shared/types/system";
 import { AdminConfig, EmailConfig, SystemConfigApiData } from "@/types/system";
 import toast from "react-hot-toast";
 
@@ -23,14 +23,15 @@ export class SystemConfigService {
   }
 
   // update system config
-  async updateSystemConfig(config: {
-    platform?: PlatformConfig;
-    account?: AdminConfig;
-    email?: EmailConfig;
-    login?: {
-      google?: GoogleAuthConfig;
-    };
-  }): Promise<boolean> {
+  async updateSystemConfig(
+    config: {
+      platform?: PlatformConfig;
+      account?: AdminConfig;
+      email?: EmailConfig;
+      login?: LoginConfig;
+    },
+    key?: "theme" | "about"
+  ): Promise<boolean> {
     const response = await fetchAdminAPI("/api/sysconfig/info", {
       method: "PUT",
       body: config as unknown as BodyInit,
@@ -42,8 +43,44 @@ export class SystemConfigService {
       );
       return false;
     }
-    toast.success(i18n.t("System config updated successfully"));
+    switch (key) {
+      case "theme":
+        toast.success(i18n.t("Theme changed successfully"));
+        break;
+      case "about":
+        toast.success(i18n.t("About page saved successfully"));
+        break;
+      default: {
+        toast.success(i18n.t("System config updated successfully"));
+        break;
+      }
+    }
     return true;
+  }
+
+  // upload image
+  async uploadImage(file: File, sha256?: string): Promise<string> {
+    const formData = new FormData();
+    formData.append("img", file);
+
+    // add sha256 parameter for image uniqueness verification
+    if (sha256) {
+      formData.append("sha256", sha256);
+    }
+
+    const response = await fetchAdminAPI<{ file_path: string }>(
+      "/api/upload/image",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!response.success) {
+      toast.error(response.error_message || i18n.t("Failed to upload image"));
+      throw new Error(response.error_message || "Failed to upload image");
+    }
+    return response.data.file_path;
   }
 }
 

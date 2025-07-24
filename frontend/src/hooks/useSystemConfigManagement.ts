@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { GoogleAuthConfig, PlatformConfig } from "@/shared/types/system";
+import { PlatformConfig, LoginConfig, EmailMode } from "@/shared/types/system";
 import { systemConfigService } from "@/services/systemConfigService";
 import { AdminConfig, EmailConfig } from "@/types/system";
 import { md5Encrypt } from "@/shared/utils/crypto";
@@ -34,14 +34,20 @@ export const useSystemConfigManagement = () => {
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
-  // google auth config
-  const [googleAuthConfig, setGoogleAuthConfig] = useState<GoogleAuthConfig>({
-    client_id: "",
-    client_secret: "",
-    is_enabled: false,
+  // login config
+  const [loginConfig, setLoginConfig] = useState<LoginConfig>({
+    google: {
+      client_id: "",
+      client_secret: "",
+      is_enabled: false,
+    },
+    email: {
+      is_enabled: true, // 默认启用邮箱登录
+      mode: EmailMode.PASSWORD, // 默认使用密码模式
+    },
   });
-  const [googleAuthLoading, setGoogleAuthLoading] = useState(false);
-  const [googleAuthError, setGoogleAuthError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   // global loading
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +69,17 @@ export const useSystemConfigManagement = () => {
           smtp_sender: "",
         }
       );
-      setGoogleAuthConfig(response.login?.google);
+      setLoginConfig({
+        google: response.login?.google || {
+          client_id: "",
+          client_secret: "",
+          is_enabled: false,
+        },
+        email: response.login?.email || {
+          is_enabled: true,
+          mode: EmailMode.PASSWORD,
+        },
+      });
     } catch (error) {
       console.error("Failed to load configurations:", error);
     } finally {
@@ -72,25 +88,31 @@ export const useSystemConfigManagement = () => {
   }, []);
 
   // save platform config
-  const savePlatformConfig = useCallback(async (config: PlatformConfig) => {
-    setPlatformLoading(true);
-    setPlatformError(null);
-    const result = await systemConfigService.updateSystemConfig({
-      platform: config,
-    });
-    if (result) {
-      setPlatformConfig(config);
-      // 重新验证平台配置缓存
-      try {
-        await revalidatePlatformConfig();
-        console.info("Platform config cache revalidated successfully");
-      } catch (error) {
-        console.error("Failed to revalidate platform config cache:", error);
+  const savePlatformConfig = useCallback(
+    async (config: PlatformConfig, key?: "theme" | "about") => {
+      if (!key) setPlatformLoading(true);
+      setPlatformError(null);
+      const result = await systemConfigService.updateSystemConfig(
+        {
+          platform: config,
+        },
+        key
+      );
+      if (result) {
+        setPlatformConfig(config);
+        // 重新验证平台配置缓存
+        try {
+          await revalidatePlatformConfig();
+          console.info("Platform config cache revalidated successfully");
+        } catch (error) {
+          console.error("Failed to revalidate platform config cache:", error);
+        }
       }
-    }
-    setPlatformLoading(false);
-    return result;
-  }, []);
+      setPlatformLoading(false);
+      return result;
+    },
+    []
+  );
 
   // save admin config
   const saveAdminConfig = useCallback(async (config: AdminConfig) => {
@@ -123,20 +145,18 @@ export const useSystemConfigManagement = () => {
     return result;
   }, []);
 
-  // save google auth config
-  const saveGoogleAuthConfig = useCallback(async (config: GoogleAuthConfig) => {
-    setGoogleAuthLoading(true);
-    setGoogleAuthError(null);
+  // save login config
+  const saveLoginConfig = useCallback(async (config: LoginConfig) => {
+    setLoginLoading(true);
+    setLoginError(null);
     const result = await systemConfigService.updateSystemConfig({
-      login: {
-        google: config,
-      },
+      login: config,
     });
     if (result) {
-      setGoogleAuthConfig(config);
+      setLoginConfig(config);
       await revalidatePlatformConfig();
     }
-    setGoogleAuthLoading(false);
+    setLoginLoading(false);
     return result;
   }, []);
 
@@ -144,12 +164,25 @@ export const useSystemConfigManagement = () => {
   const clearPlatformError = useCallback(() => setPlatformError(null), []);
   const clearAdminError = useCallback(() => setAdminError(null), []);
   const clearEmailError = useCallback(() => setEmailError(null), []);
-  const clearGoogleAuthError = useCallback(() => setGoogleAuthError(null), []);
+  const clearLoginError = useCallback(() => setLoginError(null), []);
 
   // load configs on init
   useEffect(() => {
     loadConfigurations();
   }, [loadConfigurations]);
+
+  // upload image
+  const uploadImage = useCallback(
+    async (file: File, sha256?: string): Promise<string> => {
+      try {
+        return await systemConfigService.uploadImage(file, sha256);
+      } catch (error) {
+        console.error("Failed to upload image:", error);
+        throw error;
+      }
+    },
+    []
+  );
 
   return {
     // platform config
@@ -176,13 +209,16 @@ export const useSystemConfigManagement = () => {
     saveEmailConfig,
     clearEmailError,
 
-    // google auth config
-    googleAuthConfig,
-    setGoogleAuthConfig,
-    googleAuthLoading,
-    googleAuthError,
-    saveGoogleAuthConfig,
-    clearGoogleAuthError,
+    // login config
+    loginConfig,
+    setLoginConfig,
+    loginLoading,
+    loginError,
+    saveLoginConfig,
+    clearLoginError,
+
+    // image upload
+    uploadImage,
 
     // global operations
     isLoading,
