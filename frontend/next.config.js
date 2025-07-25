@@ -29,6 +29,10 @@ const nextConfig = {
         source: "/uploads/:path*",
         destination: `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001"}/uploads/:path*`,
       },
+      {
+        source: "/mcp/:path*",
+        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001"}/mcp/:path*`,
+      },
     ];
   },
 
