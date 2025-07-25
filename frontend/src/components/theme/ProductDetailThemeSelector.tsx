@@ -30,7 +30,7 @@ export const ProductDetailThemeSelector: React.FC<
   const [mcpName, setMcpName] = useState<string>("");
   useEffect(() => {
     if (url || !product.slug_name) return;
-    setUrl(`${window.location.origin}/mcp/${product.slug_name}`);
+    setUrl(`${window.location.protocol}//${window.location.hostname}:8002/mcp/${product.slug_name}`);
   }, [product.slug_name]);
   function sanitizeMCPServerName(rawName: string | undefined): string {
     if (!rawName) return "xpack-mcp-service";
