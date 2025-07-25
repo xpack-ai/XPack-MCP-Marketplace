@@ -21,7 +21,7 @@ interface DetailProps {
     name: string;
   }[];
   url?: string;
-
+  mcpName?: string;
   // navigation items
   navItems?: NavigationItem[];
 }
@@ -30,6 +30,7 @@ export const Detail: React.FC<DetailProps> = ({
   product,
   breadcrumbs,
   url,
+  mcpName,
   navItems = [],
 }) => {
   const { t } = useTranslation();
@@ -220,7 +221,7 @@ export const Detail: React.FC<DetailProps> = ({
                         <code className="text-gray-300 whitespace-pre-wrap">
                           {`{
   "mcpServers": {
-    "xpack-mcp-market": {
+    "${mcpName || "xpack-mcp-market"}": {
       "type": "sse",
       "autoApprove":"all",
       "url": "${url}?apikey=`}

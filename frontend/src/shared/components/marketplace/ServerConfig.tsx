@@ -10,17 +10,20 @@ import { usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
 
 interface ServerConfigProps {
   product: ServiceData;
+  mcpName?: string;
 }
 
-export const ServerConfig: React.FC<ServerConfigProps> = ({ product }) => {
+export const ServerConfig: React.FC<ServerConfigProps> = ({ product, mcpName }) => {
+
   const { t } = useTranslation();
   const { handleLogin } = useAuth();
   const { platformConfig } = usePlatformConfig();
   const [url, setUrl] = useState<string>(process.env.NEXT_PUBLIC_MCP_URL || "");
   useEffect(() => {
-    if (url || !product.slug_name) return;
+    if (url || !product.slug_name) return
     setUrl(`${window.location.origin}/mcp/${product.slug_name}`);
   }, [product.slug_name]);
+
 
   return (
     <div className="min-w-[400px] w-[40%] max-w-100 flex-shrink-0 mt-12">
@@ -42,7 +45,7 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({ product }) => {
             <code className="text-gray-300 whitespace-pre-wrap">
               {`{
   "mcpServers": {
-    "xpack-mcp-market": {
+    "${mcpName || "xpack-mcp-market"}": {
       "type": "sse",
       "autoApprove":"all",
       "url": "${url}?apikey=`}
