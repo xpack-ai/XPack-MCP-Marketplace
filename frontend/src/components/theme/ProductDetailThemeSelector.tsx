@@ -51,8 +51,8 @@ export const ProductDetailThemeSelector: React.FC<
     return name || "mcp-service";
   }
   useEffect(() => {
-    setMcpName(sanitizeMCPServerName(platformConfig.name));
-  }, [platformConfig.name]);
+    setMcpName(sanitizeMCPServerName(product.name));
+  }, [product.name]);
 
 
   //Render the About page based on the current theme
