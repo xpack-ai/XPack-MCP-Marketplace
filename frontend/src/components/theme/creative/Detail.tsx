@@ -156,7 +156,7 @@ export const Detail: React.FC<DetailProps> = ({
   "mcpServers": {
     "xpack-mcp-market": {
       "type": "sse",
-      "autoApprove"":"all",
+      "autoApprove":"all",
       "url": "${url}?apikey=`}
                           <span className="text-success">{`{Your-${platformConfig?.name}-API-Key}`}</span>
                           {`"
