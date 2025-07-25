@@ -345,14 +345,14 @@ class McpManagerService:
                 tool_api.description = api.description or api.summary
                 tool_api.path = api.path
                 tool_api.method = HttpMethod(api.method)
-                tool_api.header_parameters = str(api.header_parameters) if api.header_parameters else ""
-                tool_api.query_parameters = str(api.query_parameters) if api.query_parameters else ""
-                tool_api.path_parameters = str(api.path_parameters) if api.path_parameters else ""
-                tool_api.request_body_schema = str(api.request_body_schema) if api.request_body_schema else ""
+                tool_api.header_parameters = json.dumps(api.header_parameters) if api.header_parameters else ""
+                tool_api.query_parameters = json.dumps(api.query_parameters) if api.query_parameters else ""
+                tool_api.path_parameters = json.dumps(api.path_parameters) if api.path_parameters else ""
+                tool_api.request_body_schema = json.dumps(api.request_body_schema) if api.request_body_schema else ""
                 tool_api.response_schema = json.dumps(api.response_schema) if api.response_schema else ""
-                tool_api.response_examples = str(api.response_examples) if api.response_examples else ""
-                tool_api.response_headers = str(api.response_headers) if api.response_headers else ""
-                tool_api.operation_examples = str(api.operation_examples) if api.operation_examples else ""
+                tool_api.response_examples = json.dumps(api.response_examples) if api.response_examples else ""
+                tool_api.response_headers = json.dumps(api.response_headers) if api.response_headers else ""
+                tool_api.operation_examples = json.dumps(api.operation_examples) if api.operation_examples else ""
                 tool_api.enabled = 1  # Default enabled
                 tool_api.is_deleted = 0
 
@@ -418,14 +418,14 @@ class McpManagerService:
                 temp_api.description = api.description or api.summary or ""
                 temp_api.path = api.path
                 temp_api.method = TempHttpMethod(api.method.upper())
-                temp_api.header_parameters = str(api.header_parameters) if api.header_parameters else ""
-                temp_api.query_parameters = str(api.query_parameters) if api.query_parameters else ""
-                temp_api.path_parameters = str(api.path_parameters) if api.path_parameters else ""
-                temp_api.request_body_schema = str(api.request_body_schema) if api.request_body_schema else ""
-                temp_api.response_schema = str(api.response_schema) if api.response_schema else ""
-                temp_api.response_examples = str(api.response_examples) if api.response_examples else ""
-                temp_api.response_headers = str(api.response_headers) if api.response_headers else ""
-                temp_api.operation_examples = str(api.operation_examples) if api.operation_examples else ""
+                temp_api.header_parameters = json.dumps(api.header_parameters) if api.header_parameters else ""
+                temp_api.query_parameters = json.dumps(api.query_parameters) if api.query_parameters else ""
+                temp_api.path_parameters = json.dumps(api.path_parameters) if api.path_parameters else ""
+                temp_api.request_body_schema = json.dumps(api.request_body_schema) if api.request_body_schema else ""
+                temp_api.response_schema = json.dumps(api.response_schema) if api.response_schema else ""
+                temp_api.response_examples = json.dumps(api.response_examples) if api.response_examples else ""
+                temp_api.response_headers = json.dumps(api.response_headers) if api.response_headers else ""
+                temp_api.operation_examples = json.dumps(api.operation_examples) if api.operation_examples else ""
                 temp_api.enabled = 0  # Default disabled, requires admin confirmation
                 temp_api.is_deleted = 0
 
