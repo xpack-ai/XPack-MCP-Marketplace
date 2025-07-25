@@ -13,16 +13,14 @@ interface ServerConfigProps {
 }
 
 export const ServerConfig: React.FC<ServerConfigProps> = ({ product }) => {
-
   const { t } = useTranslation();
   const { handleLogin } = useAuth();
   const { platformConfig } = usePlatformConfig();
   const [url, setUrl] = useState<string>(process.env.NEXT_PUBLIC_MCP_URL || "");
   useEffect(() => {
-    if (url || !product.slug_name) return
+    if (url || !product.slug_name) return;
     setUrl(`${window.location.origin}/mcp/${product.slug_name}`);
   }, [product.slug_name]);
-
 
   return (
     <div className="min-w-[400px] w-[40%] max-w-100 flex-shrink-0 mt-12">
@@ -46,7 +44,7 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({ product }) => {
   "mcpServers": {
     "xpack-mcp-market": {
       "type": "sse",
-      "autoApprove"":"all",
+      "autoApprove":"all",
       "url": "${url}?apikey=`}
               <span className="text-success">{`{Your-${platformConfig?.name}-API-Key}`}</span>
               {`"
