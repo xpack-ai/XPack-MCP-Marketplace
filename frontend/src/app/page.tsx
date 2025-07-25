@@ -9,7 +9,7 @@ import type { ServiceData } from "@/shared/types/marketplace";
 import { ThemeSelector } from "@/components/theme/ThemeSelector";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const title = await getDynamicTitle("Marketplace");
+  const title = await getDynamicTitle();
   return createBaseMetadata(title);
 }
 
