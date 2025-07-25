@@ -2,6 +2,7 @@
 HTTP client utility - Build and handle HTTP requests
 """
 import json
+import ast
 from typing import Dict, Any, Optional
 from services.common.logging_config import get_logger
 
@@ -10,6 +11,67 @@ logger = get_logger(__name__)
 
 class HttpRequestBuilder:
     """HTTP request builder"""
+    
+    def _safe_parse_params(self, params_str: str, param_type: str) -> list:
+        """
+        Safely parse parameter string that might be in JSON or Python dict format
+        
+        Args:
+            params_str: Parameter string to parse
+            param_type: Type of parameters (e.g., 'query', 'path', 'body')
+            
+        Returns:
+            list: Parsed parameters or empty list if parsing fails
+        """
+        if not params_str or params_str.strip() == '':
+            return []
+        
+        # Remove any surrounding whitespace
+        params_str = params_str.strip()
+        
+        # Strategy 1: Standard JSON format (with double quotes)
+        try:
+            result = json.loads(params_str)
+            if isinstance(result, list):
+                return result
+            elif isinstance(result, dict):
+                return [result]
+            else:
+                logger.warning(f"Expected list or dict but got {type(result)} for {param_type} parameters")
+                return []
+        except json.JSONDecodeError:
+            pass  # Try next strategy
+        
+        # Strategy 2: Python literal format (with single quotes)
+        try:
+            result = ast.literal_eval(params_str)
+            if isinstance(result, list):
+                return result
+            elif isinstance(result, dict):
+                return [result]
+            else:
+                logger.warning(f"Expected list or dict but got {type(result)} for {param_type} parameters")
+                return []
+        except (ValueError, SyntaxError):
+            pass  # Try next strategy
+        
+        # Strategy 3: Try to convert Python format to JSON format
+        try:
+            json_str = params_str.replace("'", '"').replace('True', 'true').replace('False', 'false').replace('None', 'null')
+            result = json.loads(json_str)
+            if isinstance(result, list):
+                return result
+            elif isinstance(result, dict):
+                return [result]
+            else:
+                logger.warning(f"Expected list or dict but got {type(result)} for {param_type} parameters")
+                return []
+        except json.JSONDecodeError:
+            pass  # All strategies failed
+        
+        # If all strategies fail, log the error
+        logger.warning(f"Failed to parse {param_type} parameters. Data: {params_str[:100]}...")
+        return []
     
     def build_request(self, tool_config, arguments: dict, auth_info: dict) -> Dict[str, Any]:
         """
@@ -94,11 +156,11 @@ class HttpRequestBuilder:
         Returns:
             str: URL after parameter replacement
         """
-        if not tool_config.path_parameters:
+        if not hasattr(tool_config, 'path_parameters') or not tool_config.path_parameters:
             return url
         
         try:
-            path_params = json.loads(tool_config.path_parameters)
+            path_params = self._safe_parse_params(tool_config.path_parameters, 'path')
             logger.debug(f"Processing path parameters: {path_params}")
             
             for param in path_params:
@@ -110,7 +172,7 @@ class HttpRequestBuilder:
             
             logger.debug(f"URL after path parameter replacement: {url}")
             
-        except (json.JSONDecodeError, TypeError) as e:
+        except Exception as e:
             logger.warning(f"Path parameter parsing failed: {e}")
         
         return url
@@ -133,7 +195,7 @@ class HttpRequestBuilder:
         self._add_auth_headers(headers, auth_info)
         
         # Add custom headers
-        self._add_custom_headers(headers, tool_config, arguments)
+        self._add_custom_headers(tool_config, arguments, headers)
         
         logger.debug(f"Final request headers: {headers}")
         return headers
@@ -158,20 +220,20 @@ class HttpRequestBuilder:
                 token_display = auth_token[:8] + "..." if len(auth_token) > 8 else "***"
                 logger.debug(f"Added auth header: {auth_header} = {token_display}")
     
-    def _add_custom_headers(self, headers: Dict[str, str], tool_config, arguments: dict) -> None:
+    def _add_custom_headers(self, tool_config, arguments: dict, headers: Dict[str, str]) -> None:
         """
         Add custom headers
         
         Args:
-            headers: Request headers dictionary
             tool_config: Tool configuration
             arguments: Tool parameters
+            headers: Request headers dictionary
         """
-        if not tool_config.header_parameters:
+        if not hasattr(tool_config, 'custom_headers') or not tool_config.custom_headers:
             return
         
         try:
-            header_params = json.loads(tool_config.header_parameters)
+            header_params = self._safe_parse_params(tool_config.custom_headers, 'header')
             logger.debug(f"Processing custom headers: {header_params}")
             
             for param in header_params:
@@ -181,7 +243,7 @@ class HttpRequestBuilder:
                         headers[param_name] = str(arguments[param_name])
                         logger.debug(f"Added custom header: {param_name} = {arguments[param_name]}")
                         
-        except (json.JSONDecodeError, TypeError) as e:
+        except Exception as e:
             logger.warning(f"Header parameter parsing failed: {e}")
     
     def _build_query_params(self, tool_config, arguments: dict) -> Dict[str, Any]:
@@ -197,11 +259,11 @@ class HttpRequestBuilder:
         """
         query_params = {}
         
-        if not tool_config.query_parameters:
+        if not hasattr(tool_config, 'query_parameters') or not tool_config.query_parameters:
             return query_params
         
         try:
-            query_param_defs = json.loads(tool_config.query_parameters)
+            query_param_defs = self._safe_parse_params(tool_config.query_parameters, 'query')
             logger.debug(f"Processing query parameter definitions: {query_param_defs}")
             
             for param in query_param_defs:
@@ -209,10 +271,11 @@ class HttpRequestBuilder:
                     param_name = param["name"]
                     if param_name in arguments:
                         query_params[param_name] = arguments[param_name]
+                        logger.debug(f"Added query parameter: {param_name} = {arguments[param_name]}")
             
             logger.debug(f"Built query parameters: {query_params}")
             
-        except (json.JSONDecodeError, TypeError) as e:
+        except Exception as e:
             logger.warning(f"Query parameter parsing failed: {e}")
         
         return query_params
@@ -228,23 +291,43 @@ class HttpRequestBuilder:
         Returns:
             Optional[Dict[str, Any]]: Request body dictionary, returns None if not needed
         """
-        if not tool_config.request_body_schema or tool_config.method.value not in ["POST", "PUT", "PATCH"]:
+        if not hasattr(tool_config, 'request_body_schema') or not tool_config.request_body_schema or tool_config.method.value not in ["POST", "PUT", "PATCH"]:
             return None
         
         try:
-            body_schema = json.loads(tool_config.request_body_schema)
-            logger.debug(f"Request body schema: {body_schema}")
-            
-            if isinstance(body_schema, dict) and "properties" in body_schema:
+            # First try to parse as parameters list (similar to query/path parameters)
+            body_params = self._safe_parse_params(tool_config.request_body_schema, 'body')
+            if body_params:
+                # If it's a list of parameters, process them like query parameters
                 request_body = {}
-                for prop_name in body_schema["properties"]:
-                    if prop_name in arguments:
-                        request_body[prop_name] = arguments[prop_name]
+                for param in body_params:
+                    if isinstance(param, dict) and "name" in param:
+                        param_name = param["name"]
+                        if param_name in arguments:
+                            request_body[param_name] = arguments[param_name]
                 
-                logger.debug(f"Built request body: {request_body}")
-                return request_body
-                
-        except (json.JSONDecodeError, TypeError) as e:
+                if request_body:
+                    logger.debug(f"Built request body from parameters: {request_body}")
+                    return request_body
+            else:
+                # If not a parameters list, try to parse as JSON schema object
+                try:
+                    body_schema = json.loads(tool_config.request_body_schema)
+                    logger.debug(f"Request body schema: {body_schema}")
+                    
+                    if isinstance(body_schema, dict) and "properties" in body_schema:
+                        request_body = {}
+                        for prop_name in body_schema["properties"]:
+                            if prop_name in arguments:
+                                request_body[prop_name] = arguments[prop_name]
+                        
+                        if request_body:
+                            logger.debug(f"Built request body from schema: {request_body}")
+                            return request_body
+                except json.JSONDecodeError:
+                    logger.warning(f"Failed to parse request body schema as JSON")
+                    
+        except Exception as e:
             logger.warning(f"Request body schema parsing failed: {e}")
         
         return None
