@@ -29,7 +29,7 @@ Everything is open-source and licensed under **Apache 2.0** — ready for commer
 😍 Deploying XPack is incredibly simple. With just one command line, you can deploy your MCP Market in 10 minutes.
 
 ```bash
-curl -sSO http://xpack.ai/install/quick-start.sh; bash quick-start.sh
+curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 ```
 
 <br>
@@ -83,7 +83,7 @@ Ensure these services are available and properly configured before running the b
 😍 Deploying XPack is incredibly simple. With just one command line, you can deploy your MCP Market in 10 minutes.
 
 ```bash
-curl -sSO http://xpack.ai/install/quick-start.sh; bash quick-start.sh
+curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 ```
 
 <details>
