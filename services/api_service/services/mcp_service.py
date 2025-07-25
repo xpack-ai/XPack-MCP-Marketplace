@@ -1,10 +1,12 @@
 import json
+import ast
 import mcp.types as types
 from typing import List, Optional
 from services.common.models.mcp_tool_api import McpToolApi
 from services.common.models.mcp_service import McpService as McpServiceModel
 from services.api_service.repositories.mcp_tool_api_repository import McpToolApiRepository
 from services.api_service.repositories.mcp_service_repository import McpServiceRepository
+from services.common.logging_config import get_logger
 
 
 class McpService:
@@ -13,6 +15,75 @@ class McpService:
     def __init__(self, tool_api_repository: McpToolApiRepository, service_repository: McpServiceRepository):
         self.tool_api_repository = tool_api_repository
         self.service_repository = service_repository
+        self.logger = get_logger(__name__)
+
+    def _safe_parse_params(self, params_str: str, tool_name: str, param_type: str) -> list:
+        """
+        Safely parse parameter string that might be in JSON or Python dict format
+        
+        Args:
+            params_str: Parameter string to parse
+            tool_name: Tool name for logging
+            param_type: Type of parameters (e.g., 'query', 'path', 'body')
+            
+        Returns:
+            list: Parsed parameters or empty list if parsing fails
+        """
+        if not params_str or params_str.strip() == '':
+            return []
+        
+        # Remove any surrounding whitespace
+        params_str = params_str.strip()
+        
+        # Try different parsing strategies
+        
+        # Strategy 1: Standard JSON format (with double quotes)
+        try:
+            result = json.loads(params_str)
+            if isinstance(result, list):
+                return result
+            elif isinstance(result, dict):
+                # If it's a single dict, wrap it in a list
+                return [result]
+            else:
+                self.logger.warning(f"Expected list or dict but got {type(result)} for {param_type} parameters in {tool_name}")
+                return []
+        except json.JSONDecodeError:
+            pass  # Try next strategy
+        
+        # Strategy 2: Python literal format (with single quotes)
+        try:
+            result = ast.literal_eval(params_str)
+            if isinstance(result, list):
+                return result
+            elif isinstance(result, dict):
+                # If it's a single dict, wrap it in a list
+                return [result]
+            else:
+                self.logger.warning(f"Expected list or dict but got {type(result)} for {param_type} parameters in {tool_name}")
+                return []
+        except (ValueError, SyntaxError):
+            pass  # Try next strategy
+        
+        # Strategy 3: Try to convert Python format to JSON format
+        try:
+            # Replace single quotes with double quotes for JSON compatibility
+            # This is a simple approach that works for most cases
+            json_str = params_str.replace("'", '"').replace('True', 'true').replace('False', 'false').replace('None', 'null')
+            result = json.loads(json_str)
+            if isinstance(result, list):
+                return result
+            elif isinstance(result, dict):
+                return [result]
+            else:
+                self.logger.warning(f"Expected list or dict but got {type(result)} for {param_type} parameters in {tool_name}")
+                return []
+        except json.JSONDecodeError:
+            pass  # All strategies failed
+        
+        # If all strategies fail, log the error
+        self.logger.warning(f"Failed to parse {param_type} parameters for {tool_name}. Data: {params_str[:100]}...")
+        return []
 
     def get_tools_by_service_id(self, service_id: str) -> List[types.Tool]:
         """
@@ -50,14 +121,21 @@ class McpService:
             # Build input schema
             input_schema = self._build_input_schema(tool_api)
             
+            # If no schema was built (no parameters), create a minimal schema
+            if input_schema is None:
+                input_schema = {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            
             return types.Tool(
                 name=tool_api.name,
-                title=tool_api.name.replace('_', ' ').title(),
                 description=tool_api.description,
                 inputSchema=input_schema
             )
         except Exception as e:
-            print(f"Tool conversion failed {tool_api.name}: {e}")
+            self.logger.error(f"Tool conversion failed for {tool_api.name}: {e}")
             return None
 
     def _build_input_schema(self, tool_api: McpToolApi) -> dict:
@@ -78,44 +156,77 @@ class McpService:
         
         # Parse path parameters
         if tool_api.path_parameters:
-            try:
-                path_params = json.loads(tool_api.path_parameters)
-                for param in path_params:
-                    if isinstance(param, dict) and "name" in param:
-                        schema["properties"][param["name"]] = {
-                            "type": param.get("type", "string"),
-                            "description": param.get("description", f"Path parameter: {param['name']}")
-                        }
-                        if param.get("required", False):
-                            schema["required"].append(param["name"])
-            except (json.JSONDecodeError, TypeError):
-                pass
+            path_params = self._safe_parse_params(tool_api.path_parameters, tool_api.name, 'path')
+            for param in path_params:
+                if isinstance(param, dict) and "name" in param:
+                    # Handle both direct type and schema.type formats
+                    param_type = "string"  # default
+                    if "type" in param:
+                        param_type = param["type"]
+                    elif "schema" in param and isinstance(param["schema"], dict) and "type" in param["schema"]:
+                        param_type = param["schema"]["type"]
+                    
+                    schema["properties"][param["name"]] = {
+                        "type": param_type,
+                        "description": param.get("description", f"Path parameter: {param['name']}")
+                    }
+                    if param.get("required", False):
+                        schema["required"].append(param["name"])
         
         # Parse query parameters
         if tool_api.query_parameters:
-            try:
-                query_params = json.loads(tool_api.query_parameters)
-                for param in query_params:
-                    if isinstance(param, dict) and "name" in param:
-                        schema["properties"][param["name"]] = {
-                            "type": param.get("type", "string"),
-                            "description": param.get("description", f"Query parameter: {param['name']}")
-                        }
-                        if param.get("required", False):
-                            schema["required"].append(param["name"])
-            except (json.JSONDecodeError, TypeError):
-                pass
+            query_params = self._safe_parse_params(tool_api.query_parameters, tool_api.name, 'query')
+            for param in query_params:
+                if isinstance(param, dict) and "name" in param:
+                    # Handle both direct type and schema.type formats
+                    param_type = "string"  # default
+                    if "type" in param:
+                        param_type = param["type"]
+                    elif "schema" in param and isinstance(param["schema"], dict) and "type" in param["schema"]:
+                        param_type = param["schema"]["type"]
+                    
+                    schema["properties"][param["name"]] = {
+                        "type": param_type,
+                        "description": param.get("description", f"Query parameter: {param['name']}")
+                    }
+                    if param.get("required", False):
+                        schema["required"].append(param["name"])
         
         # Parse request body parameters
         if tool_api.request_body_schema:
+            # Try to parse as parameters list first, then as schema object
             try:
-                body_schema = json.loads(tool_api.request_body_schema)
-                if isinstance(body_schema, dict) and "properties" in body_schema:
-                    schema["properties"].update(body_schema["properties"])
-                    if "required" in body_schema:
-                        schema["required"].extend(body_schema["required"])
-            except (json.JSONDecodeError, TypeError):
-                pass
+                # First try to parse as parameters list (similar to query/path parameters)
+                body_params = self._safe_parse_params(tool_api.request_body_schema, tool_api.name, 'body')
+                if body_params:
+                    # If it's a list of parameters, process them like query parameters
+                    for param in body_params:
+                        if isinstance(param, dict) and "name" in param:
+                            param_type = "string"  # default
+                            if "type" in param:
+                                param_type = param["type"]
+                            elif "schema" in param and isinstance(param["schema"], dict) and "type" in param["schema"]:
+                                param_type = param["schema"]["type"]
+                            
+                            schema["properties"][param["name"]] = {
+                                "type": param_type,
+                                "description": param.get("description", f"Body parameter: {param['name']}")
+                            }
+                            if param.get("required", False):
+                                schema["required"].append(param["name"])
+                else:
+                    # If not a parameters list, try to parse as JSON schema object
+                    try:
+                        body_schema = json.loads(tool_api.request_body_schema)
+                        if isinstance(body_schema, dict) and "properties" in body_schema:
+                            schema["properties"].update(body_schema["properties"])
+                            if "required" in body_schema:
+                                schema["required"].extend(body_schema["required"])
+                    except json.JSONDecodeError:
+                        pass  # Already logged by _safe_parse_params
+            except Exception as e:
+                self.logger.warning(f"Failed to parse request body schema for {tool_api.name}: {e}")
+        
         return schema
 
     def get_tool_by_name(self, service_id: str, tool_name: str) -> Optional[McpToolApi]:
