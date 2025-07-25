@@ -926,8 +926,8 @@ print_xpack_mcp_market_info() {
   webPort=$(read_env_var ${ENV_XPACK_MCP_MARKET_WEB_PORT})
   echo_pass "XPack MCP Market has run successfully."
   echo_info "The Web UI access information is as follows:"
-  echo_info "Internal network access address: http://$(read_env_var ${ENV_LAN_IP}):${webPort}/admin-signin"
-  echo_info "External network access address: http://$(read_env_var ${ENV_EXTERNAL_IP}):${webPort}/admin-signin"
+  echo_info "Internal network access address: http://$(read_env_var ${ENV_LAN_IP}):${webPort}/admin"
+  echo_info "External network access address: http://$(read_env_var ${ENV_EXTERNAL_IP}):${webPort}/admin"
   echo_info "Inital Username: admin"
   echo_info "Inital Password: 123456789"
   echo ""
