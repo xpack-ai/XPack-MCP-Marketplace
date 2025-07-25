@@ -30,7 +30,7 @@
 😍 只需一行命令，即可在 10 分钟内部署你的 MCP 服务市场：
 
 ```bash
-curl -sSO http://xpack.ai/install/quick-start.sh; bash quick-start.sh
+curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 ```
 
 该脚本会自动安装 MySQL、Redis、RabbitMQ，并启动 XPack 服务。
@@ -83,7 +83,7 @@ XPack-MCP-Market 依赖以下服务（可容器化或自行安装）：
 ### 🟢 快速部署命令
 
 ```bash
-curl -sSO http://xpack.ai/install/quick-start.sh; bash quick-start.sh
+curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 ```
 
 支持系统包括：
