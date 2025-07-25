@@ -63,7 +63,7 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({
                 ))}
               </div>
             )}
-            <p className="text-lg mb-4">
+            <p className="text-sm mb-4">
               {product.short_description || t("No description available")}
             </p>
           </div>
@@ -72,7 +72,7 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({
         {/* Price section */}
         {product.charge_type && (
           <div className="flex gap-2 items-center">
-            <b className="text-xs">{t("Price")}:</b>
+            <b className="text-md">{t("Price")}:</b>
             <Price price={product.price} charge_type={product.charge_type} />
           </div>
         )}

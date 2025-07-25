@@ -1,9 +1,6 @@
-import React, { Suspense } from "react";
-import { MarketplaceMain } from "@/components/marketplace/Main";
+import React from "react";
 import type { Metadata } from "next";
 import { createBaseMetadata, getDynamicTitle } from "@/shared/utils/metadata";
-import { Navigation } from "@/shared/components/Navigation";
-import { Footer } from "@/shared/components/Footer";
 import { fetchServices } from "@/services/marketplaceService";
 import type { ServiceData } from "@/shared/types/marketplace";
 import { ThemeSelector } from "@/components/theme/ThemeSelector";
