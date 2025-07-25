@@ -21,7 +21,7 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({ product, mcpName }) 
   const [url, setUrl] = useState<string>(process.env.NEXT_PUBLIC_MCP_URL || "");
   useEffect(() => {
     if (url || !product.slug_name) return
-    setUrl(`${window.location.origin}/mcp/${product.slug_name}`);
+    setUrl(`${window.location.protocol}//${window.location.hostname}:8002/mcp/${product.slug_name}`);
   }, [product.slug_name]);
 
 
