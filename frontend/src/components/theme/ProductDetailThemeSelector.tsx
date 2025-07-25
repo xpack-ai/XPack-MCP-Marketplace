@@ -27,10 +27,33 @@ export const ProductDetailThemeSelector: React.FC<
   const { platformConfig } = usePlatformConfig();
   const currentTheme = platformConfig.theme || Theme.DEFAULT;
   const [url, setUrl] = useState<string>(process.env.NEXT_PUBLIC_MCP_URL || "");
+  const [mcpName, setMcpName] = useState<string>("");
   useEffect(() => {
     if (url || !product.slug_name) return;
     setUrl(`${window.location.origin}/mcp/${product.slug_name}`);
   }, [product.slug_name]);
+  function sanitizeMCPServerName(rawName: string | undefined): string {
+    if (!rawName) return "xpack-mcp-service";
+
+    // Lower-case & replace invalid chars with hyphen
+    let name = rawName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]+/g, "-");
+
+    // Collapse multiple hyphens
+    name = name.replace(/-+/g, "-");
+
+    // Trim leading/trailing hyphens
+    name = name.replace(/^-+/, "").replace(/-+$/, "");
+
+
+    return name || "mcp-service";
+  }
+  useEffect(() => {
+    setMcpName(sanitizeMCPServerName(platformConfig.name));
+  }, [platformConfig.name]);
+
 
   //Render the About page based on the current theme
   switch (currentTheme) {
@@ -41,6 +64,7 @@ export const ProductDetailThemeSelector: React.FC<
           breadcrumbs={breadcrumbs}
           url={url}
           navItems={NavigationItems}
+          mcpName={mcpName}
         />
       );
     case Theme.CLASSIC:
@@ -50,6 +74,7 @@ export const ProductDetailThemeSelector: React.FC<
           breadcrumbs={breadcrumbs}
           url={url}
           navItems={NavigationItems}
+          mcpName={mcpName}
         />
       );
     case Theme.CREATIVE:
@@ -59,6 +84,7 @@ export const ProductDetailThemeSelector: React.FC<
           breadcrumbs={breadcrumbs}
           url={url}
           navItems={NavigationItems}
+          mcpName={mcpName}
         />
       );
     case Theme.TEMU:
@@ -68,6 +94,7 @@ export const ProductDetailThemeSelector: React.FC<
           breadcrumbs={breadcrumbs}
           url={url}
           navItems={NavigationItems}
+          mcpName={mcpName}
         />
       );
     case Theme.DEFAULT:
@@ -76,7 +103,7 @@ export const ProductDetailThemeSelector: React.FC<
         <div className="min-h-screen bg-background flex flex-col justify-between">
           <Navigation items={NavigationItems} />
           <main className="flex-1">
-            <ProductDetailClient product={product} />
+            <ProductDetailClient product={product} mcpName={mcpName} />
           </main>
           <div>
             <Footer />

@@ -16,11 +16,13 @@ interface ProductDetailClientProps {
     link: string;
     name: string
   }[];
+  mcpName?: string;
 }
 
 export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   product,
-  breadcrumbs
+  breadcrumbs,
+  mcpName
 }) => {
   const { t } = useTranslation();
 
@@ -56,7 +58,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
           </div>
 
           {/* Right side - Server Config */}
-          <ServerConfig product={product} />
+          <ServerConfig product={product} mcpName={mcpName} />
         </div>
 
         {/* SEO-friendly: Simple text content for search engines */}

@@ -66,9 +66,9 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           onInputChange('auth_token', '');
         }}
       >
-        <SelectItem key="none" value="none">{t('None')}</SelectItem>
-        <SelectItem key="apikey" value="apikey">{t('API Key')}</SelectItem>
-        <SelectItem key="bearer-token" value="bearer-token">{t('Bearer Token')}</SelectItem>
+        <SelectItem key="none" value={AuthMethod.None}>{t('None')}</SelectItem>
+        <SelectItem key="apikey" value={AuthMethod.APIKey}>{t('API Key')}</SelectItem>
+        <SelectItem key="token" value={AuthMethod.BearerToken}>{t('Bearer Token')}</SelectItem>
       </Select>
 
       {/* auth config input fields */}
