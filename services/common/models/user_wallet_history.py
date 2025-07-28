@@ -17,6 +17,7 @@ class TransactionType(PyEnum):
     CONSUME = "consume"
     REFUND = "refund"
     API_CALL = "api_call"
+    RESET = "reset"
 
 
 class UserWalletHistory(Base):
