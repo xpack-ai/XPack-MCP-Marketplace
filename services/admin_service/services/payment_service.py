@@ -110,27 +110,157 @@ class PaymentService:
             logger.info(f"Payment succeeded: payment_id={payment_id}, email={customer_email}, amount={amount} {currency}")
 
             # Trigger fulfillment logic (example)
+            # try:
+            #     return self.user_wallet_history_repository.deposit_complete(payment_id, payment_intent_id)
+            # except Exception as e:
+            #     logger.error(f"Failed to fulfill order for payment_id={payment_id}: {str(e)}")
+            #     return False
+            return self._add_wallet_balance(payment_id=payment_id, payment_channel_id=payment_intent_id)
+        return False
+
+    def check_transaction_id_exists(self, transaction_id: str) -> bool:
+        """
+        Check if a transaction ID already exists in the user wallet history.
+
+        Args:
+            transaction_id (str): The transaction ID to check.
+
+        Returns:
+            bool: True if the transaction ID exists, False otherwise.
+        """
+        return self.user_wallet_history_repository.get_by_id(transaction_id) is not None
+
+    def _add_wallet_balance(self, payment_id: str, payment_channel_id: str, max_retries: int = 3) -> bool:
+        history = self.user_wallet_history_repository.get_by_id(payment_id)
+        if history is None:
+            logger.error(f"Payment history not found for payment_id {payment_id}")
+            return False
+        if history.status == 1:
+            logger.warning(f"Payment history already completed for payment_id {payment_id}")
+            return True
+        user_id = history.user_id
+        amount = history.amount
+        user_wallet = self.user_wallet_repository.get_by_user_id(user_id)
+        if not user_wallet:
+            logger.error(f"User wallet not found for user_id {user_id}")
+            return False
+
+        # Retry mechanism for optimistic locking
+        for attempt in range(max_retries):
             try:
-                return self.user_wallet_history_repository.deposit_complete(payment_id, payment_intent_id)
+                # Get current wallet with row-level lock
+                current_wallet = self.user_wallet_repository.get_by_user_id_with_lock(user_id)
+                if not current_wallet:
+                    logger.error(f"User wallet not found for user_id {user_id}")
+                    return False
+
+                # Calculate new balance based on operation type
+                new_balance = current_wallet.balance + amount
+
+                # Atomic update with optimistic locking
+                success = self.user_wallet_repository.update_balance_atomic(
+                    user_id=user_id,
+                    new_balance=new_balance,
+                    expected_balance=current_wallet.balance
+                )
+
+                if success:
+                    # Create wallet history record after successful balance update
+                    return self.user_wallet_history_repository.deposit_complete(payment_id,payment_channel_id)
+                else:
+                    # Balance was modified by another transaction, retry
+                    logger.warning(f"Balance conflict detected for user_id {user_id}, attempt {attempt + 1}")
+                    continue
             except Exception as e:
-                logger.error(f"Failed to fulfill order for payment_id={payment_id}: {str(e)}")
-                return False
+                logger.error(f"Transaction failed for user_id {user_id}, attempt {attempt + 1}: {str(e)}")
+                if attempt == max_retries - 1:
+                    logger.error(f"All retry attempts failed for user_id {user_id}")
+                    return False
+                continue
 
-        # # Handle refund event
-        # elif event["type"] == "charge.refunded":
-        #     charge = event["data"]["object"]
-        #     payment_id = charge.get("payment_intent")
-        #     amount_refunded = charge.get("amount_refunded") / 100  # Convert to actual amount
-        #     currency = charge.get("currency")
+        logger.error(f"Failed to update balance after {max_retries} attempts for user_id {user_id}")
+        return False
 
-        #     logging.info(f"Refund processed: payment_id={payment_id}, amount_refunded={amount_refunded} {currency}")
+    def platform_payment(self, user_id: str, amount: float, transaction_id: str, typ: str = "incr",  max_retries: int = 3) -> bool:
+        """
+        Process platform payment for user wallet with high-concurrency transaction safety.
+        Args:
+            user_id (str): User ID
+            amount (float): Amount to add or reduce
+            transaction_id (str): Unique transaction ID for the operation
+            typ (str): Transaction type, "incr" for deposit, "reduce" for withdrawal, "set" for set balance
+            max_retries (int): Maximum retry attempts for optimistic locking
+        """
+        if transaction_id == "":
+            logger.error("Transaction ID cannot be empty")
+            return False
+        if self.user_wallet_history_repository.get_by_id(transaction_id) is not None:
+            logger.error(f"Transaction ID {transaction_id} already exists")
+            return False
+        # Validate user wallet exists
+        user_wallet = self.user_wallet_repository.get_by_user_id(user_id)
+        if not user_wallet:
+            logger.error(f"User wallet not found for user_id {user_id}")
+            return False
 
-        #     # Trigger refund processing logic (example)
-        #     try:
-        #         # process_refund(payment_id, amount_refunded)
-        #         logging.info(f"Refund processed for payment_id={payment_id}")
-        #     except Exception as e:
-        #         logging.error(f"Failed to process refund for payment_id={payment_id}: {str(e)}")
-        #         return False
-
+        # Retry mechanism for optimistic locking
+        for attempt in range(max_retries):
+            try:
+                # Get current wallet with row-level lock
+                current_wallet = self.user_wallet_repository.get_by_user_id_with_lock(user_id)
+                if not current_wallet:
+                    logger.error(f"User wallet not found for user_id {user_id}")
+                    return False
+                
+                # Calculate new balance based on operation type
+                new_balance = current_wallet.balance
+                match typ:
+                    case "incr":
+                        new_balance = current_wallet.balance + amount
+                    case "set":
+                        new_balance = amount
+                    case _:
+                        logger.error(f"Invalid transaction type: {typ}")
+                        return False
+                
+                # Atomic update with optimistic locking
+                success = self.user_wallet_repository.update_balance_atomic(
+                    user_id=user_id, 
+                    new_balance=new_balance,
+                    expected_balance=current_wallet.balance
+                )
+                
+                if success:
+                    # Create wallet history record after successful balance update
+                    try:
+                        if typ == "incr":
+                            self.user_wallet_history_repository.add_deposit(
+                                user_id=user_id, amount=amount, payment_method="platform", transaction_id=transaction_id,status=1
+                            )
+                        elif typ == "set":
+                            self.user_wallet_history_repository.set_balance(
+                                user_id=user_id, amount=amount, payment_method="platform", transaction_id=transaction_id,status=1
+                            )
+                        
+                        logger.info(f"Successfully updated balance for user_id {user_id}: {current_wallet.balance} -> {new_balance}")
+                        return True
+                        
+                    except Exception as history_error:
+                        logger.error(f"Failed to create wallet history for user_id {user_id}: {str(history_error)}")
+                        # Balance was updated but history creation failed
+                        # This is not critical for the balance update itself
+                        return True
+                else:
+                    # Balance was modified by another transaction, retry
+                    logger.warning(f"Balance conflict detected for user_id {user_id}, attempt {attempt + 1}")
+                    continue
+                    
+            except Exception as e:
+                logger.error(f"Transaction failed for user_id {user_id}, attempt {attempt + 1}: {str(e)}")
+                if attempt == max_retries - 1:
+                    logger.error(f"All retry attempts failed for user_id {user_id}")
+                    return False
+                continue
+        
+        logger.error(f"Failed to update balance after {max_retries} attempts for user_id {user_id}")
         return False

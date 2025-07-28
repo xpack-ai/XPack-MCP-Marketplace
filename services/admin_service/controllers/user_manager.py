@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Query
-from typing import Optional
-from pydantic import BaseModel
+from fastapi import APIRouter, Query, Body, Request
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from services.admin_service.services.user_service import UserService
 from services.admin_service.services.user_wallet_service import UserWalletService
 from services.common.database import get_db
-from services.common.models.user import User
 from services.common.response.user_manager_response import UserManagerResponse
 from services.common.utils.response_utils import ResponseUtils
 from services.common.utils.validation_utils import ValidationUtils
 from services.common.logging_config import get_logger
+import json,hashlib
+from services.admin_service.services.payment_service import PaymentService
 
 logger = get_logger(__name__)
 
@@ -23,6 +22,9 @@ def get_user_wallet_service(db: Session = Depends(get_db)) -> UserWalletService:
 
 def get_user_service(db: Session = Depends(get_db)) -> UserService:
     return UserService(db)
+
+def get_payment_service(db: Session = Depends(get_db)) -> PaymentService:
+    return PaymentService(db)
 
 
 @router.delete("/account", summary="Delete user account")
@@ -77,3 +79,35 @@ async def get_user_list(
         user_list.append({"id": user.id, "email": user.email, "created_at": user.created_at, "balance": wallet.balance if wallet else 0})
 
     return ResponseUtils.success_page(data=user_list, total=total, page_num=page, page_size=page_size)
+
+@router.post("/balance/recharge")
+async def recharge_balance(
+    request: Request,
+    payment_service: PaymentService = Depends(get_payment_service),
+):
+    body = await request.body()
+    body_str = body.decode('utf-8')
+    timestamp=request.headers.get("x-xpack-timestamp")
+    sign = request.headers.get("x-xpack-sign")
+    # calculate md5 hash of the body and timestamp
+    md5_hash = hashlib.md5(f"{timestamp}{body_str}".encode('utf-8')).hexdigest()
+    calculated_sign = hashlib.sha256(md5_hash.encode('utf-8')).hexdigest()
+    print(f"sign: {sign}, calculated_sign: {calculated_sign},md5_hash: {md5_hash}")
+    if sign != calculated_sign:
+        return ResponseUtils.error(message="Invalid signature")
+    try:
+        body_str = body_str.replace("'", '"')  # Ensure JSON format
+        body = json.loads(body_str)
+    except json.JSONDecodeError:
+        return ResponseUtils.error(message="Invalid JSON format")
+
+    user_id = body.get("user_id")
+    balance = body.get("balance")
+    typ = body.get("type")
+    transaction_id = hashlib.md5(f"{timestamp}{user_id}{balance}{typ}".encode('utf-8')).hexdigest()
+    if payment_service.check_transaction_id_exists(transaction_id):
+        return ResponseUtils.error(message="Transaction ID already exists")
+    success = payment_service.platform_payment(user_id=user_id, amount=balance, typ=typ, transaction_id=transaction_id)
+    if not success:
+        return ResponseUtils.error(message="Failed to recharge wallet balance")
+    return ResponseUtils.success(message="Wallet recharge successful")

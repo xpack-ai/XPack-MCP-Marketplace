@@ -19,7 +19,7 @@ class UserWalletHistoryRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def add_deposit(self, user_id: str, amount: float, payment_method: str) -> UserWalletHistory:
+    def add_deposit(self, user_id: str, amount: float, payment_method: str, transaction_id: str = "", status: int = 0) -> UserWalletHistory:
         """
         Create a new deposit record.
 
@@ -27,21 +27,83 @@ class UserWalletHistoryRepository:
             user_id: User ID
             amount: Deposit amount
             payment_method: Payment method
-
+            transaction_id: Transaction ID from payment platform, optional
+            status: Transaction status (0=new, 1=completed, 2=refunded), default is 0
         Returns:
             UserWalletHistory: Created deposit record
+        """
+        now = datetime.now(timezone.utc)
+        if transaction_id == "":
+            transaction_id = str(uuid4())
+        history = UserWalletHistory(
+            id=transaction_id,
+            user_id=user_id,
+            payment_method=PaymentMethod(payment_method),
+            amount=amount,
+            balance_after=0.00,
+            type=TransactionType.DEPOSIT,
+            status=status,
+            created_at=now,
+            updated_at=now,
+        )
+        self.db.add(history)
+        self.db.commit()
+        self.db.refresh(history)
+        return history
+
+    def add_withdrawal(self, user_id: str, amount: float, payment_method: str) -> UserWalletHistory:
+        """
+        Create a new withdrawal/consume record.
+
+        Args:
+            user_id: User ID
+            amount: Withdrawal amount (positive value)
+            payment_method: Payment method
+
+        Returns:
+            UserWalletHistory: Created withdrawal record
         """
         now = datetime.now(timezone.utc)
         history = UserWalletHistory(
             id=str(uuid4()),
             user_id=user_id,
             payment_method=PaymentMethod(payment_method),
+            amount=amount,  # Store as positive value
+            balance_after=0.00,
+            type=TransactionType.CONSUME,
+            status=1,  # Mark as completed immediately for platform withdrawals
+            created_at=now,
+            updated_at=now,
+        )
+        self.db.add(history)
+        self.db.commit()
+        self.db.refresh(history)
+        return history
+
+    def set_balance(self,user_id: str,amount:float, payment_method: str, transaction_id: str = "", status: int = 0) -> UserWalletHistory:
+        """
+        Create a new balance record.
+
+        Args:
+            user_id: User ID
+            amount: Balance amount
+            payment_method: Payment method
+            transaction_id: Transaction ID from payment platform, optional
+            status: Status of the transaction (0=new, 1=completed, 2=refunded)
+        Returns:
+            UserWalletHistory: Created balance record
+        """
+        now = datetime.now(timezone.utc)
+        if transaction_id == "":
+            transaction_id = str(uuid4())
+        history = UserWalletHistory(
+            id=transaction_id,
+            user_id=user_id,
+            payment_method=PaymentMethod(payment_method),
             amount=amount,
             balance_after=0.00,
-            type=TransactionType.DEPOSIT,
-            status=0,
-            transaction_id=None,
-            channel_user_id=None,
+            type=TransactionType.RESET,
+            status=status,  # 0=new, 1=completed, 2=refunded
             created_at=now,
             updated_at=now,
         )
