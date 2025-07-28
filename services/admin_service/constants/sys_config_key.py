@@ -20,4 +20,12 @@ KEY_EMAIL_SMTP_PASSWORD = "email_smtp_password"
 KEY_EMAIL_SMTP_SENDER = "email_smtp_sender"
 KEY_LOGIN_EMAIL_ENABLE = "login_email_enable"
 KEY_LOGIN_EMAIL_MODE = "login_email_mode"
+KEY_DOMAIN = "domain"
+KEY_IS_SHOWCASED = "is_showcased"
+KEY_MCP_SERVER_PREFIX = "mcp_server_prefix"
+
+KEY_FAQ = "faq"
+KEY_TOP_NAVIGATION = "top_navigation"
+KEY_EMBEDED_HTML = "embedded_html"
+
 

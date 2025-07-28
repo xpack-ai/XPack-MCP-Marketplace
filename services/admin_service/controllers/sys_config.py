@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Body
+import json
 from sqlalchemy import false, table
 from sqlalchemy.orm import Session
 from services.common.database import get_db
@@ -18,6 +19,62 @@ def get_sysconfig_service(db: Session = Depends(get_db)) -> SysConfigService:
 def get_user_service(db: Session = Depends(get_db)) -> UserService:
     return UserService(db)
 
+@router.get("/homepage")
+def get_homepage(
+    sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
+    ):
+    faq = sysconfig_service.get_value_by_key(sys_config_key.KEY_FAQ) or "[]"
+    # 判断是否为空值，若非空，则json反序列化
+    try:
+        # 数组类型
+        if faq.startswith("[") and faq.endswith("]"):
+            faq = json.loads(faq)
+        else:
+            return ResponseUtils.error("FAQ配置格式错误")
+    except json.JSONDecodeError:
+        return ResponseUtils.error("FAQ配置格式错误")
+    
+
+    top_navigation = sysconfig_service.get_value_by_key(sys_config_key.KEY_TOP_NAVIGATION) or "[]"
+    try:
+        # 数组类型
+        if top_navigation.startswith("[") and top_navigation.endswith("]"):
+            top_navigation = json.loads(top_navigation)
+        else:
+            return ResponseUtils.error("Top Navigation配置格式错误")
+    except json.JSONDecodeError:
+        return ResponseUtils.error("Top Navigation配置格式错误")
+    embeded_html = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMBEDED_HTML,True) or "{}"
+    print("embeded_html:", embeded_html)
+    try:
+        embeded_html = json.loads(embeded_html)
+    except json.JSONDecodeError:
+        return ResponseUtils.error("Embeded HTML配置格式错误")
+
+    return ResponseUtils.success(
+        data={
+            "faq": faq,
+            "top_navigation": top_navigation,
+            "embeded_html": embeded_html,
+        }
+    )
+
+@router.put("/homepage")
+def update_homepage(
+    sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
+    body: dict = Body(...),
+):
+    faq = body.get("faq")
+    top_navigation = body.get("top_navigation")
+    embeded_html = body.get("embeded_html")
+    """Update system configuration settings."""
+    if faq:
+        sysconfig_service.set_value_by_key(sys_config_key.KEY_FAQ, json.dumps(faq),"FAQ")
+    if top_navigation:
+        sysconfig_service.set_value_by_key(sys_config_key.KEY_TOP_NAVIGATION, json.dumps(top_navigation),"Top Navigation")
+    if embeded_html:
+        sysconfig_service.set_value_by_key(sys_config_key.KEY_EMBEDED_HTML, json.dumps(embeded_html),"Embeded HTML",True)
+    return ResponseUtils.success()
 
 @router.get("/info")
 def get_sysconfig(
@@ -63,6 +120,12 @@ def get_sysconfig(
     email_smtp_password = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PASSWORD)
     email_smtp_sender = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_SENDER)
 
+    domain = sysconfig_service.get_value_by_key(sys_config_key.KEY_DOMAIN)
+    is_showcased_raw = sysconfig_service.get_value_by_key(sys_config_key.KEY_IS_SHOWCASED) or "false"
+    is_showcased = is_showcased_raw.lower() in ("true", "t", "yes", "y", "1")
+
+    mcp_server_prefix = sysconfig_service.get_value_by_key(sys_config_key.KEY_MCP_SERVER_PREFIX)
+
     return ResponseUtils.success(
         data={
             "platform": {
@@ -75,6 +138,9 @@ def get_sysconfig(
                 "language": language,
                 "theme": theme,
                 "about_page": about_page,
+                "domain": domain,
+                "is_showcased": is_showcased,
+                "mcp_server_prefix": mcp_server_prefix,
             },
             "account": {
                 "username": admin_username,
@@ -138,6 +204,9 @@ def set_sysconfig(
         language = platform.get("language")
         theme = platform.get("theme")
         about_page = platform.get("about_page")
+        domain = platform.get("domain")
+        is_showcased = platform.get("is_showcased")
+        mcp_server_prefix = platform.get("mcp_server_prefix")
 
         account = body.get("account", {})
         admin_username = account.get("username")
@@ -151,7 +220,7 @@ def set_sysconfig(
         login_email_config = login.get("email", {})
         login_email_mode = login_email_config.get("mode")
         login_email_is_enable = login_email_config.get("is_enabled")  # 设置默认值为 False
-        print("email info:",login_email_is_enable,login_email_mode)
+        
         # 获取邮件配置 - 现在从外层获取
         email_config = body.get("email", {})
         email_smtp_host = email_config.get("smtp_host")
@@ -159,17 +228,9 @@ def set_sysconfig(
         email_smtp_user = email_config.get("smtp_user")
         email_smtp_password = email_config.get("smtp_password")
         email_smtp_sender = email_config.get("smtp_sender")
-
-        # if  login_google_enable: 
-        #     if login_google_enable == "false":
-        #         login_google_enable = "False"
-        #     else:
-        #         login_google_enable = "True"
-        # if login_email_is_enable:
-        #     if login_email_is_enable == "false":
-        #         login_email_is_enable = "False"
-        #     else:
-        #         login_email_is_enable = "True"
+        
+        
+        
         # 批量更新配置
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "Platform name"),
@@ -181,6 +242,9 @@ def set_sysconfig(
             (sys_config_key.KEY_LANGUAGE, language, "Language"),
             (sys_config_key.KEY_THEME, theme, "Theme"),
             (sys_config_key.KEY_ABOUT_PAGE, about_page, "About page"),
+            (sys_config_key.KEY_DOMAIN, domain, "Domain"),
+            (sys_config_key.KEY_IS_SHOWCASED, is_showcased, "Is showcased"),
+            (sys_config_key.KEY_MCP_SERVER_PREFIX, mcp_server_prefix, "MCP server prefix"),
             (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "Google login client ID"),
             (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "Google login client secret"),
             (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "谷歌登录是否启用"),
@@ -239,5 +303,5 @@ def test_email_config(
         return ResponseUtils.error(f"测试邮件配置失败：{str(e)}")
 
 
-def str_to_bool(s):
-    return s.lower() in ("true", "t", "yes", "y", "1")
+
+
