@@ -55,7 +55,6 @@ class Config:
         "/redoc",
         "/api/auth/email/send-captcha",
         "/api/auth/email/sign",
-        "/api/common/config",
         "/api/auth/account/sign",
         "/api/auth/email/send_captcha",
         "/api/auth/google/sign",
@@ -70,5 +69,6 @@ class Config:
         [path.strip() for path in _env_no_auth_paths.split(",") if path.strip()] if _env_no_auth_paths else _default_no_auth_paths
     )
     NO_AUTH_PREFIX_PATH=[
-        "/uploads/"
+        "/uploads/",
+        "/api/common/"
     ]
