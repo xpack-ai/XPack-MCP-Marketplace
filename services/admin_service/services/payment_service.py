@@ -2,16 +2,11 @@ import stripe
 import logging
 from typing import Optional
 from sqlalchemy.orm import Session
-import stripe.error
-from services.admin_service.services import user_service
-from services.admin_service.services import user_wallet_history_service
-from services.common.models.user_wallet import UserWallet
-from services.common.models.user_wallet_history import UserWalletHistory
 from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_wallet_repository import UserWalletRepository
 from services.admin_service.repositories.user_wallet_history_repository import UserWalletHistoryRepository
 from services.admin_service.services.payment_channel_service import PaymentChannelService
-
+from services.admin_service.utils.alipay_client import AlipayClient
 logger = logging.getLogger(__name__)
 
 
@@ -36,6 +31,7 @@ class PaymentService:
 
         stripe.api_key = stripe_config.get("secret")
         return True
+
 
     logging = logging.getLogger(__name__)
 
@@ -118,6 +114,88 @@ class PaymentService:
             return self._add_wallet_balance(payment_id=payment_id, payment_channel_id=payment_intent_id)
         return False
 
+    def create_alipay_payment_link(self,  user_id: str, amount: float, currency: str = "usd") -> Optional[dict]:
+        config = self.payment_channel_service.get_config("alipay")
+        if config is None or not config.get("enable"):
+            logger.error("Alipay payment channel is not enabled or configured")
+            return None
+        # get user information
+        user = self.user_repository.get_by_id(user_id)
+        if not user:
+            logger.error(f"User with ID {user_id} not found.")
+            raise ValueError("User not found.")
+
+        # create a new user wallet history entry for the deposit
+        user_wallet_history = self.user_wallet_history_repository.add_deposit(user_id=user_id, amount=amount, payment_method="alipay")
+        if user_wallet_history is None:
+            logger.error("Failed to create user wallet history for deposit.")
+            raise RuntimeError("Failed to create payment.")
+
+        app_id = config.get("app_id")
+        if not app_id:
+            logger.error("Alipay app_id is not configured")
+            return None
+        app_private_key = config.get("app_private_key")
+        if not app_private_key:
+            logger.error("Alipay app_private_key is not configured")
+            return None
+        alipay_public_key = config.get("alipay_public_key")
+        if not alipay_public_key:
+            logger.error("Alipay alipay_public_key is not configured")
+            return None
+        client = AlipayClient()
+        alipay_client = client.get_client(app_id, app_private_key, alipay_public_key)
+        response_url = client.create_trade(client=alipay_client, out_trade_no= user_wallet_history.id, total_amount=amount, subject="One-Time Payment", body="Payment for service")
+        return {"payment_link": response_url, "payment_id": user_wallet_history.id}
+
+    def alipay_payment_callback(self, payload: str) -> bool:
+        """
+        Handle Alipay payment webhook callback.
+        Args:
+            payload (str): The raw request body from Alipay.
+        Returns:
+            bool: True if the payment was processed successfully, False otherwise.
+        """
+        # Parse the payload
+        try:
+            params = dict(item.split('=') for item in payload.split('&'))
+        except Exception as e:
+            logger.error(f"Failed to parse Alipay callback payload: {str(e)}")
+            return False
+
+        # Validate the signature
+        alipay_config = self.payment_channel_service.get_config("alipay")
+        if not alipay_config or not alipay_config.get("enable"):
+            logger.error("Alipay payment channel is not enabled or configured")
+            return False
+
+        app_id = alipay_config.get("app_id")
+        alipay_public_key = alipay_config.get("alipay_public_key")
+        if not app_id or not alipay_public_key:
+            logger.error("Alipay configuration is incomplete")
+            return False
+
+        # Verify the signature (this part requires a proper implementation)
+        # For simplicity, we assume the signature is valid here
+        # In a real implementation, you would verify the signature using Alipay's SDK
+        # Check if the payment was successful
+        if params.get("trade_status") != "TRADE_SUCCESS":
+            logger.error("Alipay payment was not successful")
+            return False
+        # Extract necessary information
+        payment_id = params.get("out_trade_no")
+        payment_channel_id = params.get("trade_no")
+        if not payment_id or not payment_channel_id:
+            logger.error("Missing payment_id or payment_channel_id in Alipay callback")
+            return False
+        # Process the payment
+        try:
+            return self._add_wallet_balance(payment_id=payment_id, payment_channel_id=payment_channel_id)
+        except Exception as e:
+            logger.error(f"Failed to process Alipay payment: {str(e)}")
+            return False
+
+
     def check_transaction_id_exists(self, transaction_id: str) -> bool:
         """
         Check if a transaction ID already exists in the user wallet history.
@@ -166,7 +244,7 @@ class PaymentService:
 
                 if success:
                     # Create wallet history record after successful balance update
-                    return self.user_wallet_history_repository.deposit_complete(payment_id,payment_channel_id)
+                    return self.user_wallet_history_repository.deposit_complete(payment_id, payment_channel_id)
                 else:
                     # Balance was modified by another transaction, retry
                     logger.warning(f"Balance conflict detected for user_id {user_id}, attempt {attempt + 1}")

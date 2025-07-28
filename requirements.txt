@@ -14,3 +14,4 @@ python-multipart
 google-auth>=2.0.0
 google-auth-oauthlib>=1.0.0
 fastapi_mcp
+alipay-sdk-python>=3.0.0

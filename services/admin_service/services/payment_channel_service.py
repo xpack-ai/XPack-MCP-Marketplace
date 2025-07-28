@@ -25,6 +25,23 @@ class PaymentChannelService:
     
     def update_config(self, id: str, config: str) -> Optional[PaymentChannel]:
         return self.payment_channel_repository.update_config(id, config)
+
+    def get_config(self, id: str) -> Optional[dict]:
+        """Get payment channel config by ID"""
+        channel_config = self.payment_channel_repository.payment_channel_get(id)
+        if channel_config is None:
+            return None
+        config = {}
+        if channel_config.config is not None:
+            try:
+                config = json.loads(channel_config.config)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse payment channel config JSON: {str(e)}")
+                return None
+        config["enable"] = channel_config.status == 1
+        config["id"] = channel_config.id
+        return config
+
     
     def get_stripe_config(self) -> Optional[Dict[str, Any]]:
         """Get Stripe payment channel config"""
