@@ -2,6 +2,7 @@
 
 import logging
 from fastapi import APIRouter, Depends
+import json
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
@@ -19,6 +20,9 @@ from services.admin_service.constants.sys_config_key import (
     KEY_LOGIN_GOOGLE_ENABLE,
     KEY_LOGIN_EMAIL_ENABLE,
     KEY_LOGIN_EMAIL_MODE,
+    KEY_FAQ,
+    KEY_EMBEDED_HTML,
+    KEY_TOP_NAVIGATION,
 )
 
 logger = logging.getLogger(__name__)
@@ -76,4 +80,37 @@ def get_config(db: Session = Depends(get_db)):
         return ResponseUtils.success(data=config_data)
     except Exception as e:
         logger.error(f"Failed to get config: {str(e)}")
+        return ResponseUtils.error(message="Failed to get configuration")
+
+@router.get("/homepage", summary="Get homepage configuration (no login required)", tags=["common"])
+def get_homepage_config(db: Session = Depends(get_db)):
+    """Get homepage configuration settings without authentication."""
+    try:
+        # Create service instance
+        sys_config_service = SysConfigService(db)
+
+        # Get homepage config
+        faq = sys_config_service.get_value_by_key(KEY_FAQ) or "[]"
+        embeded_html = sys_config_service.get_value_by_key(KEY_EMBEDED_HTML,True) or "{}"
+        top_navigation = sys_config_service.get_value_by_key(KEY_TOP_NAVIGATION) or "[]"
+        try:
+            faq = json.loads(faq)
+        except json.JSONDecodeError:
+            return ResponseUtils.error("FAQ配置格式错误")
+        try:
+            embeded_html = json.loads(embeded_html)
+        except json.JSONDecodeError:
+            return ResponseUtils.error("Embeded HTML配置格式错误")
+        try:
+            top_navigation = json.loads(top_navigation)
+        except json.JSONDecodeError:
+            return ResponseUtils.error("Top Navigation配置格式错误")
+        config_data = {
+            "faq": faq,
+            "embeded_html": embeded_html,
+            "top_navigation": top_navigation,
+        }
+        return ResponseUtils.success(data=config_data)
+    except Exception as e:
+        logger.error(f"Failed to get homepage config: {str(e)}")
         return ResponseUtils.error(message="Failed to get configuration")
