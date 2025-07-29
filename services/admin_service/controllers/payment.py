@@ -1,13 +1,9 @@
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-import asyncio
-import logging
 
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
-from services.common.utils.request_utils import RequestUtils
 from services.admin_service.services.payment_service import PaymentService
 from services.admin_service.services.user_wallet_history_service import UserWalletHistoryService
 
@@ -43,6 +39,11 @@ def create_payment_link(
         match body.payment_method:
             case "alipay":
                 payment_info = payment.create_alipay_payment_link(user_id=user.id, amount=body.amount, currency=body.currency)
+                if not payment_info:
+                    return ResponseUtils.error(message="Failed to create Alipay payment link", code=500)
+                from services.admin_service.tasks.alipay_order_monitor_task import AlipayOrderMonitorTask
+                alipay_monitor_task = AlipayOrderMonitorTask.get_instance()
+                alipay_monitor_task.add_order_to_monitor(payment_id=payment_info.get("payment_id"))
             case _:
                 if not body.success_url:
                     return ResponseUtils.error(message="Success URL is required for Stripe payments", code=400)

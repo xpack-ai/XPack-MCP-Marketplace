@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from services.common.models.user_wallet_history import UserWalletHistory
 from services.admin_service.repositories.user_wallet_history_repository import UserWalletHistoryRepository
+from typing import Optional, Dict, Any
+from datetime import datetime
 
 
 class UserWalletHistoryService:
@@ -16,8 +18,14 @@ class UserWalletHistoryService:
     def success_order_list(self, offset: int, limit: int) -> tuple[int, list[UserWalletHistory]]:
         return self.user_wallet_history_repository.success_order_list(offset, limit)
 
-    def check_order_complete(self, id: str) -> bool:
-        user_wallet_history = self.user_wallet_history_repository.get_by_id(id)
+    def order_list(self, payment_method: str, status: int, start: Optional[datetime] = None, end: Optional[datetime] = None) -> list[UserWalletHistory]:
+        return self.user_wallet_history_repository.order_list(payment_method, status, start, end)
+
+    def get_order_by_id(self, order_id: str) -> Optional[UserWalletHistory]:
+        return self.user_wallet_history_repository.get_by_id(order_id)
+
+    def check_order_complete(self, order_id: str) -> bool:
+        user_wallet_history = self.user_wallet_history_repository.get_by_id(order_id)
         if user_wallet_history:
             return user_wallet_history.status == 1
         return False
