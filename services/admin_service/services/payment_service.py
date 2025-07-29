@@ -105,12 +105,6 @@ class PaymentService:
 
             logger.info(f"Payment succeeded: payment_id={payment_id}, email={customer_email}, amount={amount} {currency}")
 
-            # Trigger fulfillment logic (example)
-            # try:
-            #     return self.user_wallet_history_repository.deposit_complete(payment_id, payment_intent_id)
-            # except Exception as e:
-            #     logger.error(f"Failed to fulfill order for payment_id={payment_id}: {str(e)}")
-            #     return False
             return self._add_wallet_balance(payment_id=payment_id, payment_channel_id=payment_intent_id)
         return False
 
@@ -143,57 +137,31 @@ class PaymentService:
         if not alipay_public_key:
             logger.error("Alipay alipay_public_key is not configured")
             return None
-        client = AlipayClient()
-        alipay_client = client.get_client(app_id, app_private_key, alipay_public_key)
-        response_url = client.create_trade(client=alipay_client, out_trade_no= user_wallet_history.id, total_amount=amount, subject="One-Time Payment", body="Payment for service")
+        client = AlipayClient(app_id, app_private_key, alipay_public_key)
+        response_url = client.create_trade(out_trade_no= user_wallet_history.id, total_amount=amount, subject="One-Time Payment", body="Payment for service")
         return {"payment_link": response_url, "payment_id": user_wallet_history.id}
 
-    def alipay_payment_callback(self, payload: str) -> bool:
+    def payment_callback(self, payment_id: str, payment_channel_id: str, status: int = 1) -> bool:
         """
         Handle Alipay payment webhook callback.
         Args:
-            payload (str): The raw request body from Alipay.
-        Returns:
-            bool: True if the payment was processed successfully, False otherwise.
+            payment_id (str): The unique identifier for the payment.
+            payment_channel_id (str): The identifier for the payment channel.
+            status (int): The status of the payment, 1 for success, 2 for failure.
         """
-        # Parse the payload
-        try:
-            params = dict(item.split('=') for item in payload.split('&'))
-        except Exception as e:
-            logger.error(f"Failed to parse Alipay callback payload: {str(e)}")
-            return False
-
-        # Validate the signature
-        alipay_config = self.payment_channel_service.get_config("alipay")
-        if not alipay_config or not alipay_config.get("enable"):
-            logger.error("Alipay payment channel is not enabled or configured")
-            return False
-
-        app_id = alipay_config.get("app_id")
-        alipay_public_key = alipay_config.get("alipay_public_key")
-        if not app_id or not alipay_public_key:
-            logger.error("Alipay configuration is incomplete")
-            return False
-
-        # Verify the signature (this part requires a proper implementation)
-        # For simplicity, we assume the signature is valid here
-        # In a real implementation, you would verify the signature using Alipay's SDK
-        # Check if the payment was successful
-        if params.get("trade_status") != "TRADE_SUCCESS":
-            logger.error("Alipay payment was not successful")
-            return False
-        # Extract necessary information
-        payment_id = params.get("out_trade_no")
-        payment_channel_id = params.get("trade_no")
         if not payment_id or not payment_channel_id:
-            logger.error("Missing payment_id or payment_channel_id in Alipay callback")
+            logger.error("Payment ID and Payment Channel ID cannot be empty")
             return False
-        # Process the payment
-        try:
-            return self._add_wallet_balance(payment_id=payment_id, payment_channel_id=payment_channel_id)
-        except Exception as e:
-            logger.error(f"Failed to process Alipay payment: {str(e)}")
+
+        # Check if the transaction ID already exists
+        if self.check_transaction_id_exists(payment_id):
+            logger.error(f"Transaction ID {payment_id} already exists")
             return False
+        if status == 1:
+            # Add wallet balance and complete the deposit
+            return self._add_wallet_balance(payment_id, payment_channel_id)
+        self.user_wallet_history_repository.set_status(payment_id, payment_channel_id, status)
+        return True
 
 
     def check_transaction_id_exists(self, transaction_id: str) -> bool:
@@ -259,7 +227,7 @@ class PaymentService:
         logger.error(f"Failed to update balance after {max_retries} attempts for user_id {user_id}")
         return False
 
-    def platform_payment(self, user_id: str, amount: float, transaction_id: str, typ: str = "incr",  max_retries: int = 3) -> bool:
+    def platform_payment(self, user_id: str, amount: float, transaction_id: str, typ: str = "incr", payment_method: str = "platform",  max_retries: int = 3) -> bool:
         """
         Process platform payment for user wallet with high-concurrency transaction safety.
         Args:
@@ -313,11 +281,11 @@ class PaymentService:
                     try:
                         if typ == "incr":
                             self.user_wallet_history_repository.add_deposit(
-                                user_id=user_id, amount=amount, payment_method="platform", transaction_id=transaction_id,status=1
+                                user_id=user_id, amount=amount, payment_method=payment_method, transaction_id=transaction_id,status=1
                             )
                         elif typ == "set":
                             self.user_wallet_history_repository.set_balance(
-                                user_id=user_id, amount=amount, payment_method="platform", transaction_id=transaction_id,status=1
+                                user_id=user_id, amount=amount, payment_method=payment_method, transaction_id=transaction_id,status=1
                             )
                         
                         logger.info(f"Successfully updated balance for user_id {user_id}: {current_wallet.balance} -> {new_balance}")

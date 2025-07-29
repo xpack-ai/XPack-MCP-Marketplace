@@ -1,14 +1,8 @@
-from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.auth import verify_token
-from services.common.models.user import User
 from services.common.config import Config
 from services.common.logging_config import get_logger
 from services.common.utils.response_utils import ResponseUtils
-from typing import Optional
-import re
 import json
 
 logger = get_logger(__name__)

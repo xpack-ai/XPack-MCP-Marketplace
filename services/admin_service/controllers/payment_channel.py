@@ -53,7 +53,12 @@ async def payment_channel_enable(
     if not id:
         return ResponseUtils.error("Payment channel id cannot be empty")
     data = payment_channel_service.update_status(id, 1)
+
     if data:
+        if id == "alipay":
+            from services.admin_service.tasks.alipay_order_monitor_task import AlipayOrderMonitorTask
+            alipay_monitor_task = AlipayOrderMonitorTask.get_instance()
+            alipay_monitor_task.start_monitor()
         return ResponseUtils.success(
             {
                 "id": id,
@@ -77,6 +82,10 @@ async def payment_channel_disable(
         return ResponseUtils.error("Payment channel id cannot be empty")
     data = payment_channel_service.update_status(id, 0)
     if data:
+        if id == "alipay":
+            from services.admin_service.tasks.alipay_order_monitor_task import AlipayOrderMonitorTask
+            alipay_monitor_task = AlipayOrderMonitorTask.get_instance()
+            alipay_monitor_task.stop_monitor()
         return ResponseUtils.success(
             {
                 "id": id,

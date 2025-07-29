@@ -3,7 +3,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-import asyncio
 import threading
 import os
 from contextlib import asynccontextmanager
@@ -26,12 +25,15 @@ from services.admin_service.controllers import user_stats
 from services.admin_service.controllers import email_test
 from services.admin_service.controllers import upload
 
+
+
 from services.admin_service.consumers.billing_message_consumer import BillingMessageConsumer
 from services.admin_service.middleware import AuthMiddleware
 from services.common.middleware.exception_middleware import ExceptionHandlingMiddleware
 from services.common.utils.response_utils import ResponseUtils
 from services.common import error_msg
 from fastapi.responses import JSONResponse
+from services.admin_service.task import *
 
 # Setup logging for admin service
 setup_logging("admin_service")
@@ -60,12 +62,12 @@ def stop_billing_consumer():
         logger.info("Stopping billing message consumer...")
         consumer_instance.stop_consuming()
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle management"""
     global consumer_thread
-    
+    start_alipay_order_monitor()
+
     # Startup: Start consumer in separate thread
     logger.info("Admin Service starting...")
     try:
@@ -80,6 +82,7 @@ async def lifespan(app: FastAPI):
     # Shutdown: Stop consumer
     logger.info("Admin Service shutting down...")
     stop_billing_consumer()
+    start_alipay_order_monitor()
 
 
 app = FastAPI(title="Admin Service", openapi_url="/openapi.json", lifespan=lifespan)
