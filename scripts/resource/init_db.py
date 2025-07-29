@@ -25,7 +25,6 @@ def execute_sql_file(file_path: str, db_config: Optional[DBConfig] = None) -> No
     """
     if db_config is None:
         db_config = DBConfig()
-    print(db_config.MYSQL_HOST, db_config.MYSQL_PORT, db_config.MYSQL_USER, db_config.MYSQL_PASSWORD, db_config.MYSQL_DB)
     # 连接数据库
     conn = mysql.connector.connect(
         host=db_config.MYSQL_HOST,
@@ -80,7 +79,6 @@ def main():
     sql_paths = [
         project_root / 'sql' / 'init.sql'
     ]
-    print(sql_paths)
     sql_file = next((path for path in sql_paths if path.exists()), None)
     if not sql_file:
         print("错误: 未找到 init.sql 文件")

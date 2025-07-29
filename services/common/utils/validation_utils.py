@@ -1,7 +1,7 @@
 # Validation utilities with unified exception handling
 
 import re
-from typing import Any, Optional, List, Dict
+from typing import Any, Optional, List, Dict, Tuple
 from services.common.exceptions import ValidationException, NotFoundException
 
 
@@ -122,7 +122,7 @@ class ValidationUtils:
         return url
 
     @staticmethod
-    def validate_pagination(page: Any, page_size: Any) -> tuple[int, int]:
+    def validate_pagination(page: Any, page_size: Any) -> Tuple[int, int]:
         """
         Validate pagination parameters
         

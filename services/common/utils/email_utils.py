@@ -2,7 +2,7 @@ import smtplib
 import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional
+from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 from services.admin_service.services.sys_config_service import SysConfigService
 from services.admin_service.constants import sys_config_key
@@ -87,7 +87,7 @@ class EmailUtils:
             return False
 
     @staticmethod
-    def test_email_config(db: Session) -> tuple[bool, str]:
+    def test_email_config(db: Session) -> Tuple[bool, str]:
         """
         """
         try:

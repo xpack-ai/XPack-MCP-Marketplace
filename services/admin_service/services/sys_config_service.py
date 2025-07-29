@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List, Dict
 from services.common.database import SessionLocal
 from services.common.redis import RedisClient
 from services.common.redis_keys import RedisKeys
@@ -83,7 +83,7 @@ class SysConfigService:
             except Exception as e:
                 logger.warning(f"Failed to clear cache for key {key}: {e}")
 
-    def get_multiple_values(self, keys: list[str]) -> dict[str, Optional[str]]:
+    def get_multiple_values(self, keys: List[str]) -> Dict[str, Optional[str]]:
         """Get multiple config values with optimized performance"""
         result = {}
         cache_miss_keys = []

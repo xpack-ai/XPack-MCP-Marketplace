@@ -1,6 +1,6 @@
 import logging
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 from services.common.models.user_apikey import UserApiKey
 from services.common.database import SessionLocal
 from datetime import datetime
@@ -33,5 +33,5 @@ class UserApiKeyService:
         self.user_apikey_repository.delete(id)
         return user_apikey
 
-    def get_by_user_id(self, user_id: str) -> list[UserApiKey]:
+    def get_by_user_id(self, user_id: str) -> List[UserApiKey]:
         return self.user_apikey_repository.get_by_user_id(user_id)

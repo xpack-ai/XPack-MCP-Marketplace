@@ -4,7 +4,7 @@ import json
 import re
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from services.admin_service.repositories.mcp_service_repository import McpServiceRepository
 from services.admin_service.repositories.mcp_tool_api_repository import McpToolApiRepository
 from services.admin_service.repositories.temp_mcp_service_repository import TempMcpServiceRepository
@@ -18,7 +18,7 @@ from services.admin_service.services.openapi_helper import OpenApiForAI
 logger = logging.getLogger(__name__)
 
 # Utility function: Convert tags string to array
-def parse_tags_to_array(tags_str: Optional[str]) -> list[str]:
+def parse_tags_to_array(tags_str: Optional[str]) -> List[str]:
     """
     Convert tags string to array
     
@@ -26,7 +26,7 @@ def parse_tags_to_array(tags_str: Optional[str]) -> list[str]:
         tags_str: tags string, separated by commas
         
     Returns:
-        list[str]: tags array
+        List[str]: tags array
     """
     if not tags_str:
         return []
@@ -281,15 +281,15 @@ class McpManagerService:
             "price": str(float(service.price)) if service.price else "0.00",
             "enabled": service.enabled,
             "tags": parse_tags_to_array(service.tags),
-            "apis": [{"id": api.id, "name": api.name, "description": api.description} for api in apis],
+            "apis": [{"id": api.id, "name": api.name, "description": api.description,"url":api.path} for api in apis],
         }
 
         return service_info
 
-    def get_all(self) -> list[McpService]:
+    def get_all(self) -> List[McpService]:
         return self.mcp_service_repository.get_all()
 
-    def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[list[McpService], int]:
+    def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[List[McpService], int]:
         """Get service list with pagination"""
         return self.mcp_service_repository.get_all_paginated(page=page, page_size=page_size)
 
@@ -463,7 +463,7 @@ class McpManagerService:
             logger.error(f"Failed to update service from OpenAPI: {str(e)}")
             raise ValueError(f"Failed to update service from OpenAPI: {str(e)}")
 
-    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[list[dict], int]:
+    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[List[dict], int]:
         """Get public services list with pagination, returns formatted data with API info"""
         services, total = self.mcp_service_repository.get_public_services_paginated(keyword, page, page_size)
 
