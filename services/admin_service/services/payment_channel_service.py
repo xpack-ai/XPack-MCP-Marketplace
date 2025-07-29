@@ -1,7 +1,7 @@
 import json
 import logging
 from sqlalchemy.orm import Session
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Tuple
 from services.common.database import SessionLocal
 from datetime import datetime
 from services.admin_service.repositories.payment_channel_repository import PaymentChannelRepository
@@ -14,8 +14,12 @@ class PaymentChannelService:
         self.db = db
         self.payment_channel_repository = PaymentChannelRepository(db)
     
-    def list(self) -> tuple[int,list[PaymentChannel]]:
+    def list(self) -> Tuple[int, List[PaymentChannel]]:
         return self.payment_channel_repository.payment_channel_list()
+
+    def available_list(self) -> List[PaymentChannel]:
+        """Get list of available payment channels"""
+        return self.payment_channel_repository.payment_channel_available_list()
     
     def get(self, id: str) -> Optional[PaymentChannel]:
         return self.payment_channel_repository.payment_channel_get(id)

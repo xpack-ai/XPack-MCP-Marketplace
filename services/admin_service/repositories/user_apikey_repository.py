@@ -3,7 +3,7 @@ import secrets
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from services.common.models.user_apikey import UserApiKey
-from typing import Optional
+from typing import Optional, List
 
 
 class UserApiKeyRepository:
@@ -53,7 +53,7 @@ class UserApiKeyRepository:
         self.db.delete(user_apikey)
         self.db.commit()
 
-    def get_by_user_id(self, user_id: str) -> list[UserApiKey]:
+    def get_by_user_id(self, user_id: str) -> List[UserApiKey]:
         return self.db.query(UserApiKey).filter(UserApiKey.user_id == user_id).all()
     
     def get_by_id(self, id: str) -> Optional[UserApiKey]:

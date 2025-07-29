@@ -41,3 +41,4 @@ htmlcov/
 local_settings.py 
 /.secrets
 /uploads/
+/.vercel/

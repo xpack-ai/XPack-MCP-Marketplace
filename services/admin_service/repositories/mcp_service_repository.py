@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from services.common.models.mcp_service import McpService
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 
 class McpServiceRepository:
@@ -51,10 +51,10 @@ class McpServiceRepository:
     def get_by_slug_name(self, slug_name: str) -> Optional[McpService]:
         return self.db.query(McpService).filter(McpService.slug_name == slug_name).first()
 
-    def get_all(self) -> list[McpService]:
+    def get_all(self) -> List[McpService]:
         return self.db.query(McpService).order_by(McpService.created_at.desc()).all()
 
-    def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[list[McpService], int]:
+    def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[List[McpService], int]:
         """Get service list with pagination"""
         offset = (page - 1) * page_size
 
@@ -77,7 +77,7 @@ class McpServiceRepository:
         self.db.refresh(mcp_service)
         return mcp_service
 
-    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[list[McpService], int]:
+    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[List[McpService], int]:
         """Get public service list with pagination, supports keyword search"""
         offset = (page - 1) * page_size
 

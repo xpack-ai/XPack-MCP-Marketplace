@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from services.common.models.mcp_tool_api import McpToolApi
-from typing import Optional
+from typing import Optional, List
 
 
 class McpToolApiRepository:
@@ -31,7 +31,7 @@ class McpToolApiRepository:
         self.db.refresh(mcp_tool_api)
         return mcp_tool_api
 
-    def get_by_service_id(self, service_id: str) -> list[McpToolApi]:
+    def get_by_service_id(self, service_id: str) -> List[McpToolApi]:
         """Get API list by service ID"""
         return self.db.query(McpToolApi).filter(
             McpToolApi.service_id == service_id,

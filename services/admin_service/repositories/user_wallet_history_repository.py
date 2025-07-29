@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
 from services.common.models.user_wallet_history import UserWalletHistory
 from services.common.models.user_wallet import UserWallet
@@ -214,7 +214,7 @@ class UserWalletHistoryRepository:
             self.db.rollback()
             return False
 
-    def success_order_list(self, offset: int, limit: int) -> tuple[int, list[UserWalletHistory]]:
+    def success_order_list(self, offset: int, limit: int) -> Tuple[int, List[UserWalletHistory]]:
         """
         Get list of successful orders.
 
@@ -272,7 +272,7 @@ class UserWalletHistoryRepository:
             self.db.rollback()
             return None
 
-    def order_list(self, payment_method: str, status: int, start: Optional[datetime] = None, end: Optional[datetime] = None) -> list[UserWalletHistory]:
+    def order_list(self, payment_method: str, status: int, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[UserWalletHistory]:
         """
         Get list of orders based on filters.
 

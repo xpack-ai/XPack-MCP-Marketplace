@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Tuple, List
 from services.common.models.user import User
 
 
@@ -77,7 +77,7 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
-    def get_user_list(self, offset: int, limit: int) -> tuple[int, list[User]]:
+    def get_user_list(self, offset: int, limit: int) -> Tuple[int, List[User]]:
         total = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).count()
 
         users = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).offset(offset).limit(limit).all()

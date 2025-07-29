@@ -4,7 +4,7 @@ MCP call log repository class
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
 from services.common.models.mcp_call_log import McpCallLog, ProcessStatus
 
@@ -41,7 +41,7 @@ class McpCallLogRepository:
             return True
         return False
 
-    def get_user_call_history(self, user_id: str, page: int = 1, page_size: int = 20) -> tuple[int, List[McpCallLog]]:
+    def get_user_call_history(self, user_id: str, page: int = 1, page_size: int = 20) -> Tuple[int, List[McpCallLog]]:
         total = self.db.query(McpCallLog).filter(McpCallLog.user_id == user_id).count()
 
         offset = (page - 1) * page_size

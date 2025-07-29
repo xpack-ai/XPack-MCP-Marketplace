@@ -24,18 +24,21 @@ from services.admin_service.constants.sys_config_key import (
     KEY_EMBEDED_HTML,
     KEY_TOP_NAVIGATION,
 )
+from services.admin_service.services.payment_channel_service import PaymentChannelService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-
 @router.get("/config", summary="Get configuration (no login required)", tags=["common"])
-def get_config(db: Session = Depends(get_db)):
+def get_config(
+        db: Session = Depends(get_db),
+):
     """Get platform configuration settings without authentication."""
     try:
         # Create service instance
         sys_config_service = SysConfigService(db)
+        payment_channel_service = PaymentChannelService(db)
 
         # Get platform config
         platform_name = sys_config_service.get_value_by_key(KEY_PLATFORM_NAME) or "XPack"
@@ -58,7 +61,23 @@ def get_config(db: Session = Depends(get_db)):
         # Convert to boolean
         email_is_enabled = email_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
         email_mode = sys_config_service.get_value_by_key(KEY_LOGIN_EMAIL_MODE) or "password"
-        
+
+        # Get homepage config
+        faq = sys_config_service.get_value_by_key(KEY_FAQ) or "[]"
+        embeded_html = sys_config_service.get_value_by_key(KEY_EMBEDED_HTML,True) or "{}"
+        top_navigation = sys_config_service.get_value_by_key(KEY_TOP_NAVIGATION) or "[]"
+        try:
+            faq = json.loads(faq)
+        except json.JSONDecodeError:
+            return ResponseUtils.error("FAQ配置格式错误")
+        try:
+            embeded_html = json.loads(embeded_html)
+        except json.JSONDecodeError:
+            return ResponseUtils.error("Embeded HTML配置格式错误")
+        try:
+            top_navigation = json.loads(top_navigation)
+        except json.JSONDecodeError:
+            return ResponseUtils.error("Top Navigation配置格式错误")
         # Build response data
         config_data = {
             "login": {
@@ -75,6 +94,10 @@ def get_config(db: Session = Depends(get_db)):
                 "theme": theme,
                 "about_page": about_page,
             },
+            "faq": faq,
+            "embeded_html": embeded_html,
+            "top_navigation": top_navigation,
+            "payment_channels": [{"id": item.id, "name": item.name} for item in payment_channel_service.available_list()],
         }
 
         return ResponseUtils.success(data=config_data)

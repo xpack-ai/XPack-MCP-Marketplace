@@ -35,7 +35,6 @@ class AlipayClient:
         """
         client = DefaultAlipayClient(alipay_client_config=self.config)
         model = AlipayTradePagePayModel()
-        print("create trade out_trade_no:", out_trade_no)
         model.out_trade_no = out_trade_no
         model.total_amount = total_amount
         model.subject = subject
@@ -53,7 +52,6 @@ class AlipayClient:
         Query Alipay order status by out_trade_no.
         """
         model = AlipayTradeQueryModel()
-        print("query out_trade_no:", out_trade_no)
         model.out_trade_no = out_trade_no
         
         request = AlipayTradeQueryRequest(biz_model=model)

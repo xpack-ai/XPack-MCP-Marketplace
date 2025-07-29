@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Tuple, List
 from services.common.models.user import User
 from services.common.database import SessionLocal
 
@@ -32,7 +32,7 @@ class UserService:
         """Delete user"""
         return self.user_repository.delete(user_id)
 
-    def get_user_list(self, offset: int, limit: int) -> tuple[int, list[User]]:
+    def get_user_list(self, offset: int, limit: int) -> Tuple[int, List[User]]:
         """Get user list"""
         return self.user_repository.get_user_list(offset, limit)
 

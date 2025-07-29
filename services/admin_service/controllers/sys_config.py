@@ -45,7 +45,6 @@ def get_homepage(
     except json.JSONDecodeError:
         return ResponseUtils.error("Top Navigation配置格式错误")
     embeded_html = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMBEDED_HTML,True) or "{}"
-    print("embeded_html:", embeded_html)
     try:
         embeded_html = json.loads(embeded_html)
     except json.JSONDecodeError:
