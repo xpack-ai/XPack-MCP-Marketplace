@@ -60,7 +60,8 @@ class Config:
         "/api/auth/google/sign",
         "/api/web/mcp_services",
         "/api/web/mcp_service_info",
-        "/api/payment/callback_stripe",
+        "/api/payment/callback_stripe", 
+        "/api/payment/callback_alipay",
     ]
 
     # Support custom no-auth paths via environment variable
