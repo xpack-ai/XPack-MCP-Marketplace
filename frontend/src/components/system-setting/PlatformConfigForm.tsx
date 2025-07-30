@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { calculateFileSha256 } from "@/shared/utils/crypto";
 import {
   Input,
   Button,
@@ -9,43 +8,107 @@ import {
   Accordion,
   Select,
   SelectItem,
+  Switch,
 } from "@nextui-org/react";
-import MDEditor, { commands } from "@uiw/react-md-editor";
 import { PlatformConfig, Theme } from "@/shared/types/system";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { SUPPORTED_LANGUAGES } from "@/shared/lib/i18n";
 import { ThemeSelector } from "./ThemeSelector";
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
+import toast from "react-hot-toast";
 
 interface PlatformConfigFormProps {
   config: PlatformConfig;
   onSave: (config: PlatformConfig) => void;
   onThemeChange?: (theme: Theme) => Promise<void>;
-  onAboutSave?: (aboutContent: string) => Promise<void>;
-  onImageUpload?: (file: File, sha256?: string) => Promise<string>;
   isLoading?: boolean;
-  isAboutLoading?: boolean;
 }
 
 export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
   config,
   onSave,
   onThemeChange,
-  onAboutSave,
-  onImageUpload,
   isLoading = false,
-  isAboutLoading = false,
 }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<PlatformConfig>(config);
+  const [validationErrors, setValidationErrors] = useState<{
+    domain?: string;
+    mcp_server_prefix?: string;
+  }>({});
 
   // when context config updated, sync to form
   useEffect(() => {
     setFormData(config);
   }, [config]);
 
+  // URL validation function with strict regex
+  const validateUrl = (url: string): boolean => {
+    if (!url.trim()) return true; // Empty is valid (optional field)
+    
+    // Strict regex for domain validation
+    const domainRegex = /^https?:\/\/(?:[-\w.])+(?:\:[0-9]+)?(?:\/.*)?$/;
+    
+    // First check with regex
+    if (!domainRegex.test(url)) {
+      return false;
+    }
+    
+    // Then validate with URL constructor for additional checks
+    try {
+      const urlObj = new URL(url);
+      return (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') && 
+             urlObj.hostname.length > 0 &&
+             urlObj.hostname.includes('.');
+    } catch {
+      return false;
+    }
+  };
+
+  // Validate field and update errors
+  const validateField = (field: 'domain' | 'mcp_server_prefix', value: string) => {
+    const isValid = validateUrl(value);
+    setValidationErrors(prev => ({
+      ...prev,
+      [field]: isValid ? undefined : t('Please enter a valid URL with http:// or https://')
+    }));
+    return isValid;
+  };
+
   const handleInputChange = (field: keyof PlatformConfig, value: string) => {
+    // Validate URL fields
+    if (field === 'domain' || field === 'mcp_server_prefix') {
+      validateField(field, value);
+    }
+
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+
+      // Auto-enable showcase when domain is filled and showcase is not explicitly set
+      if (
+        field === "domain" &&
+        value.trim() &&
+        prev.is_showcased === undefined
+      ) {
+        newData.is_showcased = true;
+      }
+
+      return newData;
+    });
+  };
+
+  const handleBooleanChange = (field: keyof PlatformConfig, value: boolean) => {
+    // Check domain requirement for is_showcased
+    if (field === "is_showcased" && value && !formData.domain?.trim()) {
+      // Show error message or prevent enabling
+      toast.error(t("Please enter a platform domain before enabling showcase"));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -53,27 +116,21 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
   };
 
   const handleSave = async () => {
+    // Validate all URL fields before saving
+    const domainValid = validateField('domain', formData.domain || '');
+    const mcpServerValid = validateField('mcp_server_prefix', formData.mcp_server_prefix || '');
+    
+    if (!domainValid || !mcpServerValid) {
+      toast.error(t('Please fix validation errors before saving'));
+      return;
+    }
+    
     onSave(formData);
   };
 
   const handleThemeChange = async (theme: Theme) => {
     handleInputChange("theme", theme);
     onThemeChange?.(theme);
-  };
-
-  const handleAboutSave = async () => {
-    onAboutSave?.(formData.about_page || "");
-  };
-
-  const handleImageUpload = async (file: File): Promise<string> => {
-    try {
-      // 计算文件的 SHA256 哈希值
-      const sha256 = await calculateFileSha256(file);
-      return await onImageUpload!(file, sha256);
-    } catch (error) {
-      console.error("Image upload failed:", error);
-      throw error;
-    }
   };
 
   return (
@@ -170,6 +227,56 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
                 </SelectItem>
               ))}
             </Select>
+
+            {/* platform domain */}
+            <Input
+              label={t("Platform Domain")}
+              placeholder={t(
+                "Enter platform domain (e.g., https://example.com)"
+              )}
+              description={t("The domain name of your platform")}
+              value={formData.domain || ""}
+              onChange={(e) => handleInputChange("domain", e.target.value)}
+              isInvalid={!!validationErrors.domain}
+              errorMessage={validationErrors.domain}
+            />
+
+            {/* mcp server prefix */}
+            <Input
+              label={t("MCP Server Domain")}
+              placeholder={t(
+                "Enter MCP server domain (e.g., https://mcp.example.com)"
+              )}
+              description={t("The domain for MCP server API calls")}
+              value={formData.mcp_server_prefix || ""}
+              onChange={(e) =>
+                handleInputChange("mcp_server_prefix", e.target.value)
+              }
+              isInvalid={!!validationErrors.mcp_server_prefix}
+              errorMessage={validationErrors.mcp_server_prefix}
+            />
+
+            {/* showcase in xpack */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium">
+                  {t("Featured in the XPack showcase")}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {t(
+                    "Enable this option to feature your site in the XPack global showcase and reach users worldwide."
+                  )}
+                </span>
+              </div>
+              <Switch
+                isSelected={formData.is_showcased ?? false}
+                onValueChange={(value) => {
+                  handleBooleanChange("is_showcased", value);
+                }}
+                color="primary"
+                size="sm"
+              />
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -179,120 +286,6 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
               variant="solid"
               onPress={handleSave}
               isLoading={isLoading}
-              size="sm"
-            >
-              {t("Save")}
-            </Button>
-          </div>
-        </AccordionItem>
-      </Accordion>
-
-      {/* About Page Accordion */}
-      <Accordion
-        variant="splitted"
-        itemClasses={{
-          base: "shadow-none border-1",
-        }}
-        className="px-0"
-        defaultExpandedKeys={["about-config"]}
-      >
-        <AccordionItem
-          key="about-config"
-          title={
-            <div className="flex flex-col justify-between">
-              <h3 className="text-lg font-semibold">
-                {t("About Page Content")}
-              </h3>
-              <p className="text-sm text-gray-500">
-                {t("Configure about page content")}
-              </p>
-            </div>
-          }
-        >
-          <div className="space-y-4">
-            <MDEditor
-              value={formData.about_page || ""}
-              onChange={(value?: string) =>
-                handleInputChange("about_page", value || "")
-              }
-              preview="live"
-              hideToolbar={false}
-              visibleDragbar={false}
-              data-color-mode="light"
-              textareaProps={{
-                placeholder: t("Enter about page content (supports Markdown)"),
-                style: {
-                  fontSize: 14,
-                  lineHeight: 1.6,
-                  fontFamily:
-                    'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-                },
-              }}
-              height={300}
-              commands={[
-                // 默认命令
-                commands.bold,
-                commands.italic,
-                commands.strikethrough,
-                commands.hr,
-                commands.title,
-                commands.divider,
-                commands.link,
-                commands.quote,
-                commands.code,
-                commands.codeBlock,
-                commands.comment,
-                commands.divider,
-                commands.unorderedListCommand,
-                commands.orderedListCommand,
-                commands.checkedListCommand,
-                commands.divider,
-                // 自定义图片上传命令
-                {
-                  name: "image-upload",
-                  keyCommand: "image-upload",
-                  buttonProps: {
-                    "aria-label": "Upload image",
-                    title: "Upload image",
-                  },
-                  icon: (
-                    <svg width="12" height="12" viewBox="0 0 20 20">
-                      <path
-                        fill="currentColor"
-                        d="M15 9c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm4-7H1c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h18c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zM2 17l4.5-6 3.5 4.51 2.5-3.01L17 17H2z"
-                      />
-                    </svg>
-                  ),
-                  execute: (state, api) => {
-                    const input = document.createElement("input");
-                    input.type = "file";
-                    input.accept = "image/*";
-                    input.onchange = async (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0];
-                      if (file) {
-                        try {
-                          const dataUrl = await handleImageUpload(file);
-                          const imageMarkdown = `![${file.name}](${window.location.origin}${dataUrl})`;
-                          api.replaceSelection(imageMarkdown);
-                        } catch (error) {
-                          console.error("Image upload failed:", error);
-                        }
-                      }
-                    };
-                    input.click();
-                  },
-                },
-              ]}
-            />
-          </div>
-
-          {/* About Save Button */}
-          <div className="flex gap-3 py-4">
-            <Button
-              color="primary"
-              variant="solid"
-              onPress={handleAboutSave}
-              isLoading={isAboutLoading}
               size="sm"
             >
               {t("Save")}

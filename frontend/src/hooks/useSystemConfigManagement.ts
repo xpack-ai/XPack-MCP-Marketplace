@@ -1,5 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
-import { PlatformConfig, LoginConfig, EmailMode } from "@/shared/types/system";
+import { 
+  PlatformConfig, 
+  LoginConfig, 
+  EmailMode, 
+  FaqItem, 
+  TopNavigationItem, 
+  EmbeddedHtmlConfig, 
+  PaymentChannel 
+} from "@/shared/types/system";
 import { systemConfigService } from "@/services/systemConfigService";
 import { AdminConfig, EmailConfig } from "@/types/system";
 import { md5Encrypt } from "@/shared/utils/crypto";
@@ -49,6 +57,29 @@ export const useSystemConfigManagement = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
+  // faq config
+  const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
+  const [faqLoading, setFaqLoading] = useState(false);
+  const [faqError, setFaqError] = useState<string | null>(null);
+
+  // top navigation config
+  const [topNavigation, setTopNavigation] = useState<TopNavigationItem[]>([]);
+  const [navigationLoading, setNavigationLoading] = useState(false);
+  const [navigationError, setNavigationError] = useState<string | null>(null);
+
+  // embedded html config
+  const [embeddedHtml, setEmbeddedHtml] = useState<EmbeddedHtmlConfig | null>(null);
+  const [embeddedHtmlLoading, setEmbeddedHtmlLoading] = useState(false);
+  const [embeddedHtmlError, setEmbeddedHtmlError] = useState<string | null>(null);
+
+  // payment channels config
+  const [paymentChannels, setPaymentChannels] = useState<PaymentChannel[]>([]);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  // installation status
+  const [isInstalled, setIsInstalled] = useState<boolean>(false);
+
   // global loading
   const [isLoading, setIsLoading] = useState(false);
 
@@ -80,6 +111,11 @@ export const useSystemConfigManagement = () => {
           mode: EmailMode.PASSWORD,
         },
       });
+      setFaqItems(response.faq || []);
+      setTopNavigation(response.top_navigation || []);
+      setEmbeddedHtml(response.embeded_html || null);
+      setPaymentChannels(response.payment_channels || []);
+      setIsInstalled(response.is_installed || false);
     } catch (error) {
       console.error("Failed to load configurations:", error);
     } finally {
@@ -160,11 +196,71 @@ export const useSystemConfigManagement = () => {
     return result;
   }, []);
 
+  // save faq config
+  const saveFaqConfig = useCallback(async (items: FaqItem[]) => {
+    setFaqLoading(true);
+    setFaqError(null);
+    const result = await systemConfigService.updateSystemConfig({
+      faq: items,
+    }, "faq");
+    if (result) {
+      setFaqItems(items);
+    }
+    setFaqLoading(false);
+    return result;
+  }, []);
+
+  // save top navigation config
+  const saveTopNavigationConfig = useCallback(async (items: TopNavigationItem[]) => {
+    setNavigationLoading(true);
+    setNavigationError(null);
+    const result = await systemConfigService.updateSystemConfig({
+      top_navigation: items,
+    }, "navigation");
+    if (result) {
+      setTopNavigation(items);
+    }
+    setNavigationLoading(false);
+    return result;
+  }, []);
+
+  // save embedded html config
+  const saveEmbeddedHtmlConfig = useCallback(async (config: EmbeddedHtmlConfig) => {
+    setEmbeddedHtmlLoading(true);
+    setEmbeddedHtmlError(null);
+    const result = await systemConfigService.updateSystemConfig({
+      embeded_html: config,
+    }, "embedded_html");
+    if (result) {
+      setEmbeddedHtml(config);
+    }
+    setEmbeddedHtmlLoading(false);
+    return result;
+  }, []);
+
+  // save payment channels config
+  const savePaymentChannelsConfig = useCallback(async (channels: PaymentChannel[]) => {
+    setPaymentLoading(true);
+    setPaymentError(null);
+    const result = await systemConfigService.updateSystemConfig({
+      payment_channels: channels,
+    }, "payment");
+    if (result) {
+      setPaymentChannels(channels);
+    }
+    setPaymentLoading(false);
+    return result;
+  }, []);
+
   // clear errors
   const clearPlatformError = useCallback(() => setPlatformError(null), []);
   const clearAdminError = useCallback(() => setAdminError(null), []);
   const clearEmailError = useCallback(() => setEmailError(null), []);
   const clearLoginError = useCallback(() => setLoginError(null), []);
+  const clearFaqError = useCallback(() => setFaqError(null), []);
+  const clearNavigationError = useCallback(() => setNavigationError(null), []);
+  const clearEmbeddedHtmlError = useCallback(() => setEmbeddedHtmlError(null), []);
+  const clearPaymentError = useCallback(() => setPaymentError(null), []);
 
   // load configs on init
   useEffect(() => {
@@ -216,6 +312,42 @@ export const useSystemConfigManagement = () => {
     loginError,
     saveLoginConfig,
     clearLoginError,
+
+    // faq config
+    faqItems,
+    setFaqItems,
+    faqLoading,
+    faqError,
+    saveFaqConfig,
+    clearFaqError,
+
+    // top navigation config
+    topNavigation,
+    setTopNavigation,
+    navigationLoading,
+    navigationError,
+    saveTopNavigationConfig,
+    clearNavigationError,
+
+    // embedded html config
+    embeddedHtml,
+    setEmbeddedHtml,
+    embeddedHtmlLoading,
+    embeddedHtmlError,
+    saveEmbeddedHtmlConfig,
+    clearEmbeddedHtmlError,
+
+    // payment channels config
+    paymentChannels,
+    setPaymentChannels,
+    paymentLoading,
+    paymentError,
+    savePaymentChannelsConfig,
+    clearPaymentError,
+
+    // installation status
+    isInstalled,
+    setIsInstalled,
 
     // image upload
     uploadImage,

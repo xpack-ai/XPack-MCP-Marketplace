@@ -23,6 +23,7 @@ import {
 import { Footer } from "./Footer";
 import { Navigation } from "./Navigation";
 import { NavigationItem } from "@/shared/components/Navigation";
+import { Faq } from "@/components/marketplace/Faq";
 
 interface HomeProps {
   // 状态
@@ -69,17 +70,17 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* Creative Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-50">
-        {/* 主要装饰圆圈 */}
+        {/* main decorative circles */}
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-pink-400/15 to-orange-400/15 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-orange-400/10 to-yellow-400/10 rounded-full blur-3xl"></div>
 
-        {/* 小装饰圆圈 */}
+        {/* small decorative circles */}
         <div className="absolute top-10 right-20 w-16 h-16 bg-gradient-to-br from-pink-400/20 to-red-500/20 rounded-full transform rotate-12"></div>
         <div className="absolute top-32 left-16 w-12 h-12 bg-gradient-to-br from-orange-400/25 to-yellow-400/25 rounded-full transform -rotate-12"></div>
         <div className="absolute bottom-20 left-1/3 w-20 h-20 bg-gradient-to-br from-yellow-400/15 to-pink-400/15 rounded-full transform rotate-6"></div>
         <div className="absolute bottom-32 right-16 w-14 h-14 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full transform -rotate-6"></div>
 
-        {/* 微小装饰点 */}
+        {/* small decorative points */}
         <div className="absolute top-1/3 right-1/3 w-4 h-4 bg-pink-400/30 rounded-full"></div>
         <div className="absolute top-2/3 left-1/5 w-3 h-3 bg-orange-400/40 rounded-full"></div>
         <div className="absolute bottom-1/3 right-1/5 w-5 h-5 bg-yellow-400/25 rounded-full"></div>
@@ -129,7 +130,7 @@ export const Home: React.FC<HomeProps> = ({
                       placeholder={
                         searchSuggestions.length > 0
                           ? t(searchSuggestions[0])
-                          : t("✨ 发现神奇的服务...")
+                          : t("✨ Discover amazing services...")
                       }
                       value={searchQuery}
                       onChange={(e) => onSearchChange(e.target.value)}
@@ -170,9 +171,6 @@ export const Home: React.FC<HomeProps> = ({
           <div className="bg-white/90 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-pink-200/50">
             <div className="flex items-center gap-4">
               <Spinner size="lg" color="secondary" />
-              <span className="text-gray-700 text-lg font-bold">
-                ✨ 加载魔法中...
-              </span>
             </div>
           </div>
         </div>
@@ -180,7 +178,7 @@ export const Home: React.FC<HomeProps> = ({
         <div className="relative z-10">
           <div className="relative mx-auto px-6 py-16 max-w-8xl">
             {/* Creative Services Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-4 mb-12">
               {services.map((service, index) => {
                 const gradientBorders = [
                   "border-pink-200/50",
@@ -211,7 +209,7 @@ export const Home: React.FC<HomeProps> = ({
                   <Link
                     key={service.service_id}
                     href={`/marketplace/${service.service_id}`}
-                    className="block group"
+                    className="block group w-full md:w-[calc(50%-16px)] lg:w-[calc(33%-16px)] xl:w-[calc(25%-16px)]"
                   >
                     <Card
                       className={`
@@ -220,11 +218,11 @@ export const Home: React.FC<HomeProps> = ({
                       hover:scale-105 hover:shadow-xl 
                       transition-all duration-300 ease-out
                       group-hover:bg-white/90 relative
-                      h-[200px]
+                      h-[200px] w-full
                     `}
                     >
                       <CardBody className="p-6">
-                        {/* 创意图标 */}
+                        {/* creative icon */}
                         <div
                           className={` absolute -top-2 -left-2
                           w-8 h-8 ${iconGradients[index % 6]} 
@@ -233,17 +231,18 @@ export const Home: React.FC<HomeProps> = ({
                         `}
                         ></div>
 
-                        {/* 服务标题 */}
+                        {/* service title */}
                         <div className="text-lg font-bold text-gray-800 mb-2 group-hover:text-gray-900 transition-colors">
                           {service.name}
                         </div>
 
-                        {/* 服务描述 */}
-                        <div className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors flex-1">
-                          {service.short_description || "探索精彩服务"}
+                        {/* service description */}
+                        <div className="text-gray-600 text-sm line-clamp-3 leading-relaxed mb-4">
+                          {service.short_description ||
+                            t("No description available")}
                         </div>
 
-                        {/* 装饰性元素 */}
+                        {/* decorative elements */}
                         <div className="absolute top-2 right-2 w-3 h-3 bg-gradient-to-r from-pink-400/30 to-orange-400/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </CardBody>
 
@@ -265,6 +264,8 @@ export const Home: React.FC<HomeProps> = ({
                             <Price
                               price={service.price}
                               charge_type={service.charge_type}
+                              input_token_price={service.input_token_price}
+                              output_token_price={service.output_token_price}
                             />
                           </div>
                         </div>
@@ -317,6 +318,7 @@ export const Home: React.FC<HomeProps> = ({
           `}</style>
         </div>
       )}
+      <Faq />
       <Footer />
     </div>
   );

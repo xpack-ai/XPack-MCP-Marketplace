@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { Input, Button, AccordionItem, Accordion } from '@nextui-org/react';
-import { Eye, EyeOff } from 'lucide-react';
-import { AdminConfig } from '@/types/system';
+import React, { useEffect, useState } from "react";
+import { Input, Button, AccordionItem, Accordion } from "@nextui-org/react";
+import { Eye, EyeOff } from "lucide-react";
+import { AdminConfig } from "@/types/system";
 import { useTranslation } from "@/shared/lib/useTranslation";
 
 interface AdminConfigFormProps {
@@ -20,20 +20,20 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = ({
   const { t } = useTranslation();
   const [formData, setFormData] = useState<AdminConfig>(config);
   const [showPassword, setShowPassword] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   useEffect(() => {
     setFormData({
       ...config,
-      password: '',
+      password: "",
     });
-    setConfirmPassword('');
+    setConfirmPassword("");
   }, [config]);
 
   const handleInputChange = (field: keyof AdminConfig, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -42,41 +42,53 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = ({
   };
 
   const isFormValid =
-    formData.username.trim() !== '' &&
-    formData.password.trim() !== '' &&
+    formData.username.trim() !== "" &&
+    formData.password?.trim() !== "" &&
     formData.password === confirmPassword &&
-    formData.password.length >= 8;
+    formData.password?.length >= 8;
 
   const passwordsMatch = formData.password === confirmPassword;
 
   return (
-    <Accordion variant='splitted' itemClasses={{
-      base: 'shadow-none border-1',
-    }} defaultExpandedKeys={['admin-config']} className='px-0'>
-      <AccordionItem key="admin-config" title={
-        <div className="flex flex-col justify-between">
-          <h3 className="text-lg font-semibold">{t('Administrator Account')}</h3>
-          <p className="text-sm text-gray-500">{t('Configure administrator login credentials')}</p>
-        </div>
-      }>
+    <Accordion
+      variant="splitted"
+      itemClasses={{
+        base: "shadow-none border-1",
+      }}
+      defaultExpandedKeys={["admin-config"]}
+      className="px-0"
+    >
+      <AccordionItem
+        key="admin-config"
+        title={
+          <div className="flex flex-col justify-between">
+            <h3 className="text-lg font-semibold">
+              {t("Administrator Account")}
+            </h3>
+            <p className="text-sm text-gray-500">
+              {t("Configure administrator login credentials")}
+            </p>
+          </div>
+        }
+      >
         <div className="space-y-4">
           {/* admin username */}
           <Input
-            label={t('Administrator Username')}
-            placeholder={t('Enter administrator username')}
-            description={t('Username for administrator login')}
+            label={t("Administrator Username")}
+            placeholder={t("Enter administrator username")}
+            description={t("Username for administrator login")}
             value={formData.username}
-            onChange={(e) => handleInputChange('username', e.target.value)}
+            onChange={(e) => handleInputChange("username", e.target.value)}
             isRequired
           />
 
           {/* admin password */}
           <Input
-            label={t('Administrator Password')}
-            placeholder={t('Enter administrator password')}
-            description={t('Password must be at least 8 characters long')}
+            label={t("Administrator Password")}
+            placeholder={t("Enter administrator password")}
+            description={t("Password must be at least 8 characters long")}
             value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
+            onChange={(e) => handleInputChange("password", e.target.value)}
             type={showPassword ? "text" : "password"}
             endContent={
               <button
@@ -92,16 +104,24 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = ({
               </button>
             }
             isRequired
-            autoComplete='new-password'
-            color={formData.password.length > 0 && formData.password.length < 8 ? "danger" : "default"}
-            errorMessage={formData.password.length > 0 && formData.password.length < 8 ? t('Password must be at least 8 characters') : ""}
+            autoComplete="new-password"
+            color={
+              formData.password?.length > 0 && formData.password?.length < 8
+                ? "danger"
+                : "default"
+            }
+            errorMessage={
+              formData.password?.length > 0 && formData.password?.length < 8
+                ? t("Password must be at least 8 characters")
+                : ""
+            }
           />
 
           {/* confirm password */}
           <Input
-            label={t('Confirm Password')}
-            placeholder={t('Confirm administrator password')}
-            description={t('Re-enter the password to confirm')}
+            label={t("Confirm Password")}
+            placeholder={t("Confirm administrator password")}
+            description={t("Re-enter the password to confirm")}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             type={showConfirmPassword ? "text" : "password"}
@@ -118,10 +138,18 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = ({
                 )}
               </button>
             }
-            autoComplete='new-password'
+            autoComplete="new-password"
             isRequired
-            color={confirmPassword.length > 0 && !passwordsMatch ? "danger" : "default"}
-            errorMessage={confirmPassword.length > 0 && !passwordsMatch ? t('Passwords do not match') : ""}
+            color={
+              confirmPassword?.length > 0 && !passwordsMatch
+                ? "danger"
+                : "default"
+            }
+            errorMessage={
+              confirmPassword?.length > 0 && !passwordsMatch
+                ? t("Passwords do not match")
+                : ""
+            }
           />
         </div>
 
@@ -133,9 +161,9 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = ({
             onPress={handleSave}
             isLoading={isLoading}
             isDisabled={!isFormValid}
-            size='sm'
+            size="sm"
           >
-            {t('Save')}
+            {t("Save")}
           </Button>
         </div>
       </AccordionItem>

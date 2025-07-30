@@ -52,7 +52,12 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
           </div>
           <div className="hidden lg:flex gap-6 justify-center">
             {items?.map((item) => (
-              <Link href={item.href} className="text-sm text-gray-500">
+              <Link
+                key={item.href}
+                href={item.href}
+                target={item.target}
+                className="text-sm text-gray-500"
+              >
                 {t(item.label)}
               </Link>
             ))}

@@ -1,18 +1,33 @@
 "use client";
 
 import React, { useState } from "react";
-import { PlatformConfigForm } from "@/components/system-setting/PlatformConfigForm";
-import { AdminConfigForm } from "@/components/system-setting/AdminConfigForm";
-import { EmailConfigForm } from "@/components/system-setting/EmailConfigForm";
+import { HomepageSettings } from "@/components/system-setting/HomepageSettings";
+import { AboutPageSettings } from "@/components/system-setting/AboutPageSettings";
+import { EmailAndAdminSettings } from "@/components/system-setting/EmailAndAdminSettings";
 import { useSystemConfigManagement } from "@/hooks/useSystemConfigManagement";
 import { usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
 import { Theme } from "@/shared/types/system";
 import i18n from "@/shared/lib/i18n";
+import { PlatformConfigForm } from "../system-setting/PlatformConfigForm";
+import DashboardDemoContent from "@/shared/components/DashboardDemoContent";
+import { useTranslation } from "@/shared/lib/useTranslation";
+import { SidebarSubItem, TabKey } from "@/shared/types/dashboard";
+import { LoginSettingsContent } from "./LoginSettingsContent";
 
-export const SystemSettingsContent: React.FC = () => {
+interface SystemSettingsContentProps {
+  activeSubTab?: string;
+  subTab?: SidebarSubItem;
+  onTabNavigate: (tab: TabKey, subTab?: string) => void;
+}
+
+export const SystemSettingsContent: React.FC<SystemSettingsContentProps> = ({
+  activeSubTab,
+  subTab,
+  onTabNavigate,
+}) => {
   const { updateClientConfig } = usePlatformConfig();
   const [isAboutLoading, setIsAboutLoading] = useState(false);
-
+  const { t } = useTranslation();
   const {
     // platform config
     platformConfig,
@@ -31,6 +46,10 @@ export const SystemSettingsContent: React.FC = () => {
 
     // image upload
     uploadImage,
+
+    // login config
+    loginConfig,
+    saveLoginConfig,
   } = useSystemConfigManagement();
 
   // save admin config
@@ -77,33 +96,60 @@ export const SystemSettingsContent: React.FC = () => {
     });
   };
 
+  // Render content based on active sub tab
+  const renderSubTabContent = () => {
+    switch (activeSubTab) {
+      case "homepage":
+        return <HomepageSettings />;
+      case "about-page":
+        return (
+          <AboutPageSettings
+            config={platformConfig}
+            onAboutSave={handleAboutSave}
+            onImageUpload={uploadImage}
+            isAboutLoading={isAboutLoading}
+          />
+        );
+      case "email-admin":
+        return (
+          <EmailAndAdminSettings
+            emailConfig={emailConfig}
+            adminConfig={adminConfig}
+            onSaveEmailConfig={handleSaveEmailConfig}
+            onSaveAdminConfig={handleSaveAdminConfig}
+            isLoading={emailLoading}
+            isAdminLoading={adminLoading}
+          />
+        );
+      case "login-settings":
+        return (
+          <LoginSettingsContent
+            onTabNavigate={onTabNavigate}
+            loginConfig={loginConfig}
+            saveLoginConfig={saveLoginConfig}
+            emailConfig={emailConfig}
+          />
+        );
+      case "general":
+      default:
+        return (
+          <PlatformConfigForm
+            config={platformConfig}
+            onSave={handleSavePlatformConfig}
+            onThemeChange={handleThemeChange}
+            isLoading={platformLoading}
+          />
+        );
+    }
+  };
+
   return (
-    <div className="space-y-6 w-full">
-      {/* platform config */}
-      <PlatformConfigForm
-        config={platformConfig}
-        onSave={handleSavePlatformConfig}
-        onThemeChange={handleThemeChange}
-        onAboutSave={handleAboutSave}
-        isLoading={platformLoading}
-        isAboutLoading={isAboutLoading}
-        onImageUpload={uploadImage}
-      />
-
-      {/* admin config */}
-      <AdminConfigForm
-        config={adminConfig}
-        onSave={handleSaveAdminConfig}
-        isLoading={adminLoading}
-      />
-
-      {/* email config */}
-      <EmailConfigForm
-        config={emailConfig}
-        onSave={handleSaveEmailConfig}
-        isLoading={emailLoading}
-      />
-    </div>
+    <DashboardDemoContent
+      title={t(subTab?.label || "System Settings")}
+      description={t(subTab?.description || "Platform basic configuration")}
+    >
+      {renderSubTabContent()}
+    </DashboardDemoContent>
   );
 };
 

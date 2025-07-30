@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 import {
   Table,
   TableHeader,
@@ -12,19 +12,19 @@ import {
   Button,
   Tooltip,
   Pagination,
-  Spinner
-} from '@nextui-org/react';
-import { useTranslation } from '@/shared/lib/useTranslation';
-import { EnabledEnum, MCPService } from '@/types/mcp-service';
+  Spinner,
+} from "@nextui-org/react";
+import { useTranslation } from "@/shared/lib/useTranslation";
+import { EnabledEnum, MCPService } from "@/types/mcp-service";
 import {
   Trash2,
   Zap,
   PencilIcon,
   CircleCheckIcon,
   BanIcon,
-} from 'lucide-react';
-import { ChargeType } from '@/shared/types/marketplace';
-import { Price } from '@/shared/components/marketplace/Price';
+} from "lucide-react";
+import { ChargeType } from "@/shared/types/marketplace";
+import { Price } from "@/shared/components/marketplace/Price";
 
 interface ServiceTableProps {
   services: MCPService[];
@@ -58,22 +58,29 @@ export const ServiceTable: React.FC<ServiceTableProps> = ({
   const items = services;
 
   const getStatusColor = (enabled: number) => {
-    return enabled === EnabledEnum.Online ? 'success' : 'danger';
+    return enabled === EnabledEnum.Online ? "success" : "danger";
   };
 
+  const handleEdit = React.useCallback(
+    (service: MCPService) => {
+      onEdit(service);
+    },
+    [onEdit]
+  );
 
-  const handleEdit = React.useCallback((service: MCPService) => {
-    onEdit(service);
-  }, [onEdit]);
+  const handleDelete = React.useCallback(
+    (service: MCPService) => {
+      onDelete(service);
+    },
+    [onDelete]
+  );
 
-  const handleDelete = React.useCallback((service: MCPService) => {
-    onDelete(service);
-  }, [onDelete]);
-
-  const handleToggleStatus = React.useCallback((service: MCPService) => {
-    onToggleStatus(service);
-  }, [onToggleStatus]);
-
+  const handleToggleStatus = React.useCallback(
+    (service: MCPService) => {
+      onToggleStatus(service);
+    },
+    [onToggleStatus]
+  );
 
   if (loading && services.length === 0) {
     return (
@@ -96,7 +103,7 @@ export const ServiceTable: React.FC<ServiceTableProps> = ({
             <div className="flex w-full justify-center">
               <Pagination
                 showControls
-                variant='light'
+                variant="light"
                 color="primary"
                 page={currentPage}
                 total={pages}
@@ -107,17 +114,17 @@ export const ServiceTable: React.FC<ServiceTableProps> = ({
         }
       >
         <TableHeader>
-          <TableColumn>{t('Service Name')}</TableColumn>
-          <TableColumn>{t('API Endpoint')}</TableColumn>
-          <TableColumn>{t('Status')}</TableColumn>
-          <TableColumn>{t('Pricing')}</TableColumn>
-          <TableColumn className='w-20'>{t('Actions')}</TableColumn>
+          <TableColumn>{t("Service Name")}</TableColumn>
+          <TableColumn>{t("API Endpoint")}</TableColumn>
+          <TableColumn>{t("Status")}</TableColumn>
+          <TableColumn>{t("Pricing")}</TableColumn>
+          <TableColumn className="w-20">{t("Actions")}</TableColumn>
         </TableHeader>
         <TableBody
           items={items}
           isLoading={loading}
           loadingContent={<Spinner />}
-          emptyContent={t('No services found')}
+          emptyContent={t("No services found")}
         >
           {(service) => (
             <TableRow key={service.id}>
@@ -134,17 +141,22 @@ export const ServiceTable: React.FC<ServiceTableProps> = ({
                   size="sm"
                   variant="flat"
                 >
-                  {t(service.enabled === 1 ? 'Online' : 'Offline')}
+                  {t(service.enabled === 1 ? "Online" : "Offline")}
                 </Chip>
               </TableCell>
               <TableCell>
                 <div className="flex flex-col gap-1">
-                  <Price price={service.price} charge_type={service.charge_type} />
+                  <Price
+                    price={service.price}
+                    charge_type={service.charge_type}
+                    input_token_price={service.input_token_price}
+                    output_token_price={service.output_token_price}
+                  />
                 </div>
               </TableCell>
               <TableCell>
                 <div className="relative flex items-center gap-2">
-                  <Tooltip content={t('Edit')} closeDelay={0}>
+                  <Tooltip content={t("Edit")} closeDelay={0} disableAnimation>
                     <Button
                       isIconOnly
                       size="sm"
@@ -155,22 +167,40 @@ export const ServiceTable: React.FC<ServiceTableProps> = ({
                     </Button>
                   </Tooltip>
 
-                  <Tooltip content={service.enabled === EnabledEnum.Online ? t('Take Offline') : t('Bring Online')} closeDelay={0}  >
+                  <Tooltip
+                    content={
+                      service.enabled === EnabledEnum.Online
+                        ? t("Take Offline")
+                        : t("Bring Online")
+                    }
+                    closeDelay={0}
+                    disableAnimation
+                  >
                     <Button
                       isIconOnly
                       size="sm"
                       variant="light"
-                      color={service.enabled === EnabledEnum.Online ? 'danger' : 'success'}
+                      color={
+                        service.enabled === EnabledEnum.Online
+                          ? "danger"
+                          : "success"
+                      }
                       onPress={() => handleToggleStatus(service)}
                     >
-                      {service.enabled === EnabledEnum.Online ?
-                        <BanIcon className="w-4 h-4" /> :
+                      {service.enabled === EnabledEnum.Online ? (
+                        <BanIcon className="w-4 h-4" />
+                      ) : (
                         <CircleCheckIcon className="w-4 h-4" />
-                      }
+                      )}
                     </Button>
                   </Tooltip>
 
-                  <Tooltip content={t('Delete Service')} color="danger" closeDelay={0}>
+                  <Tooltip
+                    content={t("Delete Service")}
+                    color="danger"
+                    closeDelay={0}
+                    disableAnimation
+                  >
                     <Button
                       isIconOnly
                       size="sm"

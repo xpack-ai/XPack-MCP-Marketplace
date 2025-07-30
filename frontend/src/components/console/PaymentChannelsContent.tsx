@@ -1,33 +1,25 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { StripeConfigForm } from './StripeConfigForm';
-import { useTranslation } from "@/shared/lib/useTranslation";
+import React from "react";
+import { StripeConfigForm } from "../payment/StripeConfigForm";
+import { AlipayConfigForm } from "../payment/AlipayConfigForm";
+import { WechatConfigForm } from "../payment/WechatConfigForm";
 import { usePaymentChannelManagement } from "@/hooks/usePaymentChannelManagement";
-import { StripeConfig } from "@/types/payment";
-import { toast } from "react-hot-toast";
 
 export const PaymentChannelsContent: React.FC = () => {
-  const { t } = useTranslation();
-
   const {
     stripeConfig,
-    isSaving,
+    alipayConfig,
+    wechatConfig,
+    isWechatSaving,
+    isStripeSaving,
+    isAlipaySaving,
     saveStripeConfig,
-    testStripeConnection,
+    saveAlipayConfig,
+    saveWechatConfig,
+    enableChannel,
+    disableChannel,
   } = usePaymentChannelManagement();
-
-
-  // test stripe connection
-  const handleTestStripeConnection = async (config: StripeConfig) => {
-    const result = await testStripeConnection(config);
-
-    if (result.success) {
-      toast.success(t("Stripe connection test successful"));
-    } else {
-      toast.error(result.message || t("Stripe connection test failed"));
-    }
-  };
 
   return (
     <div className="space-y-6 w-full">
@@ -35,10 +27,28 @@ export const PaymentChannelsContent: React.FC = () => {
       <StripeConfigForm
         config={stripeConfig}
         onSave={saveStripeConfig}
-        onTest={handleTestStripeConnection}
-        isLoading={isSaving}
-        isTestLoading={false}
+        onEnable={enableChannel}
+        onDisable={disableChannel}
+        isLoading={isStripeSaving}
       />
+      {/* coming soon */}
+      {/* alipay configuration */}
+      {/* <AlipayConfigForm
+        config={alipayConfig}
+        onSave={saveAlipayConfig}
+        onEnable={enableChannel}
+        onDisable={disableChannel}
+        isLoading={isAlipaySaving}
+      /> */}
+      {/* coming soon */}
+      {/* wechat configuration */}
+      {/* <WechatConfigForm
+        config={wechatConfig}
+        onSave={saveWechatConfig}
+        onEnable={enableChannel}
+        onDisable={disableChannel}
+        isLoading={isWechatSaving}
+      /> */}
     </div>
   );
 };

@@ -1,10 +1,10 @@
 "use client";
 
-import React from 'react';
-import { Input, Select, SelectItem, Button } from '@nextui-org/react';
-import { useTranslation } from '@/shared/lib/useTranslation';
-import { ServiceFilters } from '@/types/mcp-service';
-import { Search, Plus } from 'lucide-react';
+import React from "react";
+import { Input, Select, SelectItem, Button } from "@nextui-org/react";
+import { useTranslation } from "@/shared/lib/useTranslation";
+import { ServiceFilters } from "@/types/mcp-service";
+import { Search, Plus } from "lucide-react";
 
 interface ServiceFiltersBarProps {
   filters: ServiceFilters;
@@ -16,7 +16,7 @@ interface ServiceFiltersBarProps {
 export const ServiceFiltersBar: React.FC<ServiceFiltersBarProps> = ({
   filters,
   onFiltersChange,
-  onImportOpenAPI
+  onImportOpenAPI,
 }) => {
   const { t } = useTranslation();
 
@@ -24,20 +24,20 @@ export const ServiceFiltersBar: React.FC<ServiceFiltersBarProps> = ({
     onFiltersChange({ ...filters, search: value });
   };
 
-
   const handleStatusChange = (value: string) => {
     onFiltersChange({ ...filters, status: value });
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+    <div className="flex flex-col sm:flex-row gap-4">
       <div className="flex-1">
         <Button
           color="primary"
           onPress={onImportOpenAPI}
           startContent={<Plus size={16} />}
+          size="sm"
         >
-          {t('Add Service')}
+          {t("Add Service")}
         </Button>
         {/* <Input
           placeholder={t('Search services...')}
@@ -74,9 +74,6 @@ export const ServiceFiltersBar: React.FC<ServiceFiltersBarProps> = ({
             </SelectItem>
           ))}
         </Select> */}
-
-
-
       </div>
     </div>
   );

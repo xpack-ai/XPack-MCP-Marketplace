@@ -19,6 +19,8 @@ export interface BaseMCPService {
   long_description?: string;
   charge_type: ChargeType;
   price?: string;
+  input_token_price?: string;
+  output_token_price?: string;
   apis: MCPServiceAPIItem[];
   tags?: string[];
 }
@@ -34,6 +36,7 @@ export interface MCPServiceAPIItem {
   id: string;
   name: string;
   description?: string;
+  url?: string;
 }
 
 // form data interface, used to create and edit service
@@ -48,6 +51,8 @@ export interface MCPServiceFormData {
   auth_token?: string;
   charge_type: ChargeType;
   price?: string;
+  input_token_price?: string; // Price for input tokens when charge_type is PerToken
+  output_token_price?: string; // Price for output tokens when charge_type is PerToken
   enabled: EnabledEnum; // API requires string type
   apis: MCPServiceAPIItem[];
   tags?: string[];
@@ -89,41 +94,6 @@ export interface ServiceDeleteRequest {
   id: string;
 }
 
-// predefined auth methods
-export const AUTH_METHODS = [
-  { value: "free", label: "free" },
-  { value: "apikey", label: "API key" },
-] as const;
-
-// predefined charge types
-export const CHARGE_TYPES = [
-  { value: "free", label: "free" },
-  { value: "per_call", label: "per call" },
-  { value: "per_token", label: "per token" },
-] as const;
-
-// predefined service categories
-export const SERVICE_CATEGORIES = [
-  "Web Services",
-  "Database",
-  "AI/ML",
-  "Authentication",
-  "Payment",
-  "Communication",
-  "Analytics",
-  "Storage",
-  "Security",
-  "Development Tools",
-  "Financial",
-  "Logistics & Transportation",
-  "E-commerce",
-  "Social Media",
-  "Content Management",
-  "Other",
-] as const;
-
-export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
-
 // tool function: convert frontend form data to API data
 export function convertFormToAPI(
   formData: MCPServiceFormData
@@ -138,6 +108,8 @@ export function convertFormToAPI(
     auth_token: formData.auth_token,
     charge_type: formData.charge_type,
     price: formData.price,
+    input_token_price: formData.input_token_price,
+    output_token_price: formData.output_token_price,
     enabled: formData.enabled,
     apis: formData.apis,
     tags: formData.tags,

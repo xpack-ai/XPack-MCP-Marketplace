@@ -2,22 +2,41 @@ import { useState, useEffect, useCallback } from "react";
 import {
   PaymentChannelApiItem,
   StripeConfig,
+  AlipayConfig,
+  WechatConfig,
   PaymentChannelTestResult,
 } from "@/types/payment";
 import { paymentChannelService } from "@/services/paymentChannelService";
+import { usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
+import { revalidatePlatformConfig } from "@/app/actions/revalidate";
 
 export const usePaymentChannelManagement = () => {
+  const { updateClientConfig, paymentChannels } = usePlatformConfig();
   const [channels, setChannels] = useState<PaymentChannelApiItem[]>([]);
   const [stripeConfig, setStripeConfig] = useState<StripeConfig>({
     secret: "",
     webhook_secret: "",
+    is_enabled: false,
+  });
+  const [alipayConfig, setAlipayConfig] = useState<AlipayConfig>({
+    app_id: "",
+    app_private_key: "",
+    alipay_public_key: "",
+    is_enabled: false,
+  });
+  const [wechatConfig, setWechatConfig] = useState<WechatConfig>({
+    app_id: "",
+    mch_id: "",
+    is_enabled: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<PaymentChannelTestResult | null>(
     null
   );
-  const [isSaving, setIsSaving] = useState(false);
+  const [isWechatSaving, setIsWechatSaving] = useState(false);
+  const [isStripeSaving, setIsStripeSaving] = useState(false);
+  const [isAlipaySaving, setIsAlipaySaving] = useState(false);
 
   // get payment channel list
   const fetchChannels = useCallback(async () => {
@@ -29,12 +48,35 @@ export const usePaymentChannelManagement = () => {
 
       setChannels(response.data);
 
-      // find stripe channel and get config
+      // find channels and get configs
       const stripeChannel = response.data.find(
         (channel) => channel.id === "stripe"
       );
       if (stripeChannel) {
-        setStripeConfig(stripeChannel.config);
+        setStripeConfig({
+          ...stripeChannel.config,
+          is_enabled: stripeChannel.is_enabled,
+        } as StripeConfig);
+      }
+
+      const alipayChannel = response.data.find(
+        (channel) => channel.id === "alipay"
+      );
+      if (alipayChannel) {
+        setAlipayConfig({
+          ...alipayChannel.config,
+          is_enabled: alipayChannel.is_enabled,
+        } as AlipayConfig);
+      }
+
+      const wechatChannel = response.data.find(
+        (channel) => channel.id === "wechat"
+      );
+      if (wechatChannel) {
+        setWechatConfig({
+          ...wechatChannel.config,
+          is_enabled: wechatChannel.is_enabled,
+        } as WechatConfig);
       }
     } catch (err) {
       setError(
@@ -48,9 +90,103 @@ export const usePaymentChannelManagement = () => {
     }
   }, []);
 
+  // test alipay connection
+  const testAlipayConnection = useCallback(async (config: AlipayConfig) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await paymentChannelService.testAlipayConnection(config);
+      setTestResult(result);
+      return result;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to test alipay connection";
+      const failedResult: PaymentChannelTestResult = {
+        success: false,
+        message: errorMessage,
+      };
+      setTestResult(failedResult);
+      setError(errorMessage);
+      return failedResult;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // test wechat connection
+  const testWechatConnection = useCallback(async (config: WechatConfig) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await paymentChannelService.testWechatConnection(config);
+      setTestResult(result);
+      return result;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to test wechat connection";
+      const failedResult: PaymentChannelTestResult = {
+        success: false,
+        message: errorMessage,
+      };
+      setTestResult(failedResult);
+      setError(errorMessage);
+      return failedResult;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // save alipay config
+  const saveAlipayConfig = useCallback(async (config: AlipayConfig) => {
+    setIsAlipaySaving(true);
+    setError(null);
+
+    try {
+      const result = await paymentChannelService.saveAlipayConfig(config);
+      if (result) {
+        setAlipayConfig(config);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to save alipay config";
+      setError(errorMessage);
+      return false;
+    } finally {
+      setIsAlipaySaving(false);
+    }
+  }, []);
+
+  // save wechat config
+  const saveWechatConfig = useCallback(async (config: WechatConfig) => {
+    setIsWechatSaving(true);
+    setError(null);
+
+    try {
+      const result = await paymentChannelService.saveWechatConfig(config);
+      if (result) {
+        setWechatConfig(config);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to save wechat config";
+      setError(errorMessage);
+      return false;
+    } finally {
+      setIsWechatSaving(false);
+    }
+  }, []);
+
   // save stripe config
   const saveStripeConfig = useCallback(async (config: StripeConfig) => {
-    setIsSaving(true);
+    setIsStripeSaving(true);
     setError(null);
 
     try {
@@ -67,7 +203,7 @@ export const usePaymentChannelManagement = () => {
       setError(errorMessage);
       return false;
     } finally {
-      setIsSaving(false);
+      setIsStripeSaving(false);
     }
   }, []);
 
@@ -102,16 +238,25 @@ export const usePaymentChannelManagement = () => {
       setError(null);
 
       try {
-        await paymentChannelService.enablePaymentChannel(channelId);
-        await fetchChannels(); // re-fetch list
-        return { success: true };
+        const result =
+          await paymentChannelService.enablePaymentChannel(channelId);
+        if (result) {
+          updateClientConfig({
+            payment_channels: [
+              ...paymentChannels,
+              { id: channelId, name: channelId },
+            ],
+          });
+          await revalidatePlatformConfig();
+        }
+        return result;
       } catch (err) {
         const errorMessage =
           err instanceof Error
             ? err.message
             : "Failed to enable payment channel";
         setError(errorMessage);
-        return { success: false, message: errorMessage };
+        return false;
       } finally {
         setLoading(false);
       }
@@ -126,16 +271,24 @@ export const usePaymentChannelManagement = () => {
       setError(null);
 
       try {
-        await paymentChannelService.disablePaymentChannel(channelId);
-        await fetchChannels(); // re-fetch list
-        return { success: true };
+        const result =
+          await paymentChannelService.disablePaymentChannel(channelId);
+        if (result) {
+          updateClientConfig({
+            payment_channels: paymentChannels.filter(
+              (channel) => channel.id !== channelId
+            ),
+          });
+          await revalidatePlatformConfig();
+        }
+        return result;
       } catch (err) {
         const errorMessage =
           err instanceof Error
             ? err.message
             : "Failed to disable payment channel";
         setError(errorMessage);
-        return { success: false, message: errorMessage };
+        return false;
       } finally {
         setLoading(false);
       }
@@ -161,13 +314,21 @@ export const usePaymentChannelManagement = () => {
   return {
     channels,
     stripeConfig,
-    isSaving,
+    alipayConfig,
+    wechatConfig,
+    isWechatSaving,
+    isStripeSaving,
+    isAlipaySaving,
     loading,
     error,
     testResult,
     fetchChannels,
     saveStripeConfig,
+    saveAlipayConfig,
+    saveWechatConfig,
     testStripeConnection,
+    testAlipayConnection,
+    testWechatConnection,
     enableChannel,
     disableChannel,
     clearTestResult,

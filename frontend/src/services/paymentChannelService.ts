@@ -1,5 +1,7 @@
 import {
   StripeConfig,
+  AlipayConfig,
+  WechatConfig,
   PaymentChannelApiItem,
   PaymentChannelListResponse,
   PaymentChannelTestResult,
@@ -52,50 +54,74 @@ export class PaymentChannelService {
     return response.data;
   }
 
-  // Save Stripe configuration
-  async saveStripeConfig(config: StripeConfig): Promise<boolean> {
-    const response = await fetchAdminAPI<StripeConfig>(
-      "/api/payment_channel/info",
-      {
-        method: "PUT",
-        body: {
-          id: "stripe",
-          config: config,
-        } as unknown as BodyInit,
-      }
-    );
+  // Generic method to save payment channel configuration
+  async savePaymentChannelConfig<T>(
+    channelId: string,
+    config: T,
+    channelName: string
+  ): Promise<boolean> {
+    const response = await fetchAdminAPI<T>("/api/payment_channel/info", {
+      method: "PUT",
+      body: {
+        id: channelId,
+        config: {
+          ...config,
+          is_enabled: undefined,
+        },
+      } as unknown as BodyInit,
+    });
 
     if (!response.success) {
       toast.error(
-        response.error_message || i18n.t("Failed to save Stripe config")
+        response.error_message ||
+          i18n.t("Failed to save {{channelName}} config", { channelName })
       );
       return false;
     }
-    toast.success(i18n.t("Stripe config saved successfully"));
+    toast.success(
+      i18n.t("{{channelName}} config saved successfully", { channelName })
+    );
     return true;
   }
 
-  // Test Stripe connection
-  async testStripeConnection(
-    config: StripeConfig
+  // Save Stripe configuration
+  async saveStripeConfig(config: StripeConfig): Promise<boolean> {
+    return this.savePaymentChannelConfig("stripe", config, "Stripe");
+  }
+
+  // Generic method to test payment channel connection
+  async testPaymentChannelConnection<T>(
+    channelId: string,
+    config: T,
+    channelName: string
   ): Promise<PaymentChannelTestResult> {
     try {
-      const response = await fetchAdminAPI<any>("/api/payment_channel/info", {
-        method: "PUT",
-        body: JSON.stringify(config),
+      const response = await fetchAdminAPI<any>("/api/payment_channel/test", {
+        method: "POST",
+        body: {
+          id: channelId,
+          config: {
+            ...config,
+            is_enabled: undefined,
+          },
+        } as unknown as BodyInit,
       });
 
       if (!response.success) {
         return {
           success: false,
-          message: response.error_message || "Stripe connection test failed",
+          message:
+            response.error_message ||
+            i18n.t("{{channelName}} connection test failed", { channelName }),
           details: response.data,
         };
       }
 
       return {
         success: true,
-        message: "Stripe connection test successful",
+        message: i18n.t("{{channelName}} connection test successful", {
+          channelName,
+        }),
         details: response.data,
       };
     } catch (error) {
@@ -106,36 +132,73 @@ export class PaymentChannelService {
     }
   }
 
+  // Test Stripe connection
+  async testStripeConnection(
+    config: StripeConfig
+  ): Promise<PaymentChannelTestResult> {
+    return this.testPaymentChannelConnection("stripe", config, "Stripe");
+  }
+
   // enable payment channel
-  async enablePaymentChannel(id: string): Promise<void> {
+  async enablePaymentChannel(id: string): Promise<boolean> {
     const response = await fetchAdminAPI("/api/payment_channel/enable", {
-      method: "POST",
+      method: "PUT",
       body: {
         id,
       } as unknown as BodyInit,
     });
 
     if (!response.success) {
-      throw new Error(
-        response.error_message || "Failed to enable payment channel"
+      toast.error(
+        response.error_message || i18n.t("Failed to enable payment channel")
       );
+      return false;
     }
+    toast.success(i18n.t("Payment channel enabled successfully"));
+    return true;
   }
 
   // disable payment channel
-  async disablePaymentChannel(id: string): Promise<void> {
+  async disablePaymentChannel(id: string): Promise<boolean> {
     const response = await fetchAdminAPI("/api/payment_channel/disable", {
-      method: "POST",
+      method: "PUT",
       body: {
         id,
       } as unknown as BodyInit,
     });
 
     if (!response.success) {
-      throw new Error(
-        response.error_message || "Failed to disable payment channel"
+      toast.error(
+        response.error_message || i18n.t("Failed to disable payment channel")
       );
+      return false;
     }
+    toast.success(i18n.t("Payment channel disabled successfully"));
+    return true;
+  }
+
+  // Save Alipay configuration
+  async saveAlipayConfig(config: AlipayConfig): Promise<boolean> {
+    return this.savePaymentChannelConfig("alipay", config, "Alipay");
+  }
+
+  // Save WeChat configuration
+  async saveWechatConfig(config: WechatConfig): Promise<boolean> {
+    return this.savePaymentChannelConfig("wechat", config, "WeChat");
+  }
+
+  // Test Alipay connection
+  async testAlipayConnection(
+    config: AlipayConfig
+  ): Promise<PaymentChannelTestResult> {
+    return this.testPaymentChannelConnection("alipay", config, "Alipay");
+  }
+
+  // Test WeChat connection
+  async testWechatConnection(
+    config: WechatConfig
+  ): Promise<PaymentChannelTestResult> {
+    return this.testPaymentChannelConnection("wechat", config, "WeChat");
   }
 
   // validate stripe config

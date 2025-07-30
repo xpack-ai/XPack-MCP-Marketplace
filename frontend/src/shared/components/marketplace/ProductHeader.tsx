@@ -73,7 +73,12 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({
         {product.charge_type && (
           <div className="flex gap-2 items-center">
             <b className="text-md">{t("Price")}:</b>
-            <Price price={product.price} charge_type={product.charge_type} />
+            <Price
+              price={product.price}
+              charge_type={product.charge_type}
+              input_token_price={product.input_token_price}
+              output_token_price={product.output_token_price}
+            />
           </div>
         )}
       </CardBody>

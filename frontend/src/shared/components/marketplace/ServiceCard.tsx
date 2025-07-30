@@ -17,7 +17,10 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
   const { t } = useTranslation();
 
   return (
-    <Link href={`/marketplace/${service.service_id}`}>
+    <Link
+      href={`/marketplace/${service.service_id}`}
+      className="w-full md:w-[calc(50%-16px)] lg:w-[calc(33%-16px)] xl:w-[calc(25%-16px)]"
+    >
       <Card
         className="group w-full h-[180px] hover:border-primary-500 transition-all duration-300 border-1"
         shadow="none"
@@ -48,7 +51,12 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
               {t("{{count}} Tools", { count: service.tools.length })}
             </Chip>
             <div className="flex flex-col gap-1">
-              <Price price={service.price} charge_type={service.charge_type} />
+              <Price
+                price={service.price}
+                charge_type={service.charge_type}
+                input_token_price={service.input_token_price}
+                output_token_price={service.output_token_price}
+              />
             </div>
           </div>
         </CardFooter>
