@@ -117,6 +117,8 @@ class McpManagerService:
             existing_service.auth_token = temp_service.auth_token
             existing_service.charge_type = ChargeType(temp_service.charge_type.value)
             existing_service.price = temp_service.price
+            existing_service.input_token_price = temp_service.input_token_price
+            existing_service.output_token_price = temp_service.output_token_price
             existing_service.enabled = temp_service.enabled
             existing_service.tags = temp_service.tags
 
@@ -191,8 +193,15 @@ class McpManagerService:
             except ValueError:
                 # If the provided value is not a valid ChargeType, default to FREE
                 existing_service.charge_type = ChargeType.FREE
-        if "price" in body and body["price"] is not None:
-            existing_service.price = body["price"]
+        match existing_service.charge_type:
+            case ChargeType.PER_CALL:
+                if "price" in body and body["price"] is not None:
+                    existing_service.price = body["price"]
+            case ChargeType.PER_TOKEN:
+                if "input_token_price" in body and body["input_token_price"] is not None:
+                    existing_service.input_token_price = body["input_token_price"]
+                if "output_token_price" in body and body["output_token_price"] is not None:
+                    existing_service.output_token_price = body["output_token_price"]
         if "tags" in body and body["tags"] is not None:
             # If provided as array, convert to string for storage
             if isinstance(body["tags"], list):
@@ -277,7 +286,9 @@ class McpManagerService:
             "auth_header": service.auth_header,
             "auth_token": service.auth_token,
             "charge_type": service.charge_type.value if service.charge_type else None,
-            "price": str(float(service.price)) if service.price else "0.00",
+            "price": str(float(service.price)) if service.price and service.charge_type == ChargeType.PER_CALL else "0.00",
+            "input_token_price": str(float(service.input_token_price)) if service.input_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+            "output_token_price": str(float(service.output_token_price)) if service.output_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
             "enabled": service.enabled,
             "tags": parse_tags_to_array(service.tags),
             "apis": [{"id": api.id, "name": api.name, "description": api.description,"url":api.path} for api in apis],

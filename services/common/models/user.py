@@ -37,10 +37,9 @@ class User(Base):
         default=False,
         comment="Soft delete flag: 0=active, 1=deleted",
     )
-    register_type: Mapped[str] = mapped_column(
-        # Enum(RegisterType, values_callable=lambda obj: [e.value for e in obj]),
-        String(36),
-        nullable=False, 
+    register_type: Mapped[RegisterType] = mapped_column(
+        Enum(RegisterType, values_callable=lambda obj: [e.value for e in obj]),
+        nullable=False,
         comment="Registration method"
     )
     role_id: Mapped[int] = mapped_column(
