@@ -90,11 +90,12 @@ class BillingMessageHandler:
                 service_id=message_data["service_id"],
                 api_id=message_data["api_id"],
                 tool_name=message_data["tool_name"],
-                input_params=message_data["input_params"],
+                input_params=message_data["input_params"], 
                 call_success=message_data["call_success"],
                 unit_price=Decimal(message_data["unit_price"]),
                 input_token=Decimal(message_data["input_token"]),
                 output_token=Decimal(message_data["output_token"]),
+                charge_type=message_data["charge_type"],
                 call_start_time=call_start_time,
                 call_end_time=call_end_time,
                 apikey_id=message_data.get("apikey_id"),  # Support older version messages that don't have this field
@@ -186,7 +187,7 @@ class BillingMessageHandler:
                 status=1,  # Completed
                 transaction_id=call_log_id,
                 channel_user_id=None,
-                callback_data=json.dumps(billing_message),
+                callback_data=json.dumps(self._billing_message_to_dict(billing_message)),
                 created_at=now,
                 updated_at=now,
             )
@@ -229,3 +230,30 @@ class BillingMessageHandler:
         except Exception as e:
             logger.warning(f"Failed to update wallet cache - User ID: {user_id}: {str(e)}")
             # Cache update failure doesn't affect main flow
+
+    def _billing_message_to_dict(self, billing_message: BillingMessage) -> dict:
+        """
+        Convert BillingMessage to JSON serializable dictionary
+
+        Args:
+            billing_message: BillingMessage object
+
+        Returns:
+            dict: JSON serializable dictionary
+        """
+        return {
+            "user_id": billing_message.user_id,
+            "service_id": billing_message.service_id,
+            "api_id": billing_message.api_id,
+            "tool_name": billing_message.tool_name,
+            "input_params": billing_message.input_params,
+            "call_success": billing_message.call_success,
+            "unit_price": str(billing_message.unit_price),
+            "input_token": str(billing_message.input_token),
+            "output_token": str(billing_message.output_token),
+            "charge_type": billing_message.charge_type,
+            "call_start_time": billing_message.call_start_time.isoformat(),
+            "call_end_time": billing_message.call_end_time.isoformat() if billing_message.call_end_time else None,
+            "call_log_id": billing_message.call_log_id,
+            "apikey_id": billing_message.apikey_id,
+        }

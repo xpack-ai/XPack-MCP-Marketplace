@@ -8,7 +8,7 @@ import threading
 import time
 import logging
 from typing import Callable
-
+import os
 from services.common.config import Config
 from services.common.database import get_db
 from services.admin_service.services.billing_message_handler import BillingMessageHandler
@@ -20,7 +20,7 @@ class BillingMessageConsumer:
     """Billing message consumer"""
 
     def __init__(self):
-        self.queue_name = "billing.api.calls"
+        self.queue_name = os.getenv("BILLING_QUEUE_NAME") or "billing.api.calls"
         self.connection = None
         self.channel = None
         self.consuming = False

@@ -1,11 +1,11 @@
 """
 """
-
+import os
 BILLING_LOCK_TIMEOUT = 5
 WALLET_CACHE_EXPIRE = 300
 SERVICE_CACHE_EXPIRE = 3600
 
-BILLING_QUEUE_NAME = "billing.api.calls"
+BILLING_QUEUE_NAME = os.getenv("BILLING_QUEUE_NAME") or "billing.api.calls"
 BILLING_EXCHANGE_NAME = "billing.exchange"
 BILLING_ROUTING_KEY = "api.call.billing"
 
