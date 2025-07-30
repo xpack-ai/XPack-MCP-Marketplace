@@ -188,8 +188,10 @@ class PaymentService:
         amount = history.amount
         user_wallet = self.user_wallet_repository.get_by_user_id(user_id)
         if not user_wallet:
-            logger.error(f"User wallet not found for user_id {user_id}")
-            return False
+            user_wallet = self.user_wallet_repository.create(user_id=user_id)
+            if not user_wallet:
+                logger.error(f"Failed to create wallet for user_id {user_id}")
+                return False
 
         # Retry mechanism for optimistic locking
         for attempt in range(max_retries):
@@ -246,8 +248,10 @@ class PaymentService:
         # Validate user wallet exists
         user_wallet = self.user_wallet_repository.get_by_user_id(user_id)
         if not user_wallet:
-            logger.error(f"User wallet not found for user_id {user_id}")
-            return False
+            user_wallet = self.user_wallet_repository.create(user_id=user_id)
+            if not user_wallet:
+                logger.error(f"Failed to create wallet for user_id {user_id}")
+                return False
 
         # Retry mechanism for optimistic locking
         for attempt in range(max_retries):
