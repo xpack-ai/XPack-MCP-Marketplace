@@ -275,15 +275,7 @@ UNIQUE KEY `uk_key` (`key`) USING BTREE COMMENT '配置键名唯一索引'
 
 INSERT INTO `user` (`id`, `name`, `email`, `password`, `is_active`, `is_deleted`, `register_type`, `role_id`, `created_at`, `updated_at`)
 VALUES ('admin', 'admin', 'admin@xpack.com', '25f9e794323b453885f5181f1b624d0b', 1, 0, 'inner', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE
-    `name` = VALUES(`name`),
-    `email` = VALUES(`email`),
-    `password` = VALUES(`password`),
-    `is_active` = VALUES(`is_active`),
-    `is_deleted` = VALUES(`is_deleted`),
-    `register_type` = VALUES(`register_type`),
-    `role_id` = VALUES(`role_id`),
-    `updated_at` = CURRENT_TIMESTAMP;
+ON DUPLICATE KEY UPDATE `register_type` = VALUES(`register_type`);
 
 INSERT INTO `user_wallet` (`id`, `user_id`, `balance`, `frozen_balance`, `created_at`, `updated_at`)
 SELECT UUID(), 'admin', 0.00, 0.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
@@ -292,5 +284,9 @@ WHERE NOT EXISTS (SELECT 1 FROM `user_wallet` WHERE `user_id` = 'admin');
 INSERT INTO `payment_channel` (`id`, `name`, `status`, `config`, `updated_at`)
 SELECT 'stripe', 'Stripe', 1, '{\"secret\": \"\", \"webhook_secret\": \"\"}', '2025-07-17 06:42:55'
 WHERE NOT EXISTS (SELECT 1 FROM `payment_channel` WHERE `id` = 'stripe');
+
+INSERT INTO `sys_config` (`id`,`key`, `value`,`description`,`created_at`,`updated_at`) 
+VALUES ('xpack-version','version', '0.2.2', 'User wallet history max count', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `description` = VALUES(`description`), `updated_at` = CURRENT_TIMESTAMP;
 
 SET FOREIGN_KEY_CHECKS = 1;

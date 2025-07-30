@@ -26,7 +26,7 @@ def get_user_order_list(
 ):
     """Get paginated list of user order history."""
     offset = (page - 1) * page_size
-    total, orders = user_wallet_history_service.success_order_list(offset, page_size)
+    total, orders = user_wallet_history_service.success_deposit_order_list(offset, page_size)
     if not orders:
         return ResponseUtils.success_page(data=[], total=total, page_num=page, page_size=page_size)
     result = []
