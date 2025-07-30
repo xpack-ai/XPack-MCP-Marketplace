@@ -214,7 +214,7 @@ class UserWalletHistoryRepository:
             self.db.rollback()
             return False
 
-    def success_order_list(self, offset: int, limit: int) -> Tuple[int, List[UserWalletHistory]]:
+    def success_deposit_order_list(self, offset: int, limit: int) -> Tuple[int, List[UserWalletHistory]]:
         """
         Get list of successful orders.
 
@@ -225,12 +225,15 @@ class UserWalletHistoryRepository:
         Returns:
             tuple: (total_count, order_list)
         """
-        total = self.db.query(UserWalletHistory).filter(UserWalletHistory.status == 1).count()
+        query = self.db.query(UserWalletHistory).filter(
+            UserWalletHistory.status == 1,
+            UserWalletHistory.type == TransactionType.DEPOSIT,
+        )
+        total = query.count()
         if total < offset:
             return total, []
         history = (
-            self.db.query(UserWalletHistory)
-            .filter(UserWalletHistory.status == 1)
+            query
             .order_by(UserWalletHistory.created_at.desc())
             .offset(offset)
             .limit(limit)
