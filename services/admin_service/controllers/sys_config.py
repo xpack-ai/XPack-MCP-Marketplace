@@ -7,7 +7,11 @@ from services.common.utils.response_utils import ResponseUtils
 from services.common.utils.email_utils import EmailUtils
 from services.admin_service.services.sys_config_service import SysConfigService
 from services.admin_service.services.user_service import UserService
+from services.admin_service.services.platform_report_service import PlatformReportService
 from services.admin_service.constants import sys_config_key
+from services.common.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -265,6 +269,33 @@ def set_sysconfig(
                 if key == sys_config_key.KEY_ABOUT_PAGE:
                     is_large = True
                 sysconfig_service.set_value_by_key(key, value, desc,is_large)
+
+        # Report platform information asynchronously to avoid impacting main operations
+        try:
+            platform_report_service = PlatformReportService()
+            
+            # Prepare platform data for reporting
+            platform_report_data = {
+                "name": platform_name,
+                "logo": platform_logo,
+                "url": platform_url,
+                "website_title": website_title,
+                "headline": headline,
+                "subheadline": subheadline,
+                "language": language,
+                "theme": theme,
+                "domain": domain,
+                "is_showcased": is_showcased,
+                "mcp_server_prefix": mcp_server_prefix,
+            }
+            
+            # Use background reporting to avoid blocking the main configuration update
+            platform_report_service.report_platform_info_background(platform_report_data)
+            logger.debug("Platform information reporting initiated in background")
+                
+        except Exception as e:
+            # Log error but continue with main operation - reporting failure should not affect configuration update
+            logger.warning(f"Failed to initiate platform reporting: {e}")
 
         return get_sysconfig(sysconfig_service, user_service)
 
