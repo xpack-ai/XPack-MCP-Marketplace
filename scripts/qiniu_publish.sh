@@ -17,7 +17,7 @@ echo "login qiniu..."
 qshell account ${AccessKey} ${SecretKey} ${QINIU_NAME}
 
 echo "qshell rput ${QINIU_BUCKET} \"xpack/images/${Tar}\" ${Tar}"
-qshell rput --thread-count 4 ${QINIU_BUCKET} "xpack/images/${Tar}" ${Tar}
+qshell rput --resumable-api-v2 --worker 4 ${QINIU_BUCKET} "xpack/images/${Tar}" ${Tar}
 
 rm -f ${Tar}
 docker rmi -f ${ImageName}:${Version}
