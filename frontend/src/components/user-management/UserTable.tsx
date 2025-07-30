@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 import {
   Table,
   TableHeader,
@@ -11,16 +11,18 @@ import {
   Button,
   Pagination,
   Tooltip,
-  Spinner
-} from '@nextui-org/react';
-import { useTranslation } from '@/shared/lib/useTranslation';
-import { User } from '@/types/user';
-import { Trash2 } from 'lucide-react';
+  Spinner,
+} from "@nextui-org/react";
+import { useTranslation } from "@/shared/lib/useTranslation";
+import { User } from "@/types/user";
+import { Trash2, CreditCard } from "lucide-react";
+import { AdminRechargeModal } from "@/components/user-management/AdminRechargeModal";
 
 interface UserTableProps {
   users: User[];
   loading?: boolean;
   onDelete: (user: User) => void;
+  onRecharge: (id: string, amount: number) => Promise<boolean>;
   pagination: {
     page: number;
     pageSize: number;
@@ -33,6 +35,7 @@ export const UserTable: React.FC<UserTableProps> = ({
   users,
   loading = false,
   onDelete,
+  onRecharge,
   pagination,
   onPageChange,
 }) => {
@@ -45,10 +48,25 @@ export const UserTable: React.FC<UserTableProps> = ({
   // 直接显示传入的用户数据（已经是当前页的数据）
   const items = users;
 
+  const [isRechargeModalOpen, setIsRechargeModalOpen] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
 
-  const handleDelete = React.useCallback((user: User) => {
-    onDelete(user);
-  }, [onDelete]);
+  const handleDelete = React.useCallback(
+    (user: User) => {
+      onDelete(user);
+    },
+    [onDelete]
+  );
+
+  const handleRecharge = React.useCallback((user: User) => {
+    setSelectedUser(user);
+    setIsRechargeModalOpen(true);
+  }, []);
+
+  const handleRechargeClose = React.useCallback(() => {
+    setIsRechargeModalOpen(false);
+    setSelectedUser(null);
+  }, []);
 
   if (loading && users.length === 0) {
     return (
@@ -68,33 +86,50 @@ export const UserTable: React.FC<UserTableProps> = ({
         removeWrapper
       >
         <TableHeader>
-          <TableColumn>{t('Email')}</TableColumn>
-          <TableColumn>{t('Register Date')}</TableColumn>
-          <TableColumn>{t('Balance')}</TableColumn>
-          <TableColumn>{t('Actions')}</TableColumn>
+          <TableColumn>{t("Email")}</TableColumn>
+          <TableColumn>{t("Register Date")}</TableColumn>
+          <TableColumn>{t("Balance")}</TableColumn>
+          <TableColumn>{t("Actions")}</TableColumn>
         </TableHeader>
         <TableBody
           items={items}
           isLoading={loading}
           loadingContent={<Spinner />}
-          emptyContent={t('No users found')}
+          emptyContent={t("No users found")}
         >
           {(user) => (
             <TableRow key={user.id}>
               <TableCell>
                 <span className="text-sm">{user.email}</span>
               </TableCell>
-              <TableCell>
-                {user.created_at || '-'}
-              </TableCell>
-              <TableCell>
-                {user.balance.toFixed(2) || "-"}
-              </TableCell>
+              <TableCell>{user.created_at || "-"}</TableCell>
+              <TableCell>{user.balance.toFixed(2) || "-"}</TableCell>
 
               <TableCell>
                 <div className="relative flex items-center gap-2">
+                  <Tooltip
+                    content={t("Recharge User")}
+                    color="primary"
+                    closeDelay={0}
+                    disableAnimation
+                  >
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="light"
+                      color="primary"
+                      onPress={() => handleRecharge(user)}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                    </Button>
+                  </Tooltip>
 
-                  <Tooltip content={t('Delete User')} color="danger" closeDelay={0}>
+                  <Tooltip
+                    content={t("Delete User")}
+                    color="danger"
+                    closeDelay={0}
+                    disableAnimation
+                  >
                     <Button
                       isIconOnly
                       size="sm"
@@ -124,6 +159,14 @@ export const UserTable: React.FC<UserTableProps> = ({
           />
         </div>
       )}
+
+      {/* Admin Recharge Modal */}
+      <AdminRechargeModal
+        isOpen={isRechargeModalOpen}
+        onClose={handleRechargeClose}
+        user={selectedUser}
+        onRecharge={onRecharge}
+      />
     </div>
   );
 };

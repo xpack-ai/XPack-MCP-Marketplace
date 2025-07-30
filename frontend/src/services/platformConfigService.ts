@@ -37,10 +37,26 @@ export class PlatformConfigService {
       console.error(response.error_message);
       return {
         platform: _DefaultPlatformConfig,
+        login: undefined,
+        faq: [],
+        top_navigation: [],
+        embeded_html: undefined,
+        payment_channels: [],
+        is_installed: false,
       };
     }
 
-    return response.data;
+    // 确保返回的数据结构正确
+    const data = response.data;
+    return {
+      platform: data.platform || _DefaultPlatformConfig,
+      login: data.login,
+      faq: data.faq || [],
+      top_navigation: data.top_navigation || [],
+      embeded_html: data.embeded_html,
+      payment_channels: data.payment_channels || [],
+      is_installed: data.is_installed || false,
+    };
   }
 }
 

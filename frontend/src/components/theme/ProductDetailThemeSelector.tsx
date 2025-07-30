@@ -12,6 +12,9 @@ import { ProductDetailClient } from "@/shared/components/marketplace/ProductDeta
 import { Navigation } from "@/shared/components/Navigation";
 import { Footer } from "@/shared/components/Footer";
 import { NavigationItems } from "./Theme.const";
+import { copyToClipboard } from "@/shared/utils/clipboard";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 interface ProductDetailThemeSelectorProps {
   product: ServiceData;
@@ -24,13 +27,26 @@ interface ProductDetailThemeSelectorProps {
 export const ProductDetailThemeSelector: React.FC<
   ProductDetailThemeSelectorProps
 > = ({ product, breadcrumbs }) => {
-  const { platformConfig } = usePlatformConfig();
+  const { platformConfig, topNavigation } = usePlatformConfig();
   const currentTheme = platformConfig.theme || Theme.DEFAULT;
-  const [url, setUrl] = useState<string>(process.env.NEXT_PUBLIC_MCP_URL || "");
+  const mcpServerPrefix =
+    platformConfig.mcp_server_prefix || process.env.NEXT_PUBLIC_MCP_URL || "";
+  const [url, setUrl] = useState<string>("");
   const [mcpName, setMcpName] = useState<string>("");
+  const { t } = useTranslation();
+  const navigationItems = [
+    ...NavigationItems,
+    ...topNavigation.map((item) => ({
+      label: item.title,
+      href: item.link,
+      target: item.target,
+    })),
+  ];
   useEffect(() => {
     if (url || !product.slug_name) return;
-    setUrl(`${window.location.protocol}//${window.location.hostname}:8002/mcp/${product.slug_name}`);
+    setUrl(
+      `${mcpServerPrefix || `${window.location.protocol}//${window.location.hostname}:8002`}/mcp/${product.slug_name}`
+    );
   }, [product.slug_name]);
   function sanitizeMCPServerName(rawName: string | undefined): string {
     if (!rawName) return "xpack-mcp-service";
@@ -47,13 +63,31 @@ export const ProductDetailThemeSelector: React.FC<
     // Trim leading/trailing hyphens
     name = name.replace(/^-+/, "").replace(/-+$/, "");
 
-
     return name || "mcp-service";
   }
   useEffect(() => {
     setMcpName(sanitizeMCPServerName(product.name));
   }, [product.name]);
+  const getCodeContent = () => {
+    return `{
+  "mcpServers": {
+    "${mcpName || "xpack-mcp-market"}": {
+      "type": "sse",
+      "autoApprove":"all",
+      "url": "${url}?apikey={Your-${platformConfig?.name}-API-Key}"
+    }
+  }
+}`;
+  };
 
+  const handleCopy = async () => {
+    const result = await copyToClipboard(getCodeContent());
+    if (result.success) {
+      toast.success(t("Copied to clipboard"));
+    } else {
+      toast.error(t("Copy failed, please copy manually"));
+    }
+  };
 
   //Render the About page based on the current theme
   switch (currentTheme) {
@@ -63,8 +97,9 @@ export const ProductDetailThemeSelector: React.FC<
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
-          navItems={NavigationItems}
+          navItems={navigationItems}
           mcpName={mcpName}
+          onCopy={handleCopy}
         />
       );
     case Theme.CLASSIC:
@@ -73,8 +108,9 @@ export const ProductDetailThemeSelector: React.FC<
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
-          navItems={NavigationItems}
+          navItems={navigationItems}
           mcpName={mcpName}
+          onCopy={handleCopy}
         />
       );
     case Theme.CREATIVE:
@@ -83,8 +119,9 @@ export const ProductDetailThemeSelector: React.FC<
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
-          navItems={NavigationItems}
+          navItems={navigationItems}
           mcpName={mcpName}
+          onCopy={handleCopy}
         />
       );
     case Theme.TEMU:
@@ -93,17 +130,22 @@ export const ProductDetailThemeSelector: React.FC<
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
-          navItems={NavigationItems}
+          navItems={navigationItems}
           mcpName={mcpName}
+          onCopy={handleCopy}
         />
       );
     case Theme.DEFAULT:
     default:
       return (
         <div className="min-h-screen bg-background flex flex-col justify-between">
-          <Navigation items={NavigationItems} />
+          <Navigation items={navigationItems} />
           <main className="flex-1">
-            <ProductDetailClient product={product} mcpName={mcpName} />
+            <ProductDetailClient
+              product={product}
+              mcpName={mcpName}
+              url={url}
+            />
           </main>
           <div>
             <Footer />

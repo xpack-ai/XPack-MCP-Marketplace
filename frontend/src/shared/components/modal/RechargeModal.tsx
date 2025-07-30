@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   ModalContent,
@@ -7,11 +7,14 @@ import {
   ModalFooter,
   Button,
   Input,
+  RadioGroup,
+  Radio,
 } from "@nextui-org/react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { fetchAPI } from "@/shared/rpc/common-function";
 import toast from "react-hot-toast";
 import { ConfirmPurchaseModal } from "./ConfirmPurchaseModal";
+import { usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
 
 interface RechargeModalProps {
   isOpen: boolean;
@@ -23,12 +26,15 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
+  const { paymentChannels } = usePlatformConfig();
   const [amount, setAmount] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [selectedPaymentChannel, setSelectedPaymentChannel] = useState<string>(
+    paymentChannels[0]?.id || ""
+  );
 
   const [paymentId, setPaymentId] = useState("");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-
 
   const handlePurchase = async () => {
     const numAmount = parseFloat(amount);
@@ -41,10 +47,17 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({
       setError(t("Minimum recharge amount is $1"));
       return;
     }
+
+    if (!selectedPaymentChannel) {
+      setError(t("Please select a payment method"));
+      return;
+    }
+
     const response = await fetchAPI("/api/payment/create_payment_link", {
       method: "POST",
       body: {
         amount: numAmount,
+        payment_channel: selectedPaymentChannel,
         success_url: window.location.origin + "/pay_success",
       } as unknown as BodyInit,
     });
@@ -93,6 +106,7 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({
   const handleClose = () => {
     setAmount("");
     setError("");
+    setSelectedPaymentChannel(paymentChannels[0]?.id || "");
     onClose();
   };
 
@@ -119,23 +133,54 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({
                   }
                   type="text"
                   variant="bordered"
-                  isInvalid={!!error}
-                  errorMessage={error}
+                  isInvalid={!!error && !error.includes("payment method")}
+                  errorMessage={
+                    error && !error.includes("payment method") ? error : ""
+                  }
+                  labelPlacement="outside"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handlePurchase();
                     }
                   }}
                 />
-                <p className="text-xs text-default-500">
-                  {t("Funds will be added to your account balance")}
-                </p>
+                {/**coming soon : select payment channel*/}
+
+                {/* {paymentChannels.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-default-700">
+                      {t("Payment Method")}
+                    </label>
+                    <RadioGroup
+                      value={selectedPaymentChannel}
+                      onValueChange={setSelectedPaymentChannel}
+                      isInvalid={!!error && error.includes("payment method")}
+                      errorMessage={
+                        error && error.includes("payment method") ? error : ""
+                      }
+                      orientation="horizontal"
+                      description={t(
+                        "Funds will be added to your account balance"
+                      )}
+                    >
+                      {paymentChannels.map((channel) => (
+                        <Radio key={channel.id} value={channel.id}>
+                          {channel.name}
+                        </Radio>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )} */}
               </ModalBody>
               <ModalFooter>
                 <Button variant="light" onPress={handleClose}>
                   {t("Cancel")}
                 </Button>
-                <Button color="primary" onPress={handlePurchase}>
+                <Button
+                  color="primary"
+                  onPress={handlePurchase}
+                  isDisabled={!selectedPaymentChannel || !amount}
+                >
                   {t("Confirm")}
                 </Button>
               </ModalFooter>
@@ -143,7 +188,6 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({
           )}
         </ModalContent>
       </Modal>
-
 
       {/**Confirm Purchase Modal */}
       <ConfirmPurchaseModal

@@ -8,6 +8,8 @@ export interface ServiceData {
   tags?: string[];
   price?: string;
   charge_type?: ChargeType;
+  input_token_price?: string;
+  output_token_price?: string;
 }
 
 export interface ToolData {

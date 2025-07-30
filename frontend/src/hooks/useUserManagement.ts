@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { User } from "@/types/user";
-import { getUserList, deleteUser } from "@/services/userService";
+import { getUserList, deleteUser, rechargeUser } from "@/services/userService";
 
 interface PaginationInfo {
   page: number;
@@ -67,6 +67,28 @@ export const useUserManagement = () => {
     },
     [fetchUsers]
   );
+  const handleRechargeUser = async (
+    userId: string,
+    amount: number
+  ): Promise<boolean> => {
+    try {
+      const result = await rechargeUser(userId, amount);
+      if (result) {
+        // after recharge, fetch users again
+        setUsers((prevUsers: User[]) =>
+          prevUsers.map((user: User) =>
+            user.id === userId
+              ? { ...user, balance: user.balance + amount }
+              : user
+          )
+        );
+        return true;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Recharge user failed");
+    }
+    return false;
+  };
 
   const setSearch = useCallback((search: string) => {
     setSearchQuery(search);
@@ -88,6 +110,7 @@ export const useUserManagement = () => {
 
   return {
     users,
+    handleRechargeUser,
     loading,
     error,
     searchQuery,

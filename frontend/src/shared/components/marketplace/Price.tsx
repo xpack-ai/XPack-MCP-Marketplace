@@ -9,9 +9,16 @@ import React from "react";
 interface PriceProps {
   price?: string;
   charge_type?: ChargeType;
+  input_token_price?: string;
+  output_token_price?: string;
 }
 
-export const Price: React.FC<PriceProps> = ({ price, charge_type }) => {
+export const Price: React.FC<PriceProps> = ({
+  price,
+  charge_type,
+  input_token_price,
+  output_token_price,
+}) => {
   const { t } = useTranslation();
   if (!charge_type) {
     return null;
@@ -37,13 +44,24 @@ export const Price: React.FC<PriceProps> = ({ price, charge_type }) => {
       </div>
     );
   } else {
+    const inputPrice = parseFloat(input_token_price || "0");
+    const outputPrice = parseFloat(output_token_price || "0");
     return (
-      <div className="flex items-center gap-1">
-        <Zap className="w-3 h-3 text-blue-600" />
-        <span className="text-sm font-medium text-blue-600">
-          ${priceText.toFixed(2)}
-        </span>
-        <span className="text-xs text-gray-500">/{t("token")}</span>
+      <div className="flex flex-col gap-1 text-xs ">
+        <div className="flex items-center gap-1">
+          <span className="text-gray-600">{t("Input")}:</span>
+          <span className="font-medium text-green-600">
+            ${inputPrice.toFixed(2)}
+          </span>
+          <span className="text-xs text-gray-500">/{t("1M tokens")}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-gray-600">{t("Output")}:</span>
+          <span className="font-medium text-blue-600">
+            ${outputPrice.toFixed(2)}
+          </span>
+          <span className="text-xs text-gray-500">/{t("1M tokens")}</span>
+        </div>
       </div>
     );
   }

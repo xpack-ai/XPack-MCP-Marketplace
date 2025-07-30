@@ -23,6 +23,7 @@ import {
 import { Footer } from "./Footer";
 import { Navigation } from "./Navigation";
 import { NavigationItem } from "@/shared/components/Navigation";
+import { Faq } from "@/components/marketplace/Faq";
 
 interface HomeProps {
   // 状态
@@ -163,13 +164,14 @@ export const Home: React.FC<HomeProps> = ({
           <div className="bg-gray-50 py-16">
             <div className="mx-auto px-6 max-w-7xl">
               {/* Services Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+              <div className="flex flex-wrap justify-center gap-4 mb-12">
                 {services.map((service) => (
                   <Link
                     key={service.service_id}
                     href={`/marketplace/${service.service_id}`}
+                    className="w-full md:w-[calc(50%-16px)] lg:w-[calc(33%-16px)] xl:w-[calc(25%-16px)]"
                   >
-                    <Card className="group h-[200px] hover:shadow-lg transition-shadow duration-200 cursor-pointer border border-gray-200 bg-white rounded-sm shadow-sm">
+                    <Card className="group h-[200px] w-full hover:shadow-lg transition-shadow duration-200 cursor-pointer border border-gray-200 bg-white rounded-sm shadow-sm">
                       <CardBody className="p-4">
                         {/* Header */}
                         <div className="flex items-start justify-between mb-3">
@@ -211,6 +213,8 @@ export const Home: React.FC<HomeProps> = ({
                             <Price
                               price={service.price}
                               charge_type={service.charge_type}
+                              input_token_price={service.input_token_price}
+                              output_token_price={service.output_token_price}
                             />
                           </div>
                         </div>
@@ -245,6 +249,7 @@ export const Home: React.FC<HomeProps> = ({
             </div>
           </div>
         )}
+        <Faq />
       </div>
       <div>
         <Footer />

@@ -21,12 +21,48 @@ export interface PlatformConfig {
   subheadline?: string; // homepage subheadline
   theme?: Theme; // platform theme for homepage and marketplace templates
   about_page?: string; // about page content (markdown)
+  domain?: string; // platform domain
+  is_showcased?: boolean; // whether to showcase in xpack official case list
+  mcp_server_prefix?: string; // MCP server domain prefix for API calls
 }
 
 export type ThemeType = Theme;
+// FAQ item
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+export enum TopNavigationTargetEnum {
+  SELF = "_self",
+  BLANK = "_blank",
+}
+// Top navigation item
+export interface TopNavigationItem {
+  title: string;
+  link: string;
+  target: TopNavigationTargetEnum;
+}
+
+// Embedded HTML config
+export interface EmbeddedHtmlConfig {
+  is_enabled: boolean;
+  html: string;
+}
+
+// Payment channel
+export interface PaymentChannel {
+  id: string;
+  name: string;
+}
+
 export interface PlatformConfigResponse {
-  platform: PlatformConfig;
+  platform?: PlatformConfig;
   login?: LoginConfig;
+  faq?: FaqItem[];
+  top_navigation?: TopNavigationItem[];
+  embeded_html?: EmbeddedHtmlConfig;
+  payment_channels?: PaymentChannel[];
+  is_installed?: boolean;
 }
 
 // google auth config

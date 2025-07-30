@@ -4,6 +4,10 @@ import {
   GoogleAuthConfig,
   PlatformConfig,
   LoginConfig,
+  FaqItem,
+  TopNavigationItem,
+  EmbeddedHtmlConfig,
+  PaymentChannel,
 } from "@/shared/types/system";
 
 // API return system config data structure
@@ -12,6 +16,11 @@ export interface SystemConfigApiData {
   account: AdminConfig;
   email: EmailConfig;
   login: LoginConfig;
+  faq?: FaqItem[];
+  top_navigation?: TopNavigationItem[];
+  embeded_html?: EmbeddedHtmlConfig;
+  payment_channels?: PaymentChannel[];
+  is_installed?: boolean;
 }
 // admin config
 export interface AdminConfig {

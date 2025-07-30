@@ -25,6 +25,7 @@ import {
 import { Navigation } from "./Navigation";
 import { Footer } from "./Footer";
 import { NavigationItem } from "@/shared/components/Navigation";
+import { Faq } from "@/components/marketplace/Faq";
 
 interface HomeProps {
   // 状态
@@ -106,7 +107,7 @@ export const Home: React.FC<HomeProps> = ({
           {/* Modern Search Bar */}
           <div className="max-w-2xl mx-auto">
             <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex">
+              <div className="flex gap-1">
                 <div className="flex-1">
                   <Input
                     size="lg"
@@ -141,97 +142,103 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </div>
 
-      {/* Service List Section */}
-      {loading ? (
-        <div className="mx-auto h-[200px] flex items-center justify-center">
-          <div className="bg-white p-8 rounded-lg shadow-md">
-            <Spinner size="lg" color="primary" />
-          </div>
-        </div>
-      ) : (
-        <div className="py-16">
-          <div className="mx-auto px-6 max-w-7xl">
-            {/* Services Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-              {services.map((service) => (
-                <Link
-                  key={service.service_id}
-                  href={`/marketplace/${service.service_id}`}
-                >
-                  <Card className="group h-[200px] hover:shadow-lg transition-all duration-200 cursor-pointer bg-white border border-gray-100 rounded-xl shadow-sm">
-                    <CardBody className="p-4">
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Zap className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900 text-base mb-1 truncate group-hover:text-blue-600 transition-colors">
-                              {service.name}
-                            </h3>
-                          </div>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed mb-4">
-                        {service.short_description ||
-                          t("No description available")}
-                      </p>
-                    </CardBody>
-
-                    {/* Footer */}
-                    <CardFooter className="pt-0 px-4 pb-4">
-                      <div className="flex items-center justify-between w-full">
-                        {/* Tools count */}
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                          <span className="text-sm font-medium text-gray-700">
-                            {t("{{count}} Tools", {
-                              count: service.tools.length,
-                            })}
-                          </span>
-                        </div>
-
-                        {/* Price */}
-                        <div className="flex flex-col items-end">
-                          <Price
-                            price={service.price}
-                            charge_type={service.charge_type}
-                          />
-                        </div>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                </Link>
-              ))}
+      <section>
+        {/* Service List Section */}
+        {loading ? (
+          <div className="mx-auto h-[200px] flex items-center justify-center">
+            <div className="bg-white p-8 rounded-lg shadow-md">
+              <Spinner size="lg" color="primary" />
             </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center">
-                <Pagination
-                  total={totalPages}
-                  page={currentPage}
-                  onChange={onPageChange}
-                  showControls
-                  color="primary"
-                  variant="light"
-                  size="lg"
-                  classNames={{
-                    wrapper: "gap-2",
-                    item: "w-10 h-10 text-sm font-medium",
-                    cursor:
-                      "bg-gradient-to-r from-blue-500 to-indigo-600 shadow-sm",
-                  }}
-                />
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="py-16">
+            <div className="mx-auto px-6 max-w-7xl">
+              {/* Services Grid */}
+              <div className="flex flex-wrap justify-center gap-4 mb-12">
+                {services.map((service) => (
+                  <Link
+                    key={service.service_id}
+                    href={`/marketplace/${service.service_id}`}
+                    className="w-full md:w-[calc(50%-16px)] lg:w-[calc(33%-16px)] xl:w-[calc(25%-16px)]"
+                  >
+                    <Card className="group h-[200px] w-full hover:shadow-lg transition-all duration-200 cursor-pointer bg-white border border-gray-100 rounded-xl shadow-sm">
+                      <CardBody className="p-4">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <Zap className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-900 text-base mb-1 truncate group-hover:text-blue-600 transition-colors">
+                                {service.name}
+                              </h3>
+                            </div>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed mb-4">
+                          {service.short_description ||
+                            t("No description available")}
+                        </p>
+                      </CardBody>
+
+                      {/* Footer */}
+                      <CardFooter className="pt-0 px-4 pb-4">
+                        <div className="flex items-center justify-between w-full">
+                          {/* Tools count */}
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                            <span className="text-sm font-medium text-gray-700">
+                              {t("{{count}} Tools", {
+                                count: service.tools.length,
+                              })}
+                            </span>
+                          </div>
+
+                          {/* Price */}
+                          <div className="flex flex-col items-end">
+                            <Price
+                              price={service.price}
+                              charge_type={service.charge_type}
+                              input_token_price={service.input_token_price}
+                              output_token_price={service.output_token_price}
+                            />
+                          </div>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center">
+                  <Pagination
+                    total={totalPages}
+                    page={currentPage}
+                    onChange={onPageChange}
+                    showControls
+                    color="primary"
+                    variant="light"
+                    size="lg"
+                    classNames={{
+                      wrapper: "gap-2",
+                      item: "w-10 h-10 text-sm font-medium",
+                      cursor:
+                        "bg-gradient-to-r from-blue-500 to-indigo-600 shadow-sm",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+      <Faq />
 
       <Footer />
     </div>

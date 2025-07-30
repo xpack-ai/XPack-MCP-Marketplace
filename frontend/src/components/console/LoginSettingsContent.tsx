@@ -1,37 +1,32 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { EmailConfigForm } from "@/components/login-setting/EmailConfigForm";
 import { GoogleAuthConfigForm } from "@/components/login-setting/GoogleAuthConfigForm";
-import { useSystemConfigManagement } from "@/hooks/useSystemConfigManagement";
 import { usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
 import { LoginConfig, GoogleAuthConfig } from "@/shared/types/system";
 import { TabKey } from "@/shared/types/dashboard";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { toast } from "react-hot-toast";
+import { EmailConfig } from "@/types/system";
 
 interface LoginSettingsContentProps {
   onTabNavigate?: (tab: TabKey) => void;
+  loginConfig: LoginConfig;
+  saveLoginConfig: (config: LoginConfig) => Promise<boolean>;
+  emailConfig: EmailConfig;
 }
 
 export const LoginSettingsContent: React.FC<LoginSettingsContentProps> = ({
   onTabNavigate,
+  loginConfig,
+  saveLoginConfig,
+  emailConfig,
 }) => {
+  const [googleSubmitLoading, setGoogleSubmitLoading] = useState(false);
+  const [emailSubmitLoading, setEmailSubmitLoading] = useState(false);
   const { t } = useTranslation();
   const { updateClientConfig } = usePlatformConfig();
-
-  const {
-    // login config
-    loginConfig,
-    loginLoading,
-    saveLoginConfig,
-
-    // email config
-    emailConfig,
-
-    // platform config
-    platformConfig,
-  } = useSystemConfigManagement();
 
   // 验证至少有一种登录方式启用
   const validateLoginMethods = (config: LoginConfig): boolean => {
@@ -57,12 +52,13 @@ export const LoginSettingsContent: React.FC<LoginSettingsContentProps> = ({
       return;
     }
 
+    setEmailSubmitLoading(true);
     const result = await saveLoginConfig(config);
     if (!result) return;
     updateClientConfig({
-      platform: platformConfig,
       login: config,
     });
+    setEmailSubmitLoading(false);
   };
 
   // save google auth config
@@ -76,22 +72,23 @@ export const LoginSettingsContent: React.FC<LoginSettingsContentProps> = ({
       return;
     }
 
+    setGoogleSubmitLoading(true);
     const result = await saveLoginConfig(updatedLoginConfig);
     if (!result) return;
     updateClientConfig({
-      platform: platformConfig,
       login: updatedLoginConfig,
     });
+    setGoogleSubmitLoading(false);
   };
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-4 w-full">
       {/* email config */}
       <EmailConfigForm
         config={loginConfig}
         emailConfig={emailConfig}
         onSave={handleSaveLoginConfig}
-        isLoading={loginLoading}
+        isLoading={emailSubmitLoading}
         onTabNavigate={onTabNavigate}
       />
 
@@ -99,7 +96,7 @@ export const LoginSettingsContent: React.FC<LoginSettingsContentProps> = ({
       <GoogleAuthConfigForm
         config={loginConfig.google}
         onSave={handleSaveGoogleAuthConfig}
-        isLoading={loginLoading}
+        isLoading={googleSubmitLoading}
       />
     </div>
   );

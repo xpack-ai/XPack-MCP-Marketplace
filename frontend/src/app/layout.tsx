@@ -32,6 +32,13 @@ export default async function RootLayout({
             `,
           }}
         />
+        {platformConfig?.embeded_html?.is_enabled && platformConfig?.embeded_html?.html && (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: platformConfig.embeded_html.html,
+            }}
+          />
+        )}
       </head>
       <body className={redHatDisplay.className} suppressHydrationWarning>
         <ClientRootProviders initConfig={platformConfig}>

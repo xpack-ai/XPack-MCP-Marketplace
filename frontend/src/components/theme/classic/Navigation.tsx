@@ -43,7 +43,12 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex space-x-6">
             {items?.map((item) => (
-              <Link href={item.href} className="text-sm text-gray-500">
+              <Link
+                key={item.href}
+                href={item.href}
+                target={item.target}
+                className="text-sm text-gray-500"
+              >
                 {t(item.label)}
               </Link>
             ))}
