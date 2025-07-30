@@ -12,6 +12,8 @@ from services.common.utils.cache_utils import CacheUtils
 from services.common.redis_keys import RedisKeys
 from services.admin_service.utils.user_utils import UserUtils
 from services.common import error_msg
+from services.common.models.mcp_service import ChargeType
+
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +201,9 @@ def get_mcp_service_list(
                 "auth_header": service.auth_header,
                 "auth_token": service.auth_token,
                 "charge_type": service.charge_type.value if service.charge_type else None,
-                "price": float(service.price) if service.price else 0.0,
+                "price": str(float(service.price)) if service.price and service.charge_type == ChargeType.PER_CALL else "0.00",
+                "input_token_price": str(float(service.input_token_price)) if service.input_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "output_token_price": str(float(service.output_token_price)) if service.output_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
                 "enabled": service.enabled,
                 "tags": parse_tags_to_array(service.tags),
                 "created_at": str(service.created_at) if service.created_at else None,
