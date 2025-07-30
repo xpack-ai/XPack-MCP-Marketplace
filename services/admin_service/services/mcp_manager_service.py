@@ -461,7 +461,9 @@ class McpManagerService:
                 "auth_header": temp_service.auth_header,
                 "auth_token": temp_service.auth_token,
                 "charge_type": temp_service.charge_type.value if temp_service.charge_type else None,
-                "price": str(float(temp_service.price)) if temp_service.price else "0.00",
+                "price": str(float(temp_service.price)) if temp_service.price and temp_service.charge_type == ChargeType.PER_CALL else "0.00",
+                "input_token_price": str(float(temp_service.input_token_price)) if temp_service.input_token_price and temp_service.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "output_token_price": str(float(temp_service.output_token_price)) if temp_service.output_token_price and temp_service.charge_type == ChargeType.PER_TOKEN else "0.00",
                 "enabled": temp_service.enabled,
                 "tags": parse_tags_to_array(temp_service.tags),
                 "apis": apis_list,
@@ -498,7 +500,10 @@ class McpManagerService:
                 "tags": parse_tags_to_array(service.tags),
                 "slug_name": service.slug_name,
                 "charge_type": service.charge_type.value if service.charge_type else "free",
-                "price": str(float(service.price)) if service.price else "0.00",
+                "price": str(float(service.price)) if service.price and service.charge_type == ChargeType.PER_CALL else "0.00",
+                "input_token_price": str(float(service.input_token_price)) if service.input_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "output_token_price": str(float(service.output_token_price)) if service.output_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+
                 "apis": api_list,
             }
             service_list.append(service_info)
