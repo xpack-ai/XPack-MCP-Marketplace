@@ -145,7 +145,7 @@ class McpController:
             if db is not None:
                 db.close()
 
-    def _extract_user_info(self, request: Request) -> Optional[Tuple[str, str]]:
+    def _extract_user_info(self, request: Request) -> Optional[tuple[str, str]]:
         """Extract user ID and apikey ID from request by validating apikey parameter."""
         # Get apikey from URL query parameters
         apikey = request.query_params.get("apikey")
