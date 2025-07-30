@@ -23,6 +23,7 @@ from services.admin_service.constants.sys_config_key import (
     KEY_FAQ,
     KEY_EMBEDED_HTML,
     KEY_TOP_NAVIGATION,
+    KEY_MCP_SERVER_PREFIX
 )
 from services.admin_service.services.payment_channel_service import PaymentChannelService
 
@@ -61,6 +62,7 @@ def get_config(
         # Convert to boolean
         email_is_enabled = email_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
         email_mode = sys_config_service.get_value_by_key(KEY_LOGIN_EMAIL_MODE) or "password"
+        mcp_server_prefix = sys_config_service.get_value_by_key(KEY_MCP_SERVER_PREFIX) or ""
 
         # Get homepage config
         faq = sys_config_service.get_value_by_key(KEY_FAQ) or "[]"
@@ -93,6 +95,7 @@ def get_config(
                 "language": language,
                 "theme": theme,
                 "about_page": about_page,
+                "mcp_server_prefix": mcp_server_prefix,
             },
             "faq": faq,
             "embeded_html": embeded_html,

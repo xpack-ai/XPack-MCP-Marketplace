@@ -50,14 +50,26 @@ class BillingService:
         """
         try:
             # Get service price information
-            service_price, charge_type = await self._get_service_price(service_id)
+            price, input_token_price, output_token_price, charge_type = await self._get_service_price(service_id)
+            service_price = price
+            match charge_type:
+                case ChargeType.FREE:
+                    logger.info(f"Free service, skip billing check - User ID: {user_id}, Service ID: {service_id}")
+                    return PreDeductResult(
+                        success=True,
+                        message="Free service",
+                        service_price=Decimal("0"),
+                        user_balance=Decimal("0"),
+                        input_token_price=input_token_price,
+                        output_token_price=output_token_price,
+                        charge_type=charge_type.value
+                    )
+                case ChargeType.PER_TOKEN:
+                    # 计算预估费用（按每百万Token计费）
+                    estimated_input_cost = (Decimal(100) / Decimal("1000000")) * input_token_price
+                    estimated_output_cost = (Decimal(500) / Decimal("1000000")) * output_token_price
+                    service_price = estimated_input_cost + estimated_output_cost
 
-            # Free service passes directly
-            if charge_type == ChargeType.FREE:
-                logger.info(f"Free service, skip billing check - User ID: {user_id}, Service ID: {service_id}")
-                return PreDeductResult(success=True, message="Free service", service_price=Decimal("0"), user_balance=Decimal("0"))
-
-            # Acquire distributed lock for pre-deduction
             async with self._acquire_billing_lock(user_id):
                 # Get user balance
                 user_balance = await self._get_user_wallet_balance(user_id)
@@ -70,6 +82,9 @@ class BillingService:
                         message=f"Insufficient balance, current balance: {user_balance}, required: {service_price}",
                         service_price=service_price,
                         user_balance=user_balance,
+                        input_token_price=input_token_price,
+                        output_token_price=output_token_price,
+                        charge_type=charge_type.value
                     )
 
                 # Pre-deduct amount in Redis
@@ -77,7 +92,15 @@ class BillingService:
                 await self._update_wallet_cache(user_id, new_balance)
 
                 logger.info(f"Pre-deduction successful - User ID: {user_id}, Deduction: {service_price}, Balance: {user_balance} -> {new_balance}")
-                return PreDeductResult(success=True, message="Pre-deduction successful", service_price=service_price, user_balance=new_balance)
+                return PreDeductResult(
+                    success=True,
+                    message="Pre-deduction successful",
+                    service_price=service_price,
+                    user_balance=new_balance,
+                    input_token_price=input_token_price,
+                    output_token_price=output_token_price,
+                    charge_type=charge_type.value
+                )
 
         except Exception as e:
             logger.error(f"Pre-deduction check failed - User ID: {user_id}, Service ID: {service_id}: {str(e)}", exc_info=True)
@@ -130,7 +153,7 @@ class BillingService:
             logger.error(f"Failed to send billing message: {str(e)}", exc_info=True)
             # Consider saving failed messages to local queue for retry
 
-    async def _get_service_price(self, service_id: str) -> Tuple[Decimal, ChargeType]:
+    async def _get_service_price(self, service_id: str) -> Tuple[Decimal, Decimal, Decimal, ChargeType]:
         """
         Get service price and charge type
 
@@ -147,7 +170,7 @@ class BillingService:
         if cached_data:
             try:
                 data = json.loads(cached_data)
-                return Decimal(data["price"]), ChargeType(data["charge_type"])
+                return Decimal(data["price"]), Decimal(data["input_token_price"]), Decimal(data["output_token_price"]), ChargeType(data["charge_type"])
             except (json.JSONDecodeError, KeyError, ValueError):
                 logger.warning(f"Service price cache data anomaly, re-fetch from database - Service ID: {service_id}")
 
@@ -161,13 +184,20 @@ class BillingService:
                 raise ValueError(f"Service not found: {service_id}")
 
             price = Decimal(str(service.price))
+            input_token_price = Decimal(str(service.input_token_price))
+            output_token_price = Decimal(str(service.output_token_price))
             charge_type = service.charge_type
 
             # Cache to Redis
-            cache_data = {"price": str(price), "charge_type": charge_type.value}
+            cache_data = {
+                "price": str(price),
+                "input_token_price": str(input_token_price),
+                "output_token_price":str(output_token_price),
+                "charge_type": charge_type.value
+            }
             self.redis.set(cache_key, json.dumps(cache_data), ex=self.SERVICE_CACHE_EXPIRE)
 
-            return price, charge_type
+            return price,input_token_price,output_token_price, charge_type
 
         finally:
             db.close()
