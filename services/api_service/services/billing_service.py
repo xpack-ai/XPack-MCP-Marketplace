@@ -3,6 +3,7 @@ Billing service - Handle user API call billing logic
 """
 
 import json
+import os
 import uuid
 import asyncio
 from datetime import datetime, timezone
@@ -30,7 +31,7 @@ class BillingService:
     BILLING_LOCK_TIMEOUT = 5  # Distributed lock timeout (seconds)
     WALLET_CACHE_EXPIRE = 300  # Wallet cache expiration time (seconds)
     SERVICE_CACHE_EXPIRE = 3600  # Service price cache expiration time (seconds)
-    BILLING_QUEUE_NAME = "billing.api.calls"
+    BILLING_QUEUE_NAME = os.getenv("BILLING_QUEUE_NAME") or "billing.api.calls"
 
     def __init__(self):
         self.redis = redis_client
@@ -150,6 +151,9 @@ class BillingService:
                     "input_params": message.input_params,
                     "call_success": message.call_success,
                     "unit_price": str(message.unit_price),
+                    "input_token": str(message.input_token),
+                    "output_token": str(message.output_token),
+                    "charge_type": message.charge_type, 
                     "call_start_time": message.call_start_time.isoformat(),
                     "call_end_time": message.call_end_time.isoformat() if message.call_end_time else None,
                     "apikey_id": message.apikey_id,

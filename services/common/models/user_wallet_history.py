@@ -38,10 +38,10 @@ class UserWalletHistory(Base):
         comment="Payment method: platform, stripe, alipay, wechat",
     )
     amount: Mapped[float] = mapped_column(
-        Numeric(10, 2), nullable=False, comment="Transaction amount (positive for deposit, negative for consumption, 2 decimal places)"
+        Numeric(16, 6), nullable=False, comment="Transaction amount (positive for deposit, negative for consumption, 6 decimal places)"
     )
     balance_after: Mapped[float] = mapped_column(
-        Numeric(10, 2), nullable=False, comment="Balance after transaction (2 decimal places)"
+        Numeric(16, 6), nullable=False, comment="Balance after transaction (6 decimal places)"
     )
     type: Mapped[TransactionType] = mapped_column(
         Enum(TransactionType, values_callable=lambda obj: [e.value for e in obj]),
