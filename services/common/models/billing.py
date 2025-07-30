@@ -29,6 +29,8 @@ class ApiCallLogInfo:
     tool_name: str
     input_params: str
     unit_price: Decimal
+    input_token_amount: Decimal
+    output_token_amount: Decimal
     call_start_time: datetime
     call_end_time: Optional[datetime] = None
     apikey_id: Optional[str] = None
@@ -40,3 +42,6 @@ class PreDeductResult:
     message: str
     service_price: Decimal
     user_balance: Decimal
+    input_token_price: Decimal
+    output_token_price: Decimal
+    charge_type: str
