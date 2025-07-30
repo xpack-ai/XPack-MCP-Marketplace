@@ -107,6 +107,7 @@ async def recharge_balance(
     transaction_id = hashlib.md5(f"{timestamp}{user_id}{balance}{typ}".encode('utf-8')).hexdigest()
     if payment_service.check_transaction_id_exists(transaction_id):
         return ResponseUtils.error(message="Transaction ID already exists")
+    print(f"user_id: {user_id}, amount: {balance}, typ: {typ}, transaction_id: {transaction_id}")
     success = payment_service.platform_payment(user_id=user_id, amount=balance, typ=typ, transaction_id=transaction_id)
     if not success:
         return ResponseUtils.error(message="Failed to recharge wallet balance")

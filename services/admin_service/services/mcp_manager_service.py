@@ -266,7 +266,6 @@ class McpManagerService:
 
         # Get service's API list
         apis = self.mcp_tool_api_repository.get_by_service_id(id)
-
         # Build return data
         service_info = {
             "id": service.id,
@@ -274,7 +273,7 @@ class McpManagerService:
             "short_description": service.short_description,
             "long_description": service.long_description,
             "base_url": service.base_url,
-            "auth_method": service.auth_method.value if service.auth_method else None,
+            "auth_method": service.auth_method.value if service.auth_method != AuthMethod.FREE else "none",
             "auth_header": service.auth_header,
             "auth_token": service.auth_token,
             "charge_type": service.charge_type.value if service.charge_type else None,
