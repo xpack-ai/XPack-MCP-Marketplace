@@ -46,40 +46,50 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
   // URL validation function with strict regex
   const validateUrl = (url: string): boolean => {
     if (!url.trim()) return true; // Empty is valid (optional field)
-    
+
     // Strict regex for domain validation
     const domainRegex = /^https?:\/\/(?:[-\w.])+(?:\:[0-9]+)?(?:\/.*)?$/;
-    
+
     // First check with regex
     if (!domainRegex.test(url)) {
       return false;
     }
-    
+
     // Then validate with URL constructor for additional checks
     try {
       const urlObj = new URL(url);
-      return (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') && 
-             urlObj.hostname.length > 0 &&
-             urlObj.hostname.includes('.');
+      return (
+        (urlObj.protocol === "http:" || urlObj.protocol === "https:") &&
+        urlObj.hostname.length > 0 &&
+        urlObj.hostname.includes(".")
+      );
     } catch {
       return false;
     }
   };
 
   // Validate field and update errors
-  const validateField = (field: 'domain' | 'mcp_server_prefix', value: string) => {
+  const validateField = (
+    field: "domain" | "mcp_server_prefix",
+    value: string
+  ) => {
     const isValid = validateUrl(value);
-    setValidationErrors(prev => ({
+    setValidationErrors((prev) => ({
       ...prev,
-      [field]: isValid ? undefined : t('Please enter a valid URL with http:// or https://')
+      [field]: isValid
+        ? undefined
+        : t("Please enter a valid URL with http:// or https://"),
     }));
     return isValid;
   };
 
-  const handleInputChange = (field: keyof PlatformConfig, value: string) => {
+  const handleInputChange = (
+    field: keyof PlatformConfig,
+    value: string | boolean
+  ) => {
     // Validate URL fields
-    if (field === 'domain' || field === 'mcp_server_prefix') {
-      validateField(field, value);
+    if (field === "domain" || field === "mcp_server_prefix") {
+      validateField(field, value as string);
     }
 
     setFormData((prev) => {
@@ -88,43 +98,23 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
         [field]: value,
       };
 
-      // Auto-enable showcase when domain is filled and showcase is not explicitly set
-      if (
-        field === "domain" &&
-        value.trim() &&
-        prev.is_showcased === undefined
-      ) {
-        newData.is_showcased = true;
-      }
-
       return newData;
     });
   };
 
-  const handleBooleanChange = (field: keyof PlatformConfig, value: boolean) => {
-    // Check domain requirement for is_showcased
-    if (field === "is_showcased" && value && !formData.domain?.trim()) {
-      // Show error message or prevent enabling
-      toast.error(t("Please enter a platform domain before enabling showcase"));
-      return;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
   const handleSave = async () => {
     // Validate all URL fields before saving
-    const domainValid = validateField('domain', formData.domain || '');
-    const mcpServerValid = validateField('mcp_server_prefix', formData.mcp_server_prefix || '');
-    
+    const domainValid = validateField("domain", formData.domain || "");
+    const mcpServerValid = validateField(
+      "mcp_server_prefix",
+      formData.mcp_server_prefix || ""
+    );
+
     if (!domainValid || !mcpServerValid) {
-      toast.error(t('Please fix validation errors before saving'));
+      toast.error(t("Please fix validation errors before saving"));
       return;
     }
-    
+
     onSave(formData);
   };
 
@@ -271,7 +261,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
               <Switch
                 isSelected={formData.is_showcased ?? false}
                 onValueChange={(value) => {
-                  handleBooleanChange("is_showcased", value);
+                  handleInputChange("is_showcased", value);
                 }}
                 color="primary"
                 size="sm"
