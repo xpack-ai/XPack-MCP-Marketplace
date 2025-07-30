@@ -93,6 +93,8 @@ class BillingMessageHandler:
                 input_params=message_data["input_params"],
                 call_success=message_data["call_success"],
                 unit_price=Decimal(message_data["unit_price"]),
+                input_token=Decimal(message_data["input_token"]),
+                output_token=Decimal(message_data["output_token"]),
                 call_start_time=call_start_time,
                 call_end_time=call_end_time,
                 apikey_id=message_data.get("apikey_id"),  # Support older version messages that don't have this field
@@ -184,6 +186,7 @@ class BillingMessageHandler:
                 status=1,  # Completed
                 transaction_id=call_log_id,
                 channel_user_id=None,
+                callback_data=json.dumps(billing_message),
                 created_at=now,
                 updated_at=now,
             )

@@ -145,7 +145,21 @@ class McpServerFactory:
         db = next(get_db())
         call_success = False
         result: List[types.ContentBlock] = []
-
+        # calculate input token amount
+        input_token_amount = Decimal("0")
+        output_token_amount = Decimal("0")
+        input_token = 0
+        output_token = 0
+        
+        # Calculate input token amount based on charge type
+        if pre_deduct_result.charge_type == "per_token":
+            # Estimate input tokens from arguments
+            input_text = json.dumps(arguments)
+            estimated_input_tokens = len(input_text.split()) * 1.3  # Rough estimation: 1.3 tokens per word
+            input_token = estimated_input_tokens
+            # Calculate input token amount (prices are per million tokens)
+            input_token_amount = (Decimal(str(estimated_input_tokens)) / Decimal("1000000")) * pre_deduct_result.input_token_price
+        
         try:
             # Create service instance
             mcp_service = self._create_mcp_service(db)
@@ -167,6 +181,17 @@ class McpServerFactory:
             result = await self.tool_service.execute_tool(tool_config, arguments, auth_info)
             call_success = True
             logger.info(f"Tool call successful - User ID: {user_id}, Tool: {name}")
+            
+            # Calculate output token amount after tool execution
+            if pre_deduct_result.charge_type == "per_token" and result:
+                output_text = ""
+                for content in result:
+                    if isinstance(content, types.TextContent):
+                        output_text += content.text
+                estimated_output_tokens = len(output_text.split()) * 1.3  # Rough estimation: 1.3 tokens per word
+                output_token = estimated_output_tokens
+                # Calculate output token amount (prices are per million tokens)
+                output_token_amount = (Decimal(str(estimated_output_tokens)) / Decimal("1000000")) * pre_deduct_result.output_token_price
 
         except Exception as e:
             logger.error(f"Tool call failed - User ID: {user_id}, Tool: {name}: {str(e)}", exc_info=True)
@@ -186,9 +211,9 @@ class McpServerFactory:
             api_id=call_log_id,
             tool_name=name,
             input_params=json.dumps(arguments),
-            # unit_price=pre_deduct_result.service_price,
-            input_token_amount=0,
-            output_token_amount=0,
+            unit_price=input_token_amount + output_token_amount,
+            input_token=input_token,
+            output_token=output_token,
             call_start_time=call_start_time,
             call_end_time=call_end_time,
             apikey_id=apikey_id,

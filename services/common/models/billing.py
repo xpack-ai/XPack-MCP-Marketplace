@@ -15,6 +15,9 @@ class BillingMessage:
     input_params: str
     call_success: bool
     unit_price: Decimal
+    input_token: Decimal
+    output_token: Decimal
+    charge_type: str
     call_start_time: datetime
     call_end_time: Optional[datetime] = None
     call_log_id: Optional[str] = None
@@ -29,8 +32,9 @@ class ApiCallLogInfo:
     tool_name: str
     input_params: str
     unit_price: Decimal
-    input_token_amount: Decimal
-    output_token_amount: Decimal
+    input_token: Decimal
+    output_token: Decimal
+    charge_type: str
     call_start_time: datetime
     call_end_time: Optional[datetime] = None
     apikey_id: Optional[str] = None

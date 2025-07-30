@@ -104,7 +104,15 @@ class BillingService:
 
         except Exception as e:
             logger.error(f"Pre-deduction check failed - User ID: {user_id}, Service ID: {service_id}: {str(e)}", exc_info=True)
-            return PreDeductResult(success=False, message=f"System error: {str(e)}", service_price=Decimal("0"), user_balance=Decimal("0"))
+            return PreDeductResult(
+                success=False,
+                message=f"System error: {str(e)}",
+                service_price=Decimal("0"),
+                user_balance=Decimal("0"),
+                input_token_price=Decimal("0"),
+                output_token_price=Decimal("0"),
+                charge_type=ChargeType.FREE.value
+            )
 
     async def send_billing_message(self, call_log: ApiCallLogInfo, call_success: bool, call_end_time: datetime) -> None:
         """
@@ -166,7 +174,6 @@ class BillingService:
         # Try to get from Redis cache
         cache_key = f"service:price:{service_id}"
         cached_data = self.redis.get(cache_key)
-
         if cached_data:
             try:
                 data = json.loads(cached_data)
