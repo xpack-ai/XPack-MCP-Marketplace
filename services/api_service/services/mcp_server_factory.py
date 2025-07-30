@@ -133,6 +133,9 @@ class McpServerFactory:
                 unit_price=pre_deduct_result.service_price,
                 call_start_time=call_start_time,
                 call_end_time=datetime.now(timezone.utc),
+                input_token=Decimal("0"),
+                output_token=Decimal("0"),
+                charge_type=pre_deduct_result.charge_type,
                 apikey_id=apikey_id,
             )
             await self.billing_service.send_billing_message(call_log, False, datetime.now(timezone.utc))
@@ -148,8 +151,8 @@ class McpServerFactory:
         # calculate input token amount
         input_token_amount = Decimal("0")
         output_token_amount = Decimal("0")
-        input_token = 0
-        output_token = 0
+        input_token  = Decimal("0")
+        output_token  = Decimal("0")
         
         # Calculate input token amount based on charge type
         if pre_deduct_result.charge_type == "per_token":
@@ -212,8 +215,9 @@ class McpServerFactory:
             tool_name=name,
             input_params=json.dumps(arguments),
             unit_price=input_token_amount + output_token_amount,
-            input_token=input_token,
-            output_token=output_token,
+            input_token=Decimal(str(input_token)),
+            output_token=Decimal(str(output_token)),
+            charge_type=pre_deduct_result.charge_type,
             call_start_time=call_start_time,
             call_end_time=call_end_time,
             apikey_id=apikey_id,
