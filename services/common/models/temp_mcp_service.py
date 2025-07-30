@@ -44,7 +44,13 @@ class TempMcpService(Base):
         nullable=False,
         comment="Charge type: free, per_call, per_token",
     )
-    price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, comment="Service price (2 decimal places)")
+    price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=True, comment="Service price (2 decimal places)")
+    input_token_price: Mapped[float] = mapped_column(
+        Numeric(10, 2), nullable=True, comment="Input token price (2 decimal places, for per_token charge type)"
+    )
+    output_token_price: Mapped[float] = mapped_column(
+        Numeric(10, 2), nullable=True, comment="Output token price (2 decimal places, for per_token charge type)"
+    )
     enabled: Mapped[int] = mapped_column(Integer, nullable=True, comment="Service status: 0=disabled, 1=enabled")
     tags: Mapped[str] = mapped_column(String, nullable=True, comment="Tags")
     created_at: Mapped[datetime] = mapped_column(
