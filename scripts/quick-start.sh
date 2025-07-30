@@ -1027,7 +1027,7 @@ operate() {
   echo_logo
   echo_split
   echo_question "Hello, Welcome to use XPack MCP Market! What do you want to do?"
-  echo_point "1. Install XPack MCP Market"
+  echo_point "1. Install or Update XPack MCP Market"
   echo_point "2. Print system information"
   echo_point "3. Uninstall XPack MCP Market"
   echo_point "4. Exit"
