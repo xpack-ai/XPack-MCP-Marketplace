@@ -538,7 +538,10 @@ class McpManagerService:
             "long_description": service.long_description,
             "slug_name": service.slug_name,
             "charge_type": service.charge_type.value if service.charge_type else "free",
-            "price": f"{float(service.price):.2f}" if service.price else "0.00",
+            "price": str(float(service.price)) if service.price and service.charge_type == ChargeType.PER_CALL else "0.00",
+            "input_token_price": str(float(service.input_token_price)) if service.input_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+            "output_token_price": str(float(service.output_token_price)) if service.output_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+
             "tags": parse_tags_to_array(service.tags),
             "apis": api_list,
         }
