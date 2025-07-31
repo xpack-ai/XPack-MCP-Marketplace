@@ -37,7 +37,7 @@ async def payment_channel_list(
                 "name": item.name,
                 "config": cfg,
                 "is_enabled": enable,
-                "updated_time": item.update_at,
+                "updated_time": item.updated_at,
             }
         )
     return ResponseUtils.success_page(data=result, total=total, page_num=page, page_size=page_size)
@@ -65,7 +65,7 @@ async def payment_channel_enable(
                 "name": data.name,
                 "config": data.config,
                 "is_enabled": data.status == 1,
-                "updated_time": data.update_at,
+                "updated_time": data.updated_at,
             }
         )
     return ResponseUtils.success(data={})
@@ -92,7 +92,7 @@ async def payment_channel_disable(
                 "name": data.name,
                 "config": data.config,
                 "is_enabled": data.status == 1,
-                "updated_time": data.update_at,
+                "updated_time": data.updated_at,
             }
         )
     return ResponseUtils.success(data={})
@@ -119,7 +119,7 @@ async def payment_channel_config(
                     "name": data.name,
                     "config": config,
                     "is_enabled": data.status == 1,
-                    "updated_time": data.update_at,
+                    "updated_time": data.updated_at,
                 }
             )
         return ResponseUtils.success(data={})
