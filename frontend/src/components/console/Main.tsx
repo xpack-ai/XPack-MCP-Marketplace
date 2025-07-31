@@ -19,10 +19,8 @@ import {
   Home,
   Settings,
   Users,
-  LogIn,
   ServerIcon,
 } from "lucide-react";
-import { LoginSettingsContent } from "@/components/console/LoginSettingsContent";
 import ConsoleSidebar from "./Sidebar";
 
 const ConsoleContent: React.FC = () => {
