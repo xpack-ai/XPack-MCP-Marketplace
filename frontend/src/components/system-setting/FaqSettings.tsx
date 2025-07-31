@@ -23,19 +23,21 @@ interface FaqSettingsProps {
   onSave?: (config: FaqItem[]) => void;
   config?: FaqItem[];
 }
-
+const defaultFaqs = [{ question: "", answer: "" }];
 export const FaqSettings: React.FC<FaqSettingsProps> = ({
   onSave,
   config = [],
 }) => {
   const { t } = useTranslation();
-  const [faqs, setFaqs] = useState<FaqItem[]>(config || []);
+  const [faqs, setFaqs] = useState<FaqItem[]>(
+    config && config.length > 0 ? config : defaultFaqs
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [focusedAnswer, setFocusedAnswer] = useState<number | null>(null);
   const draggedItem = useRef<number | null>(null);
   const draggedOverItem = useRef<number | null>(null);
   useEffect(() => {
-    setFaqs(config);
+    setFaqs(config && config.length > 0 ? config : defaultFaqs);
   }, [config]);
 
   const handleQuestionChange = (index: number, value: string) => {
@@ -54,6 +56,10 @@ export const FaqSettings: React.FC<FaqSettingsProps> = ({
 
   const handleDelete = (index: number) => {
     setFaqs((prev) => {
+      // Ensure at least one record remains
+      if (prev.length <= 1) {
+        return defaultFaqs;
+      }
       return prev.filter((_, idx) => idx !== index);
     });
   };

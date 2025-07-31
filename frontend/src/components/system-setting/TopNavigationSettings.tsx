@@ -27,19 +27,24 @@ interface TopNavigationSettingsProps {
   onSave?: (config: TopNavigationItem[]) => void;
   config?: TopNavigationItem[];
 }
-
+const defaultNavigationItems = [
+  { title: "", link: "", target: TopNavigationTargetEnum.BLANK },
+];
 export const TopNavigationSettings: React.FC<TopNavigationSettingsProps> = ({
   onSave,
   config = [],
 }) => {
   const { t } = useTranslation();
-  const [navigationItems, setNavigationItems] =
-    useState<TopNavigationItem[]>(config);
+  const [navigationItems, setNavigationItems] = useState<TopNavigationItem[]>(
+    config && config.length > 0 ? config : defaultNavigationItems
+  );
   const [isSaving, setIsSaving] = useState(false);
   const draggedItem = useRef<number | null>(null);
   const draggedOverItem = useRef<number | null>(null);
   useEffect(() => {
-    setNavigationItems(config);
+    setNavigationItems(
+      config && config.length > 0 ? config : defaultNavigationItems
+    );
   }, [config]);
 
   const handleTitleChange = (index: number, value: string) => {
@@ -67,6 +72,10 @@ export const TopNavigationSettings: React.FC<TopNavigationSettingsProps> = ({
 
   const handleDelete = (index: number) => {
     setNavigationItems((prev) => {
+      // Ensure at least one record remains
+      if (prev.length <= 1) {
+        return defaultNavigationItems;
+      }
       return prev.filter((_, idx) => idx !== index);
     });
   };
