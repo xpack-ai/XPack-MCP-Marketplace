@@ -13,8 +13,8 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.get("/key_call_tool_count")
-async def get_key_call_tool_count(
+@router.get("/key_call_tool")
+async def get_key_call_tool(
     apikey_id: str = Query(..., description="apikey ID (not the apikey itself)"),
     last_day: int = Query(30, description="Days to query, default 30"),
     db: Session = Depends(get_db),

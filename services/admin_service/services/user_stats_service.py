@@ -9,6 +9,7 @@ from sqlalchemy import func, and_
 from services.common.models.mcp_call_log import McpCallLog
 from services.common.models.user_apikey import UserApiKey
 from services.common.logging_config import get_logger
+from decimal import Decimal, getcontext
 
 logger = get_logger(__name__)
 
@@ -49,7 +50,11 @@ class UserStatsService:
 
         # Query statistics data
         stats_query = (
-            self.db.query(func.date(McpCallLog.call_start_time).label("stats_day"), func.count(McpCallLog.id).label("call_tool_count"))
+            self.db.query(
+                func.date(McpCallLog.call_start_time).label("stats_day"),
+                func.count(McpCallLog.id).label("call_tool_count"),
+                func.sum(McpCallLog.unit_price).label("amount"),
+            )
             .join(UserApiKey, UserApiKey.id == McpCallLog.apikey_id)
             .filter(
                 and_(
@@ -63,7 +68,7 @@ class UserStatsService:
         )
 
         # Convert to dictionary for easy lookup
-        stats_dict = {str(row.stats_day): row.call_tool_count for row in stats_query}
+        stats_dict = {str(row.stats_day): [row.call_tool_count,row.amount] for row in stats_query}
 
         # Generate complete date sequence, including dates with no calls
         result = []
@@ -71,9 +76,14 @@ class UserStatsService:
 
         while current_date <= end_date:
             date_str = current_date.strftime("%Y-%m-%d")
-            call_count = stats_dict.get(date_str, 0)
+            columns = stats_dict.get(date_str, [])
+            if len(columns) == 0:
+                result.append({"stats_day": date_str, "call_tool_count": 0, "amount": "0.0"})
+            else:
+                #columns[1]不用科学记数法，保留六位小数
+                result.append({"stats_day": date_str, "call_tool_count": columns[0], "amount": columns[1]})        
 
-            result.append({"stats_day": date_str, "call_tool_count": call_count})
+            # result.append({"stats_day": date_str, "call_tool_count": call_count, "amount": amount})
 
             current_date += timedelta(days=1)
 
