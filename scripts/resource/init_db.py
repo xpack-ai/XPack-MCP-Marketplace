@@ -88,58 +88,76 @@ def execute_sql_file(file_path: str, db_config: Optional[DBConfig] = None) -> bo
         conn = get_db_connection(db_config)
         cursor = conn.cursor()
         
-        # 读取 SQL 文件
-        with open(file_path, 'r', encoding='utf-8') as f:
-            sql_content = f.read()
-
-        # 设置字符集
-        cursor.execute('SET NAMES utf8mb4')
         # 禁用外键检查
         cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
-
-        # 执行 SQL 语句
-        for statement in sql_content.split(';'):
-            if statement.strip():
-                sql = statement.strip()
+        
+        # 读取SQL文件
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+        
+        # 移除多行注释 /* ... */
+        import re
+        content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
+        
+        # 按分号分割语句
+        statements = content.split(';')
+        statement_count = 0
+        
+        for statement in statements:
+            # 清理语句：移除空行和注释行
+            lines = statement.strip().split('\n')
+            cleaned_lines = []
+            for line in lines:
+                line = line.strip()
+                if line and not line.startswith('--'):
+                    cleaned_lines.append(line)
+            
+            if not cleaned_lines:
+                continue
                 
-                # 跳过注释行和空行
-                if sql.startswith('#') or sql.startswith('--') or not sql:
-                    continue
-                
-                # 移除行内注释
-                lines = sql.split('\n')
-                cleaned_lines = []
-                for line in lines:
-                    line = line.strip()
-                    if line and not line.startswith('#') and not line.startswith('--'):
-                        cleaned_lines.append(line)
-                
-                if not cleaned_lines:
-                    continue
-                    
-                sql = '\n'.join(cleaned_lines)
-                
+            sql = '\n'.join(cleaned_lines)
+            statement_count += 1
+            
+            # 跳过SET语句，单独处理
+            if sql.upper().startswith('SET '):
+                print(f"执行第{statement_count}个语句: {sql}")
                 try:
                     cursor.execute(sql)
-                except mysql.connector.Error as err:
-                    # 检查是否是重复列错误，如果是则忽略并继续
-                    if "Duplicate column name" in str(err):
-                        print(f"忽略重复列错误: {err}")
-                        continue
-                    else:
-                        print(f"执行SQL语句失败: {err}")
-                        print(f"问题语句: {sql}")
-                        # 回滚事务并关闭连接
-                        conn.rollback()
-                        cursor.close()
-                        conn.close()
-                        return False
-
-        # 启用外键检查
+                    print(f"  -> 成功")
+                except mysql.connector.Error as e:
+                    print(f"  -> SET语句执行错误: {e}")
+                    # SET语句失败不影响后续执行
+                continue
+            
+            # 添加调试信息
+            if sql.upper().startswith('CREATE TABLE'):
+                table_match = re.search(r'CREATE TABLE.*?`(\w+)`', sql, re.IGNORECASE)
+                table_name = table_match.group(1) if table_match else 'unknown'
+                print(f"执行第{statement_count}个语句: 创建表 {table_name}")
+            elif sql.upper().startswith('INSERT INTO'):
+                table_match = re.search(r'INSERT INTO.*?`(\w+)`', sql, re.IGNORECASE)
+                table_name = table_match.group(1) if table_match else 'unknown'
+                print(f"执行第{statement_count}个语句: 插入数据到表 {table_name}")
+            else:
+                print(f"执行第{statement_count}个语句: {sql[:50]}...")
+            
+            try:
+                cursor.execute(sql)
+                print(f"  -> 成功")
+            except mysql.connector.Error as e:
+                if "Duplicate column name" in str(e):
+                    print(f"  -> 忽略重复列错误: {e}")
+                    continue
+                else:
+                    print(f"  -> 执行错误: {e}")
+                    print(f"  -> 语句内容: {sql}")
+                    raise
+        
+        # 恢复外键检查
         cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
         # 提交事务
         conn.commit()
-        print(f"成功执行 SQL 文件: {file_path}")
+        print(f"成功执行 SQL 文件: {file_path}，共执行 {statement_count} 个语句")
         
         cursor.close()
         conn.close()
@@ -151,10 +169,10 @@ def execute_sql_file(file_path: str, db_config: Optional[DBConfig] = None) -> bo
     except mysql.connector.Error as err:
         print(f"数据库错误: {err}")
         if sql:
-            print(f"问题语句: {sql}")
+            print(f"出错的SQL语句: {sql}")
         return False
     except Exception as e:
-        print(f"执行出错: {e}")
+        print(f"未知错误: {e}")
         return False
 
 def get_version_files(sql_dir: Path) -> List[Tuple[str, Path]]:
