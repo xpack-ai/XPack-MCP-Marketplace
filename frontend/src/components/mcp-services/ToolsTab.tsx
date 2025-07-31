@@ -38,7 +38,8 @@ export const ToolsTab: React.FC<ToolsTabProps> = ({
         removeWrapper
       >
         <TableHeader>
-          <TableColumn className='w-1/3'>{t('Tool Name')}</TableColumn>
+          <TableColumn className='w-1/4'>{t('Tool Name')}</TableColumn>
+          <TableColumn className='w-1/4'>{t('Tool URL')}</TableColumn>
           <TableColumn>{t('Description')}</TableColumn>
         </TableHeader>
         <TableBody emptyContent={t('No tools added yet. Add your first tool using the input above.')}>
@@ -49,7 +50,13 @@ export const ToolsTab: React.FC<ToolsTabProps> = ({
               <TableCell>
                 <Input
                   value={tool.name}
-                  // onChange={(e) => handleToolChange(index, 'name', e.target.value)}
+                  size="sm"
+                  isDisabled
+                />
+              </TableCell>
+              <TableCell>
+                <Input
+                  value={tool.url}
                   size="sm"
                   isDisabled
                 />

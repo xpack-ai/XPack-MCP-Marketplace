@@ -13,24 +13,32 @@ import { NavigationItems } from "@/components/theme/Theme.const";
 import { AboutContent } from "@/components/about/AboutContent";
 
 export const AboutThemeSelector: React.FC = () => {
-  const { platformConfig } = usePlatformConfig();
+  const { platformConfig, topNavigation } = usePlatformConfig();
   const currentTheme = platformConfig.theme || Theme.DEFAULT;
+  const navigationItems = [
+    ...NavigationItems,
+    ...topNavigation.map((item) => ({
+      label: item.title,
+      href: item.link,
+      target: item.target,
+    })),
+  ];
 
   // Render the About page based on the current theme
   switch (currentTheme) {
     case Theme.MODERN:
-      return <ModernAbout navItems={NavigationItems} />;
+      return <ModernAbout navItems={navigationItems} />;
     case Theme.CLASSIC:
-      return <ClassicAbout navItems={NavigationItems} />;
+      return <ClassicAbout navItems={navigationItems} />;
     case Theme.CREATIVE:
-      return <CreativeAbout navItems={NavigationItems} />;
+      return <CreativeAbout navItems={navigationItems} />;
     case Theme.TEMU:
-      return <TemuAbout navItems={NavigationItems} />;
+      return <TemuAbout navItems={navigationItems} />;
     case Theme.DEFAULT:
     default:
       return (
         <div className="min-h-screen bg-background flex flex-col justify-between">
-          <Navigation items={NavigationItems} />
+          <Navigation items={navigationItems} />
           <main className="flex-1 max-w-7xl mx-auto px-4 py-8">
             <AboutContent />
           </main>

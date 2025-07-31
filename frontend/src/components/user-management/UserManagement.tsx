@@ -12,8 +12,14 @@ const UserManagement: React.FC = () => {
   const { t } = useTranslation();
 
   // use custom hook to manage user data
-  const { users, loading, pagination, handleDeleteUser, setPage } =
-    useUserManagement();
+  const {
+    users,
+    loading,
+    pagination,
+    handleDeleteUser,
+    setPage,
+    handleRechargeUser,
+  } = useUserManagement();
 
   // Modal states
   const [deleteModal, setDeleteModal] = useState({
@@ -47,6 +53,13 @@ const UserManagement: React.FC = () => {
     setDeleteModal({ isOpen: false, user: null });
   }, []);
 
+  const handleRecharge = useCallback(
+    async (id: string, amount: number): Promise<boolean> => {
+      return await handleRechargeUser(id, amount);
+    },
+    [handleRechargeUser]
+  );
+
   return (
     <DashboardDemoContent
       title={t("User Management")}
@@ -59,6 +72,7 @@ const UserManagement: React.FC = () => {
           users={users}
           loading={loading}
           onDelete={handleDeleteUserClick}
+          onRecharge={handleRecharge}
           pagination={pagination}
           onPageChange={setPage}
         />

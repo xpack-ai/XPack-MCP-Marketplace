@@ -6,6 +6,10 @@ import {
   PlatformConfigResponse,
   Theme,
   LoginConfig,
+  FaqItem,
+  TopNavigationItem,
+  EmbeddedHtmlConfig,
+  PaymentChannel,
 } from "@/shared/types/system";
 export const _DefaultPlatformConfig: PlatformConfig = {
   name: "XPack",
@@ -17,10 +21,18 @@ export const _DefaultPlatformConfig: PlatformConfig = {
   subheadline:
     "Open‑source MCP marketplace — publish or consume APIs in minutes.",
   theme: Theme.DEFAULT,
+  domain: "",
+  is_showcased: false,
+  mcp_server_prefix: "",
 };
 interface PlatformConfigContextType {
   platformConfig: PlatformConfig;
   loginConfig: LoginConfig | null;
+  faqItems: FaqItem[];
+  topNavigation: TopNavigationItem[];
+  embeddedHtml: EmbeddedHtmlConfig | null;
+  paymentChannels: PaymentChannel[];
+  isInstalled: boolean;
   updateClientConfig: (config: PlatformConfigResponse) => void;
 }
 
@@ -43,13 +55,41 @@ export const PlatformConfigProvider: React.FC<PlatformConfigProviderProps> = ({
   const [loginConfig, setLoginConfig] = useState<LoginConfig | null>(
     initConfig?.login || null
   );
+  const [faqItems, setFaqItems] = useState<FaqItem[]>(initConfig?.faq || []);
+  const [topNavigation, setTopNavigation] = useState<TopNavigationItem[]>(
+    initConfig?.top_navigation || []
+  );
+  const [embeddedHtml, setEmbeddedHtml] = useState<EmbeddedHtmlConfig | null>(
+    initConfig?.embeded_html || null
+  );
+  const [paymentChannels, setPaymentChannels] = useState<PaymentChannel[]>(
+    initConfig?.payment_channels || []
+  );
+  const [isInstalled, setIsInstalled] = useState<boolean>(
+    initConfig?.is_installed || false
+  );
+
   const updateClientConfig = (config: PlatformConfigResponse) => {
     if (config.platform) setPlatformConfig(config.platform);
     if (config.login) setLoginConfig(config.login);
+    if (config.faq) setFaqItems(config.faq);
+    if (config.top_navigation) setTopNavigation(config.top_navigation);
+    if (config.embeded_html) setEmbeddedHtml(config.embeded_html);
+    if (config.payment_channels) setPaymentChannels(config.payment_channels);
+    if (config.is_installed !== undefined) setIsInstalled(config.is_installed);
   };
   return (
     <PlatformConfigContext.Provider
-      value={{ platformConfig, loginConfig, updateClientConfig }}
+      value={{
+        platformConfig,
+        loginConfig,
+        faqItems,
+        topNavigation,
+        embeddedHtml,
+        paymentChannels,
+        isInstalled,
+        updateClientConfig,
+      }}
     >
       {children}
     </PlatformConfigContext.Provider>

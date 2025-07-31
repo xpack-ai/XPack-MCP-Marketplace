@@ -25,7 +25,7 @@ export const ServiceListSection: React.FC<ServiceListSectionProps> = ({
   return (
     <div className="mx-auto px-6 py-12 max-w-7xl">
       {/* Services Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-12">
+      <div className="flex flex-wrap justify-center gap-4 mb-12">
         {services.map((service) => (
           <ServiceCard key={service.service_id} service={service} />
         ))}

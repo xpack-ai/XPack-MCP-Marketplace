@@ -14,6 +14,7 @@ import { Navigation } from "@/shared/components/Navigation";
 import { MarketplaceMain } from "../marketplace/Main";
 import { Footer } from "@/shared/components/Footer";
 import { NavigationItems } from "./Theme.const";
+import { Faq } from "../marketplace/Faq";
 
 interface ThemeSelectorProps {
   initialServices: ServiceData[];
@@ -33,8 +34,16 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   error,
 }) => {
   const router = useRouter();
-  const { platformConfig } = usePlatformConfig();
+  const { platformConfig, topNavigation } = usePlatformConfig();
   const currentTheme = platformConfig.theme || Theme.DEFAULT;
+  const navigationItems = [
+    ...NavigationItems,
+    ...topNavigation.map((item) => ({
+      label: item.title,
+      href: item.link,
+      target: item.target,
+    })),
+  ];
 
   // state management for services, search query, pagination, and loading state
   const [searchQuery, setSearchQuery] = useState(initialSearch);
@@ -122,7 +131,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
           onSearch={handleSearch}
           onPageChange={handlePageChange}
           searchSuggestions={searchSuggestions}
-          navItems={NavigationItems}
+          navItems={navigationItems}
         />
       );
     case Theme.CLASSIC:
@@ -139,7 +148,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
           onSearch={handleSearch}
           onPageChange={handlePageChange}
           searchSuggestions={searchSuggestions}
-          navItems={NavigationItems}
+          navItems={navigationItems}
         />
       );
     case Theme.CREATIVE:
@@ -156,7 +165,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
           onSearch={handleSearch}
           onPageChange={handlePageChange}
           searchSuggestions={searchSuggestions}
-          navItems={NavigationItems}
+          navItems={navigationItems}
         />
       );
     case Theme.TEMU:
@@ -173,14 +182,14 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
           onSearch={handleSearch}
           onPageChange={handlePageChange}
           searchSuggestions={searchSuggestions}
-          navItems={NavigationItems}
+          navItems={navigationItems}
         />
       );
     case Theme.DEFAULT:
     default:
       return (
         <div className="min-h-screen bg-background flex flex-col justify-between">
-          <Navigation items={NavigationItems} />
+          <Navigation items={navigationItems} />
           <main className="flex-1">
             <MarketplaceMain
               initialServices={services}
@@ -190,6 +199,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
               pageSize={pageSize}
               error={error}
             />
+            <Faq />
           </main>
           <div>
             <Footer />

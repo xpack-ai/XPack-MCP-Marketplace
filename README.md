@@ -7,15 +7,14 @@
   <a href="/README-zh-cn.md">简体中文</a>
 </p>
 
-**XPack** is a lightweight, open-source marketplace framework for MCP (Model Context Protocol) services.  
-It allows you to transform any OpenAPI into a monetizable MCP service and build your own API store in just minutes.
+**XPack** is the world’s first open-source MCP marketplace, to quickly create and sell your own MCP services in just minutes.
 
 <br>
 
 ✨ With XPack, you can:
 - ✅ **One-click OpenAPI → MCP service config**
 - 🧾 **SEO-friendly homepage + mcp service page**
-- 💳 **Built-in billing (per-call)**
+- 💳 **Built-in billing (per-call or token usage)**
 - 👥 **User account management**
 - 🛠 **Support Stripe Payment**
 - 🔐 **Support Email & Google OAuth Sign in**
@@ -31,6 +30,9 @@ Everything is open-source and licensed under **Apache 2.0** — ready for commer
 ```bash
 curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 ```
+
+[![Learn how to deploy your mcp market in 10 minutes](https://github.com/user-attachments/assets/8881d724-b6aa-47b7-bbd7-b587ef541957)](https://www.youtube.com/watch?v=Ut4mbFXWbFs)
+
 
 <br>
 

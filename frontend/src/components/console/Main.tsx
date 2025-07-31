@@ -4,7 +4,6 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useAdminStore } from "@/store/admin";
-import DashboardSidebar from "@/shared/components/DashboardSidebar";
 import DashboardDemoContent from "@/shared/components/DashboardDemoContent";
 import ConsoleStats from "@/components/console/ConsoleStats";
 import PaymentChannelsContent from "@/components/console/PaymentChannelsContent";
@@ -15,23 +14,24 @@ import { MCPServicesManagement } from "@/components/mcp-services/MCPServicesMana
 import UserManagement from "@/components/user-management/UserManagement";
 import RevenueManagement from "@/components/revenue-management/RevenueManagement";
 import {
-  Cog,
   CreditCard,
   DollarSign,
   Home,
   Settings,
   Users,
   LogIn,
+  ServerIcon,
 } from "lucide-react";
 import { LoginSettingsContent } from "@/components/console/LoginSettingsContent";
-import { Button } from "@nextui-org/react";
-import { FaDiscord } from "react-icons/fa";
+import ConsoleSidebar from "./Sidebar";
 
 const ConsoleContent: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [admin_token] = useAdminStore((state) => [state.admin_token]);
+
+  const _DefaultSubTab = "general";
 
   const getInitialTab = (): TabKey => {
     const tabFromUrl = searchParams.get("tab") as TabKey;
@@ -51,49 +51,79 @@ const ConsoleContent: React.FC = () => {
     return TabKey.CONSOLE;
   };
 
+  const getInitialSubTab = (): string | undefined => {
+    const subTabFromUrl = searchParams.get("subtab");
+    return subTabFromUrl || _DefaultSubTab;
+  };
+
   const [activeTab, setActiveTab] = useState<TabKey>(getInitialTab);
+  const [activeSubTab, setActiveSubTab] = useState<string | undefined>(
+    getInitialSubTab
+  );
   const sidebarItems: SidebarItem[] = [
     {
       key: TabKey.CONSOLE,
-      icon: <Home className="w-5 h-5" />,
+      icon: <Home size={18} />,
       label: t("Dashboard"),
       description: t("Overview and analytics"),
     },
     {
       key: TabKey.MCP_SERVICES,
-      icon: <Settings className="w-5 h-5" />,
+      icon: <ServerIcon size={18} />,
       label: t("MCP Services"),
       description: t("Manage MCP services and API tools"),
     },
     {
       key: TabKey.USER_MANAGEMENT,
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users size={18} />,
       label: t("User Management"),
       description: t("Manage registered users"),
     },
     {
       key: TabKey.REVENUE_MANAGEMENT,
-      icon: <DollarSign className="w-5 h-5" />,
+      icon: <DollarSign size={18} />,
       label: t("Revenue Management"),
       description: t("View user recharge history"),
     },
     {
       key: TabKey.PAYMENT_CHANNELS,
-      icon: <CreditCard className="w-5 h-5" />,
+      icon: <CreditCard size={18} />,
       label: t("Payment Channels"),
       description: t("Configure payment channels"),
     },
     {
-      key: TabKey.LOGIN_SETTINGS,
-      icon: <LogIn className="w-5 h-5" />,
-      label: t("Login Settings"),
-      description: t("Configure authentication methods"),
-    },
-    {
       key: TabKey.SYSTEM_SETTINGS,
-      icon: <Cog className="w-5 h-5" />,
+      icon: <Settings size={18} />,
       label: t("System Settings"),
       description: t("Platform basic configuration"),
+      // Sub-menu items for System Settings
+      subItems: [
+        {
+          key: "general",
+          label: "General",
+          description: "Platform basic configuration",
+        },
+        {
+          key: "login-settings",
+          label: "Login Settings",
+          description: "Configure authentication methods",
+        },
+        {
+          key: "homepage",
+          label: "Homepage",
+          description: "Homepage content and theme settings",
+        },
+        {
+          key: "about-page",
+          label: "About Page",
+          description: "About page content configuration",
+        },
+        {
+          key: "email-admin",
+          label: "Email & Admin",
+          description: "Email and administrator settings",
+        },
+      ],
     },
   ];
 
@@ -104,8 +134,10 @@ const ConsoleContent: React.FC = () => {
     }
   }, [admin_token, router]);
 
-  const handleTabNavigate = (tab: TabKey) => {
+  const handleTabNavigate = (tab: TabKey, subTab?: string) => {
     setActiveTab(tab);
+    setActiveSubTab(subTab || _DefaultSubTab);
+
     // update url params
     if (tab === TabKey.CONSOLE) {
       // when switch to dashboard, clear all query params, only keep base path
@@ -114,6 +146,12 @@ const ConsoleContent: React.FC = () => {
       // other tabs set corresponding tab params
       const params = new URLSearchParams();
       params.set("tab", tab);
+
+      // add subtab parameter if provided
+      if (subTab) {
+        params.set("subtab", subTab);
+      }
+
       router.push(`/console?${params.toString()}`, { scroll: false });
     }
   };
@@ -151,23 +189,15 @@ const ConsoleContent: React.FC = () => {
             <PaymentChannelsContent />
           </DashboardDemoContent>
         );
-      case "login-settings":
-        return (
-          <DashboardDemoContent
-            title={t("Login Settings")}
-            description={t("Configure authentication methods")}
-          >
-            <LoginSettingsContent onTabNavigate={handleTabNavigate} />
-          </DashboardDemoContent>
-        );
       case "system-settings":
         return (
-          <DashboardDemoContent
-            title={t("System Settings")}
-            description={t("Platform basic configuration")}
-          >
-            <SystemSettingsContent />
-          </DashboardDemoContent>
+          <SystemSettingsContent
+            activeSubTab={activeSubTab}
+            subTab={sidebarItems
+              .find((item) => item.key === activeTab)
+              ?.subItems?.find((item) => item.key === activeSubTab)}
+            onTabNavigate={handleTabNavigate}
+          />
         );
       default:
         return (
@@ -185,25 +215,12 @@ const ConsoleContent: React.FC = () => {
     <div className="min-h-screen bg-background">
       <div className="flex">
         {/* Sidebar */}
-        <DashboardSidebar
+        <ConsoleSidebar
           activeTab={activeTab}
+          activeSubTab={activeSubTab}
           onTabNavigate={handleTabNavigate}
           onLogout={handleLogout}
           sidebarItems={sidebarItems}
-          bottomPanel={
-            <Button
-              variant="light"
-              startContent={<FaDiscord className="w-5 h-5" />}
-              className="w-full justify-start h-auto p-3"
-              onPress={() => {
-                window.open("https://discord.gg/cyZfcdCXkW", "_blank");
-              }}
-            >
-              <div className="flex justify-between items-center w-full">
-                <span className="font-medium">{t("Discord")}</span>
-              </div>
-            </Button>
-          }
         />
 
         {/* Main Content */}

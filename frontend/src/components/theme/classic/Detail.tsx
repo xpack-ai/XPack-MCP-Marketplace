@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import { useTranslation } from "@/shared/lib/useTranslation";
-import { Tabs, Tab, Chip, Card, CardBody } from "@nextui-org/react";
+import { Tabs, Tab, Chip, Card, CardBody, Button } from "@nextui-org/react";
 import { ServiceData } from "@/shared/types/marketplace";
 import { ProductOverview } from "@/shared/components/marketplace/ProductOverview";
 import { ProductNotFound } from "@/shared/components/marketplace/ProductNotFound";
-import { FileText, Wrench, Cog } from "lucide-react";
+import { FileText, Wrench, Cog, Copy } from "lucide-react";
 import { Navigation } from "./Navigation";
 import { Footer } from "./Footer";
 import Link from "next/link";
@@ -24,14 +24,15 @@ interface DetailProps {
   mcpName?: string;
   // navigation items
   navItems?: NavigationItem[];
+  onCopy: () => void;
 }
 
 export const Detail: React.FC<DetailProps> = ({
   product,
-  breadcrumbs,
   url,
   mcpName,
   navItems = [],
+  onCopy,
 }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
@@ -98,6 +99,8 @@ export const Detail: React.FC<DetailProps> = ({
                       <Price
                         price={product.price}
                         charge_type={product.charge_type}
+                        input_token_price={product.input_token_price}
+                        output_token_price={product.output_token_price}
                       />
                     </div>
                   )}
@@ -210,18 +213,26 @@ export const Detail: React.FC<DetailProps> = ({
                   {/* Code Snippet */}
                   <Card className="w-full max-w-2xl bg-black text-white p-2 sm:p-4 rounded-lg relative z-10">
                     <div className="text-left font-mono">
-                      <Chip
-                        className="mb-2 text-white"
-                        size="sm"
-                        variant="flat"
-                      >
-                        {platformConfig?.name} MCP
-                      </Chip>
+                      <div className="flex items-center gap-2 mb-2 justify-between">
+                        <Chip className="text-white" size="sm" variant="flat">
+                          {platformConfig?.name} MCP
+                        </Chip>
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="flat"
+                          className="min-w-6 w-6 h-6 p-0 text-white"
+                          onPress={onCopy}
+                          aria-label={t("Copy code")}
+                        >
+                          <Copy size={14} />
+                        </Button>
+                      </div>
                       <pre className="p-2 sm:p-4 rounded-md text-xs overflow-x-auto">
                         <code className="text-gray-300 whitespace-pre-wrap">
                           {`{
   "mcpServers": {
-    "${mcpName || "xpack-mcp-market"}": {
+    "${mcpName}": {
       "type": "sse",
       "autoApprove":"all",
       "url": "${url}?apikey=`}

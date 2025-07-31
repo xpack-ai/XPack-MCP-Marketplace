@@ -22,6 +22,7 @@ import {
 import { Footer } from "./Footer";
 import { Navigation } from "./Navigation";
 import { NavigationItem } from "@/shared/components/Navigation";
+import { Faq } from "@/components/marketplace/Faq";
 
 interface HomeProps {
   // 状态
@@ -188,6 +189,8 @@ export const Home: React.FC<HomeProps> = ({
                         <Price
                           price={service.price}
                           charge_type={service.charge_type}
+                          input_token_price={service.input_token_price}
+                          output_token_price={service.output_token_price}
                         />
                       </div>
                     </CardFooter>
@@ -212,6 +215,7 @@ export const Home: React.FC<HomeProps> = ({
             )}
           </>
         )}
+        <Faq />
       </div>
 
       <Footer />

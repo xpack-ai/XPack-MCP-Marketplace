@@ -11,16 +11,28 @@ export enum TabKey {
   ACCOUNT = "account",
 }
 
+export interface SidebarSubItem {
+  key: string;
+  label: string;
+  description?: string;
+}
+
 export interface SidebarItem {
   key: TabKey;
   icon: React.ReactNode;
   label: string;
   description: string;
+  subItems?: SidebarSubItem[];
+}
+
+export interface SidebarItemWithActive extends SidebarItem {
+  isExpanded?: boolean;
 }
 
 export interface DashboardSidebarProps {
   activeTab: TabKey;
-  onTabNavigate?: (tab: TabKey) => void;
+  activeSubTab?: string;
+  onTabNavigate?: (tab: TabKey, subTab?: string) => void;
   onLogout: () => void;
   bottomPanel?: React.ReactNode;
   sidebarItems: SidebarItem[];

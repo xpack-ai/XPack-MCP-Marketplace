@@ -29,7 +29,7 @@ const DashboardContent: React.FC = () => {
     state.user_token,
     state.user,
   ]);
-  const { loginConfig } = usePlatformConfig();
+  const { loginConfig, paymentChannels } = usePlatformConfig();
 
   const [logOut, useGetUser] = useGlobalStore((state) => [
     state.logOut,
@@ -163,14 +163,16 @@ const DashboardContent: React.FC = () => {
                         </span>
                       </div>
 
-                      <Button
-                        variant="bordered"
-                        onPress={handleRecharge}
-                        aria-label="Recharge wallet"
-                        size="sm"
-                      >
-                        {t("Recharge")}
-                      </Button>
+                      {paymentChannels.length > 0 && (
+                        <Button
+                          variant="bordered"
+                          onPress={handleRecharge}
+                          aria-label="Recharge wallet"
+                          size="sm"
+                        >
+                          {t("Recharge")}
+                        </Button>
+                      )}
                     </div>
                   </CardBody>
                 </Card>

@@ -493,7 +493,7 @@ class McpManagerService:
 
             # Build service info
             service_info = {
-                "id": service.id,
+                "id": service.slug_name,
                 "name": service.name,
                 "short_description": service.short_description,
                 "long_description": service.long_description,
@@ -513,11 +513,15 @@ class McpManagerService:
     def get_public_service_info(self, id: str) -> Optional[dict]:
         """Get public service details (only returns enabled services and APIs)"""
         service = self.mcp_service_repository.get_by_id(id)
-        if not service or service.enabled != 1:
+        if not service:
+            service = self.mcp_service_repository.get_by_slug_name(id)
+            if not service:
+                return None
+        if service.enabled != 1:
             return None
 
         # Get service's API list (only return enabled APIs)
-        all_apis = self.mcp_tool_api_repository.get_by_service_id(id)
+        all_apis = self.mcp_tool_api_repository.get_by_service_id(service.id)
         apis = [api for api in all_apis if api.enabled == 1]
 
         # Build API info (according to API specification format)
@@ -528,7 +532,7 @@ class McpManagerService:
 
         # Build return data (according to API specification format)
         service_info = {
-            "id": service.id,
+            "id": service.slug_name,
             "name": service.name,
             "short_description": service.short_description,
             "long_description": service.long_description,
