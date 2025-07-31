@@ -21,4 +21,3 @@ ALTER TABLE `user_wallet_history` MODIFY COLUMN `balance_after` decimal(16, 6) N
 INSERT INTO `sys_config` (`id`,`key`, `value`,`description`,`created_at`,`updated_at`) 
 VALUES ('xpack-version','version', '1.0.0', 'User wallet history max count', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `description` = VALUES(`description`), `updated_at` = CURRENT_TIMESTAMP;
-

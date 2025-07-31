@@ -15,4 +15,4 @@ class PaymentChannel(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Channel name")
     status: Mapped[int] = mapped_column(Integer, nullable=False, comment="Channel status, 0: disabled, 1: enabled")
     config: Mapped[str] = mapped_column(Text, nullable=True, comment="Channel config")
-    update_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, comment="Update time")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, comment="Update time")
