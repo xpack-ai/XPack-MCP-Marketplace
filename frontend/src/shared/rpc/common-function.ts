@@ -54,12 +54,11 @@ export const fetchAPI = async <T = any>(
       };
     }
   } catch (error) {
-    console.error("API fetch error:", error);
-    return {
-      success: false,
-      code: "ERROR",
-      error_message: error instanceof Error ? error.message : "Unknown error",
-      data: null as T,
-    };
+    if (error instanceof Error && error.name === "AbortError") {
+      console.log("Request aborted:", url);
+    } else {
+      console.error("Fetch error:", error);
+    }
+    throw error;
   }
 };
