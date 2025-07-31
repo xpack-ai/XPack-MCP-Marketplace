@@ -21,7 +21,7 @@ interface EmailConfigFormProps {
   emailConfig: EmailConfig;
   onSave: (config: LoginConfig) => Promise<void>;
   isLoading?: boolean;
-  onTabNavigate?: (tab: TabKey) => void;
+  onTabNavigate?: (tab: TabKey, subTab?: string) => void;
 }
 
 export const EmailConfigForm: React.FC<EmailConfigFormProps> = ({
@@ -180,7 +180,7 @@ export const EmailConfigForm: React.FC<EmailConfigFormProps> = ({
                 <Link
                   className="text-sm underline cursor-pointer"
                   onPress={() => {
-                    onTabNavigate?.(TabKey.SYSTEM_SETTINGS);
+                    onTabNavigate?.(TabKey.SYSTEM_SETTINGS, "email-admin");
                   }}
                 >
                   {t("Go to Settings")}
