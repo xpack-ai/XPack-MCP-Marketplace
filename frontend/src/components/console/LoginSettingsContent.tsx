@@ -28,10 +28,9 @@ export const LoginSettingsContent: React.FC<LoginSettingsContentProps> = ({
   const { t } = useTranslation();
   const { updateClientConfig } = usePlatformConfig();
 
-  // 验证至少有一种登录方式启用
+  // check if at least one login method is enabled
   const validateLoginMethods = (config: LoginConfig): boolean => {
-    const isGoogleEnabled =
-      config.google?.is_enabled && config.google?.client_id;
+    const isGoogleEnabled = config.google?.is_enabled;
     const isEmailEnabled = config.email?.is_enabled;
 
     const enabledCount = [isGoogleEnabled, isEmailEnabled].filter(
