@@ -32,6 +32,7 @@ interface AuthKeyDetailsProps {
 interface ApiAnalyticsData {
   stats_day: string;
   call_tool_count: number;
+  amount: number;
 }
 
 // Custom cursor to highlight the hovered bar with a lighter and narrower overlay
@@ -76,7 +77,7 @@ const AuthKeyDetails: React.FC<AuthKeyDetailsProps> = ({
     try {
       setIsLoading(true);
       const response = await fetchAPI(
-        `/api/stats/key_call_tool_count?apikey_id=${selectedApiKey.apikey_id}`,
+        `/api/stats/key_call_tool?apikey_id=${selectedApiKey.apikey_id}`,
         {
           method: "GET",
         }
@@ -86,7 +87,8 @@ const AuthKeyDetails: React.FC<AuthKeyDetailsProps> = ({
         const formattedData = response.data.days.map(
           (day: ApiAnalyticsData) => ({
             name: new Date(day.stats_day).toISOString().split("T")[0],
-            value: day.call_tool_count,
+            value: day.amount,
+            count: day.call_tool_count,
           })
         );
         setAnalyticsData(formattedData);
@@ -101,7 +103,7 @@ const AuthKeyDetails: React.FC<AuthKeyDetailsProps> = ({
   }, [selectedApiKey, t]);
 
   useEffect(() => {
-    if (!selectedApiKey?.apikey_id) return
+    if (!selectedApiKey?.apikey_id) return;
     fetchAnalyticsData();
   }, [selectedApiKey?.apikey_id]);
 
@@ -163,7 +165,9 @@ const AuthKeyDetails: React.FC<AuthKeyDetailsProps> = ({
             </div>
 
             <div className="flex items-center gap-2 bg-gray-100 p-2 rounded relative justify-between">
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap">{getEncryptedKey(selectedApiKey.apikey)}</span>
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                {getEncryptedKey(selectedApiKey.apikey)}
+              </span>
               <Button
                 isIconOnly
                 size="sm"
@@ -213,11 +217,14 @@ const AuthKeyDetails: React.FC<AuthKeyDetailsProps> = ({
                       axisLine={false}
                       tickLine={false}
                       tick={{ fontSize: 12, fill: "#666" }}
-                      allowDecimals={false}
+                      allowDecimals={true}
                     />
                     <RechartsTooltip
                       cursor={<CustomCursor />}
-                      formatter={(value: number) => [value, t("Times")]}
+                      formatter={(value: number) => [
+                        value,
+                        t("Total Spending"),
+                      ]}
                       contentStyle={{
                         backgroundColor: "#fff",
                         border: "1px solid #e5e7eb",
