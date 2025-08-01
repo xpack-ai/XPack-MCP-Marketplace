@@ -263,6 +263,7 @@ class OrderMonitorTask:
                         mch_id=channel.config[WxPayConfig.MCH_ID],
                         private_key=channel.config[WxPayConfig.PRIVATE_KEY],
                         cert_serial_no=channel.config[WxPayConfig.CERT_SERIAL_NO],
+                        notify_url=channel.config[WxPayConfig.NOTIFY_URL],
                     )
                     self.payment_clients["wechat"] = client
                     self.client_status["wechat"] = ClientStatus(
