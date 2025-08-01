@@ -687,8 +687,14 @@ remove_container() {
 
 exist_container() {
   local containerName=$1
+  reinstall=$2
   exists=$(docker ps -a --filter "name=^/${containerName}$" --format "{{.Names}}")
   if [ -n "$exists" ]; then
+    if [[ "${reinstall}" == "true" ]]; then
+      echo_info "Container ${containerName} already exists, reinstalling..."
+      remove_container ${containerName}
+      return 0
+    fi
     echo_question "Container ${containerName} already exists. Do you want to reinstall container? (yes/no)"
     read -r installChoice
     # 直到输入yes或no
@@ -762,11 +768,12 @@ load_image() {
 
 download_package_docker() {
   name=$1
+  skip=$2
   image=$(jq -r ".downloads.${name}.docker" ${VersionFile})
   version=$(jq -r ".downloads.${name}.version" ${VersionFile})
   url=$(jq -r ".downloads.${name}.url" ${VersionFile})
   file=$(jq -r ".downloads.${name}.tar" ${VersionFile})
-  if [ -f "${file}" ]; then
+  if [[ -f "${file}" && ${skip} != "true" ]]; then
     # 是否重新下载包
     echo_question "${file} already exists. Do you want to re-download package? (yes/no)"
     read -r installChoice
@@ -863,13 +870,15 @@ write_redis_env() {
   write_env_var "${ENV_REDIS_DATA_MOUNT}" $5
 }
 
-install_xpack_mcp_market() {
-  exist_container ${XPACK_MCP_MARKET_CONTAINER_NAME}
-  if [ $? -eq 1 ]; then
-    return
-  fi
+upgrade_xpack_mcp_market() {
+  exist_container ${XPACK_MCP_MARKET_CONTAINER_NAME} "true"
+  imageName=$(download_package_docker "program.xpack_mcp_market" "true")
+  run_xpack_mcp_market
+  echo_pass "Upgrade XPACK MCP MARKET success"
 
-  imageName=$(download_package_docker "program.xpack_mcp_market")
+}
+
+run_xpack_mcp_market() {
   dockerCmd="docker run -dt --name ${XPACK_MCP_MARKET_CONTAINER_NAME} --restart=always --privileged=true \
   --network=${NETWORK_NAME} -p ${XPACK_MCP_MARKET_WEB_MAP_PORT}:3000 -p ${XPACK_MCP_MARKET_MCP_MAP_PORT}:8002 \
   ${imageName}"
@@ -879,6 +888,15 @@ install_xpack_mcp_market() {
   write_env_var ${ENV_XPACK_MCP_MARKET_MCP_PORT} ${XPACK_MCP_MARKET_MCP_MAP_PORT}
 
   wait_for "XPACK MCP MARKET" "curl -s -o /dev/null http://127.0.0.1:${XPACK_MCP_MARKET_WEB_MAP_PORT}"
+}
+
+install_xpack_mcp_market() {
+  exist_container ${XPACK_MCP_MARKET_CONTAINER_NAME}
+  if [ $? -eq 1 ]; then
+    return
+  fi
+
+  run_xpack_mcp_market
   echo_pass "Install XPACK MCP MARKET success"
 }
 
@@ -913,6 +931,14 @@ install() {
   print_xpack_mcp_market_info
 }
 
+upgrade() {
+  echo_split
+  echo_info "Upgrading XPack MCP Market to the latest version(${XPACK_VERSION})..."
+  upgrade_xpack_mcp_market
+  echo_logo
+  print_xpack_mcp_market_info
+}
+
 print_xpack_mcp_market_info() {
   # 若ENV_LAN_IP不存在，则报程序未安装，请先安装APIPark
   lanIP=$(read_env_var ${ENV_LAN_IP})
@@ -924,17 +950,14 @@ print_xpack_mcp_market_info() {
 
   
   webPort=$(read_env_var ${ENV_XPACK_MCP_MARKET_WEB_PORT})
-  echo_pass "XPack MCP Market has run successfully."
-  echo_info "The Web UI access information is as follows:"
-  echo_info "Internal network access address: http://$(read_env_var ${ENV_LAN_IP}):${webPort}/admin"
-  echo_info "External network access address: http://$(read_env_var ${ENV_EXTERNAL_IP}):${webPort}/admin"
-  echo_info "Inital Username: admin"
-  echo_info "Inital Password: 123456789"
-  echo ""
   mcpPort=$(read_env_var ${ENV_XPACK_MCP_MARKET_MCP_PORT})
-  echo_info "The MCP API access information is as follows:"
-  echo_info "Internal network access address: http://$(read_env_var ${ENV_LAN_IP}):${mcpPort}"
-  echo_info "External network access address: http://$(read_env_var ${ENV_EXTERNAL_IP}):${mcpPort}"
+  echo_pass "XPack MCP Market has run successfully. Version is ${XPACK_VERSION}."
+  echo_info "The Web UI information is as follows:"
+  echo_info "Homepage: http://$(read_env_var ${ENV_EXTERNAL_IP}):${webPort}"
+  echo_info "Admin dashboard: http://$(read_env_var ${ENV_EXTERNAL_IP}):${webPort}/admin"
+  echo_info "Admin Username: admin"
+  echo_info "Admin Password: 123456789"
+  echo_info "MCP endpoint: http://$(read_env_var ${ENV_EXTERNAL_IP}):${mcpPort}"
 }
 
 valid_port() {
@@ -1027,10 +1050,11 @@ operate() {
   echo_logo
   echo_split
   echo_question "Hello, Welcome to use XPack MCP Market! What do you want to do?"
-  echo_point "1. Install or Update XPack MCP Market"
-  echo_point "2. Print system information"
-  echo_point "3. Uninstall XPack MCP Market"
-  echo_point "4. Exit"
+  echo_point "1. Install XPack MCP Market"
+  echo_point "2. Upgrade XPack MCP Market(Latest is ${XPACK_VERSION})"
+  echo_point "3. Print system information"
+  echo_point "4. Uninstall XPack MCP Market"
+  echo_point "5. Exit"
 
   read -r programChoice
 
@@ -1038,10 +1062,10 @@ operate() {
     # 检查系统类型
     Get_Pack_Manager
     if [ "${PM}" = "yum" ]; then
-    		Install_RPM_Pack
-    	elif [ "${PM}" = "apt-get" ]; then
-    		Install_Deb_Pack
-    	fi
+      Install_RPM_Pack
+    elif [ "${PM}" = "apt-get" ]; then
+      Install_Deb_Pack
+    fi
     write_ip_env
     sleep 5s
     echo_info "start docker..."
@@ -1051,6 +1075,8 @@ operate() {
     init_network
     install
   elif [[ "$programChoice" == "2" ]]; then
+    upgrade
+  elif [[ "$programChoice" == "3" ]]; then
     echo_logo
     print_xpack_mcp_market_info
   elif [[ "$programChoice" == "3" ]]; then
@@ -1078,4 +1104,5 @@ operate_another() {
 
 download_version_file
 
+XPACK_VERSION=$(jq -r ".downloads.program.xpack_mcp_market.version" ${VersionFile})
 operate

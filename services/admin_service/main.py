@@ -66,7 +66,7 @@ def stop_billing_consumer():
 async def lifespan(app: FastAPI):
     """Application lifecycle management"""
     global consumer_thread
-    # start_alipay_order_monitor()
+    # start_order_monitor()
 
     # Startup: Start consumer in separate thread
     logger.info("Admin Service starting...")
@@ -82,7 +82,7 @@ async def lifespan(app: FastAPI):
     # Shutdown: Stop consumer
     logger.info("Admin Service shutting down...")
     stop_billing_consumer()
-    # start_alipay_order_monitor()
+    # stop_order_monitor()
 
 
 app = FastAPI(title="Admin Service", openapi_url="/openapi.json", lifespan=lifespan)

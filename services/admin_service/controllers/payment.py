@@ -6,7 +6,7 @@ from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.payment_service import PaymentService
 from services.admin_service.services.user_wallet_history_service import UserWalletHistoryService
-
+from services.admin_service.tasks.order_monitor_task import OrderMonitorTask
 router = APIRouter()
 
 
@@ -41,9 +41,14 @@ def create_payment_link(
                 payment_info = payment.create_alipay_payment_link(user_id=user.id, amount=body.amount, currency=body.currency)
                 if not payment_info:
                     return ResponseUtils.error(message="Failed to create Alipay payment link", code=500)
-                from services.admin_service.tasks.alipay_order_monitor_task import AlipayOrderMonitorTask
-                alipay_monitor_task = AlipayOrderMonitorTask.get_instance()
-                alipay_monitor_task.add_order_to_monitor(payment_id=payment_info.get("payment_id"))
+                task = OrderMonitorTask.get_instance()
+                task.add_order_to_monitor(payment_id=payment_info.get("payment_id"))
+            case "wechat":
+                payment_info = payment.create_wxpay_payment_link(user_id=user.id, amount=body.amount, currency=body.currency)
+                if not payment_info:
+                    return ResponseUtils.error(message="Failed to create Wechat payment link", code=500)
+                task = OrderMonitorTask.get_instance()
+                task.add_order_to_monitor(payment_id=payment_info.get("payment_id"))
             case _:
                 if not body.success_url:
                     return ResponseUtils.error(message="Success URL is required for Stripe payments", code=400)
@@ -68,15 +73,15 @@ async def callback_stripe(
     else:
         return ResponseUtils.error(message="Stripe callback failed", code=500)
 
-@router.post("/callback_alipay", response_model=dict)
-async def callback_alipay(request: Request, payment: PaymentService = Depends(get_payment)):
-    """Handle Alipay payment webhook callback."""
-    payload = (await request.body()).decode("utf-8")
-    result = payment.alipay_payment_callback(payload)
-    if result:
-        return ResponseUtils.success()
-    else:
-        return ResponseUtils.error(message="Alipay callback failed", code=500)
+# @router.post("/callback_alipay", response_model=dict)
+# async def callback_alipay(request: Request, payment: PaymentService = Depends(get_payment)):
+#     """Handle Alipay payment webhook callback."""
+#     payload = (await request.body()).decode("utf-8")
+#     result = payment.alipay_payment_callback(payload)
+#     if result:
+#         return ResponseUtils.success()
+#     else:
+#         return ResponseUtils.error(message="Alipay callback failed", code=500)
 
 
 @router.get("/order_status", response_model=dict)
