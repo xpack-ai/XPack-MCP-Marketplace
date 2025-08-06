@@ -31,7 +31,7 @@ Everything is open-source and licensed under **Apache 2.0** — ready for commer
 curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 ```
 
-[![Learn how to deploy your mcp market in 10 minutes](https://github.com/user-attachments/assets/8881d724-b6aa-47b7-bbd7-b587ef541957)](https://www.youtube.com/watch?v=Ut4mbFXWbFs)
+[![Learn how to deploy your mcp market in 10 minutes](https://github.com/user-attachments/assets/8881d724-b6aa-47b7-bbd7-b587ef541957)](https://www.youtube.com/watch?v=XHJXyvDevd8)
 
 
 <br>
