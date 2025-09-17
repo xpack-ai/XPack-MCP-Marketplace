@@ -192,7 +192,7 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 
   4. Access `XPack-MCP-Market` in your browser at port 3000
 
-  * **Admin User Login Address**: http://{IP}:3000/admin-signin
+  * **Admin User Login Address**: http://{IP}:3000/admin
   * **Admin User**: admin
   * **Admin Password**: 123456789
 </details>
