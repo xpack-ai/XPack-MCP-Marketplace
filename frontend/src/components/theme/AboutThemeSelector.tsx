@@ -17,6 +17,14 @@ export const AboutThemeSelector: React.FC = () => {
   const currentTheme = platformConfig.theme || Theme.DEFAULT;
   const navigationItems = [
     ...NavigationItems,
+    ...(platformConfig.about_page
+      ? [
+          {
+            label: "About",
+            href: "/about",
+          },
+        ]
+      : []),
     ...topNavigation.map((item) => ({
       label: item.title,
       href: item.link,

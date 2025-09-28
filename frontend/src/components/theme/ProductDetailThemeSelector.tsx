@@ -36,6 +36,14 @@ export const ProductDetailThemeSelector: React.FC<
   const { t } = useTranslation();
   const navigationItems = [
     ...NavigationItems,
+    ...(platformConfig.about_page
+      ? [
+          {
+            label: "About",
+            href: "/about",
+          },
+        ]
+      : []),
     ...topNavigation.map((item) => ({
       label: item.title,
       href: item.link,
@@ -45,7 +53,10 @@ export const ProductDetailThemeSelector: React.FC<
   useEffect(() => {
     if (url || !product.slug_name) return;
     setUrl(
-      `${mcpServerPrefix || `${window.location.protocol}//${window.location.hostname}:8002`}/mcp/${product.slug_name}`
+      `${
+        mcpServerPrefix ||
+        `${window.location.protocol}//${window.location.hostname}:8002`
+      }/mcp/${product.slug_name}`
     );
   }, [product.slug_name]);
   function sanitizeMCPServerName(rawName: string | undefined): string {
