@@ -1,12 +1,19 @@
 import stripe
 import logging
+import asyncio
+from uuid import uuid4
 from typing import Optional
 from sqlalchemy.orm import Session
 from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_wallet_repository import UserWalletRepository
 from services.admin_service.repositories.user_wallet_history_repository import UserWalletHistoryRepository
+from services.admin_service.repositories.sys_config_repository import SysConfigRepository
 from services.admin_service.services.payment_channel_service import PaymentChannelService
 from services.admin_service.utils.alipay_client import AlipayClient
+from services.admin_service.utils.wxpay_client import WxPayClient,WxPayConfig
+from services.admin_service.constants.sys_config_key import (
+    KEY_PLATFORM_NAME
+)
 logger = logging.getLogger(__name__)
 
 
@@ -17,10 +24,11 @@ class PaymentService:
         self.user_wallet_repository = UserWalletRepository(db)
         self.user_wallet_history_repository = UserWalletHistoryRepository(db)
         self.payment_channel_service = PaymentChannelService(db)
+        self.sys_config_repository = SysConfigRepository(db)
 
     def _get_stripe_config(self) -> Optional[dict]:
         """Get Stripe configuration"""
-        return self.payment_channel_service.get_stripe_config()
+        return self.payment_channel_service.get_config("stripe")
 
     def _configure_stripe_key(self) -> bool:
         """Configure Stripe API Key"""
@@ -137,9 +145,99 @@ class PaymentService:
         if not alipay_public_key:
             logger.error("Alipay alipay_public_key is not configured")
             return None
+        platform_name = self.sys_config_repository.get_by_key(KEY_PLATFORM_NAME)
+        if platform_name is None:
+            platform_name = "XPack"
         client = AlipayClient(app_id, app_private_key, alipay_public_key)
-        response_url = client.create_trade(out_trade_no= user_wallet_history.id, total_amount=amount, subject="One-Time Payment", body="Payment for service")
+        response_url = client.create_trade(out_trade_no= user_wallet_history.id, total_amount=amount, subject=f"[Deposit] {platform_name}", body="Payment for service")
         return {"payment_link": response_url, "payment_id": user_wallet_history.id}
+
+    def create_wxpay_payment_link(self, user_id: str, amount: float, currency: str = "cny") -> Optional[dict]:
+        config = self.payment_channel_service.get_config("wechat")
+        if config is None or not config.get("enable"):
+            logger.error("WeChat payment channel is not enabled or configured")
+            return None
+
+        # get user information
+        user = self.user_repository.get_by_id(user_id)
+        if not user:
+            logger.error(f"User with ID {user_id} not found.")
+            raise ValueError("User not found.")
+        # 生成32位uuid
+        transaction_id = str(uuid4()).replace("-", "")
+        # create a new user wallet history entry for the deposit
+        user_wallet_history = self.user_wallet_history_repository.add_deposit(user_id=user_id, transaction_id=transaction_id, amount=amount, payment_method="wechat")
+        if user_wallet_history is None:
+            logger.error("Failed to create user wallet history for deposit.")
+            raise RuntimeError("Failed to create payment.")
+
+        # 获取配置参数
+        app_id = config.get(WxPayConfig.APP_ID)        
+        apiv3_key = config.get(WxPayConfig.APIV3_KEY)
+        mch_id = config.get(WxPayConfig.MCH_ID)
+        private_key = config.get(WxPayConfig.PRIVATE_KEY)
+        cert_serial_no = config.get(WxPayConfig.CERT_SERIAL_NO)
+        notify_url = config.get(WxPayConfig.NOTIFY_URL)
+        
+        # 详细的配置验证
+        missing_configs = []
+        if not app_id: missing_configs.append("app_id")
+        if not apiv3_key: missing_configs.append("apiv3_key")
+        if not mch_id: missing_configs.append("mch_id")
+        if not private_key: missing_configs.append("private_key")
+        if not cert_serial_no: missing_configs.append("cert_serial_no")
+        if not notify_url: missing_configs.append("notify_url")
+        
+        if missing_configs:
+            logger.error(f"WeChat payment configuration is incomplete. Missing: {', '.join(missing_configs)}")
+            logger.error(f"Current config keys: {list(config.keys()) if config else 'None'}")
+            return None
+        
+        # 验证配置值的格式
+        if not str(mch_id).isdigit():
+            logger.error(f"Invalid mch_id format: {mch_id} (should be numeric)")
+            return None
+            
+        try:
+            platform_name = self.sys_config_repository.get_by_key(KEY_PLATFORM_NAME)
+            if platform_name is None:
+                platform_name = "XPack"
+                
+            logger.info(f"Creating WeChat Pay client for mch_id: {mch_id}")
+            
+            # Initialize WeChat Pay client with better error handling
+            wxpay_client = WxPayClient(
+                app_id=str(app_id),
+                apiv3_key=str(apiv3_key), 
+                mch_id=str(mch_id),
+                private_key=str(private_key),
+                cert_serial_no=str(cert_serial_no),
+                notify_url=str(notify_url)
+            )
+            
+            # Create order
+            code_url = asyncio.run(wxpay_client.create_order(
+                order_id=user_wallet_history.id,
+                amount=amount,
+                description=f"[Deposit] {platform_name}",
+            ))
+            
+            if code_url is None:
+                logger.error("Failed to get payment code URL from WeChat Pay")
+                return None
+                
+            logger.info(f"Successfully created WeChat Pay payment link for order: {user_wallet_history.id}")
+            return {"payment_link": code_url, "payment_id": user_wallet_history.id}
+            
+        except ValueError as e:
+            logger.error(f"WeChat Pay configuration validation failed: {str(e)}")
+            return None
+        except RuntimeError as e:
+            logger.error(f"WeChat Pay client initialization failed: {str(e)}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to create WeChat payment link: {str(e)}")
+            return None
 
     def payment_callback(self, payment_id: str, payment_channel_id: str, status: int = 1) -> bool:
         """

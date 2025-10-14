@@ -22,6 +22,11 @@ class SysConfigService:
             logger.warning(f"Redis connection failed, cache will be disabled: {e}")
             self.redis_client = None
 
+    def get_all(self, keys: List[str] = [], is_large: bool= False) -> Dict[str, str]:
+        if is_large:
+            return self.sys_config_large_repository.get_all(keys)
+        return  self.sys_config_repository.get_all(keys)
+
     def get_value_by_key(self, key: str, is_large:bool = False) -> str:
         if is_large:
             sys_config = self.sys_config_large_repository.get_by_key(key)

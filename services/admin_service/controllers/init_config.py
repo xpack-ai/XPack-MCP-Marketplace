@@ -7,24 +7,7 @@ from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.sys_config_service import SysConfigService
-from services.admin_service.constants.sys_config_key import (
-    KEY_PLATFORM_NAME,
-    KEY_PLATFORM_LOGO,
-    KEY_WEBSITE_TITLE,
-    KEY_HEADLINE,
-    KEY_SUBHEADLINE,
-    KEY_LANGUAGE,
-    KEY_THEME,
-    KEY_ABOUT_PAGE,
-    KEY_LOGIN_GOOGLE_CLIENT,
-    KEY_LOGIN_GOOGLE_ENABLE,
-    KEY_LOGIN_EMAIL_ENABLE,
-    KEY_LOGIN_EMAIL_MODE,
-    KEY_FAQ,
-    KEY_EMBEDED_HTML,
-    KEY_TOP_NAVIGATION,
-    KEY_MCP_SERVER_PREFIX
-)
+from services.admin_service.constants.sys_config_key import *
 from services.admin_service.services.payment_channel_service import PaymentChannelService
 
 logger = logging.getLogger(__name__)
@@ -40,29 +23,8 @@ def get_config(
         # Create service instance
         sys_config_service = SysConfigService(db)
         payment_channel_service = PaymentChannelService(db)
-
-        # Get platform config
-        platform_name = sys_config_service.get_value_by_key(KEY_PLATFORM_NAME) or "XPack"
-        platform_logo = sys_config_service.get_value_by_key(KEY_PLATFORM_LOGO) or ""
-        website_title = sys_config_service.get_value_by_key(KEY_WEBSITE_TITLE) or ""
-        headline = sys_config_service.get_value_by_key(KEY_HEADLINE) or ""
-        subheadline = sys_config_service.get_value_by_key(KEY_SUBHEADLINE) or ""
-        language = sys_config_service.get_value_by_key(KEY_LANGUAGE) or ""
-        theme = sys_config_service.get_value_by_key(KEY_THEME) or ""
-        about_page = sys_config_service.get_value_by_key(KEY_ABOUT_PAGE,True) or ""
-
-        # Get login config
-        google_client_id = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_CLIENT) or ""
-        google_is_enabled_raw = sys_config_service.get_value_by_key(KEY_LOGIN_GOOGLE_ENABLE) or "false"
-        # Convert to boolean
-        google_is_enabled = google_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
+        values  = sys_config_service.get_all()
         
-        # Get login email config
-        email_is_enabled_raw = sys_config_service.get_value_by_key(KEY_LOGIN_EMAIL_ENABLE) or "false"
-        # Convert to boolean
-        email_is_enabled = email_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
-        email_mode = sys_config_service.get_value_by_key(KEY_LOGIN_EMAIL_MODE) or "password"
-        mcp_server_prefix = sys_config_service.get_value_by_key(KEY_MCP_SERVER_PREFIX) or ""
 
         # Get homepage config
         faq = sys_config_service.get_value_by_key(KEY_FAQ) or "[]"
@@ -83,19 +45,28 @@ def get_config(
         # Build response data
         config_data = {
             "login": {
-                "google": {"client_id": google_client_id, "is_enabled": google_is_enabled},
-                "email": {"is_enabled": email_is_enabled, "mode": email_mode},
+                "google": {"client_id": values.get(KEY_LOGIN_GOOGLE_CLIENT, ""), "is_enabled": values.get(KEY_LOGIN_GOOGLE_ENABLE, "false").lower() in ("true", "t", "yes", "y", "1")},
+                "email": {"is_enabled": values.get(KEY_LOGIN_EMAIL_ENABLE, "false").lower() in ("true", "t", "yes", "y", "1"), "mode": values.get(KEY_LOGIN_EMAIL_MODE, "password")},
             },
             "platform": {
-                "name": platform_name,
-                "logo": platform_logo,
-                "website_title": website_title,
-                "headline": headline,
-                "subheadline": subheadline,
-                "language": language,
-                "theme": theme,
-                "about_page": about_page,
-                "mcp_server_prefix": mcp_server_prefix,
+                "name": values.get(KEY_PLATFORM_NAME, "XPack"),
+                "logo": values.get(KEY_PLATFORM_LOGO, ""),
+                "website_title": values.get(KEY_WEBSITE_TITLE, ""),
+                "headline": values.get(KEY_HEADLINE, ""),
+                "subheadline": values.get(KEY_SUBHEADLINE, ""),
+                "language": values.get(KEY_LANGUAGE, ""),
+                "theme": values.get(KEY_THEME, ""),
+                "about_page": values.get(KEY_ABOUT_PAGE,True) or "",
+                "mcp_server_prefix": values.get(KEY_MCP_SERVER_PREFIX, ""),
+                "meta_description": values.get(KEY_META_DESCRIPTION, ""),
+                "x_title": values.get(KEY_X_TITLE, ""),
+                "x_description": values.get(KEY_X_DESCRIPTION, ""),
+                "x_image_url": values.get(KEY_X_IMAGE_URL, ""),
+                "facebook_title": values.get(KEY_FACEBOOK_TITLE, ""),
+                "facebook_description": values.get(KEY_FACEBOOK_DESCRIPTION, ""),
+                "facebook_image_url": values.get(KEY_FACEBOOK_IMAGE_URL, ""),
+                "social_account_facebook_url": values.get(KEY_SOCIAL_ACCOUNT_FACEBOOK_URL, ""),
+                "social_account_x_url": values.get(KEY_SOCIAL_ACCOUNT_X_URL, ""),
             },
             "faq": faq,
             "embeded_html": embeded_html,

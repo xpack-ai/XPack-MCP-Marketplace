@@ -3,11 +3,15 @@ import secrets
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from services.common.models.sys_config import SysConfig
-from typing import Optional
+from typing import Optional,Dict,List
 
 class SysConfigRepository:
     def __init__(self, db: Session):
         self.db = db
+    def get_all(self, keys: List[str] = []) -> Dict[str, str]:
+        if keys:
+            return {item.key: item.value for item in self.db.query(SysConfig).filter(SysConfig.key.in_(keys)).all()}
+        return {item.key: item.value for item in self.db.query(SysConfig).all()}
     def get_by_key(self, key: str) -> Optional[SysConfig]:
         return self.db.query(SysConfig).filter(SysConfig.key == key).first()
     def get_value_by_key(self, key: str) -> Optional[str]:
