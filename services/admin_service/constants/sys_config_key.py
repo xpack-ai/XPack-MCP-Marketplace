@@ -28,4 +28,15 @@ KEY_FAQ = "faq"
 KEY_TOP_NAVIGATION = "top_navigation"
 KEY_EMBEDED_HTML = "embedded_html"
 
+KEY_META_DESCRIPTION = "meta_description"
 
+KEY_X_TITLE = "x_title"
+KEY_X_DESCRIPTION = "x_description"
+KEY_X_IMAGE_URL = "x_image_url"
+
+KEY_FACEBOOK_TITLE = "facebook_title"
+KEY_FACEBOOK_DESCRIPTION = "facebook_description"
+KEY_FACEBOOK_IMAGE_URL = "facebook_image_url"
+
+KEY_SOCIAL_ACCOUNT_FACEBOOK_URL = "social_account_facebook_url"
+KEY_SOCIAL_ACCOUNT_X_URL = "social_account_x_url"

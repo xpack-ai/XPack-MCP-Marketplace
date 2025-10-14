@@ -86,84 +86,64 @@ def get_sysconfig(
 ):
     """Get all system configuration settings."""
     admin_user = user_service.get_admin_user()
+    # 批量读取配置（小表）
+    
+    large_keys = [
+        sys_config_key.KEY_ABOUT_PAGE,
+    ]
 
-    platform_name = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_NAME)
-    platform_logo = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_LOGO)
-    platform_url = sysconfig_service.get_value_by_key(sys_config_key.KEY_PLATFORM_URL)
-    website_title = sysconfig_service.get_value_by_key(sys_config_key.KEY_WEBSITE_TITLE)
-    headline = sysconfig_service.get_value_by_key(sys_config_key.KEY_HEADLINE)
-    subheadline = sysconfig_service.get_value_by_key(sys_config_key.KEY_SUBHEADLINE)
-    language = sysconfig_service.get_value_by_key(sys_config_key.KEY_LANGUAGE)
-    theme = sysconfig_service.get_value_by_key(sys_config_key.KEY_THEME)
-    about_page = sysconfig_service.get_value_by_key(sys_config_key.KEY_ABOUT_PAGE,True)
+    small_values = sysconfig_service.get_all()
+    large_values = sysconfig_service.get_all(large_keys, is_large=True)
 
+    # 管理员用户名
     admin_username = ""
     if admin_user and admin_user.name:
         admin_username = admin_user.name
-    login_google_client = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_CLIENT)
-    login_google_secret = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_SECRET)
-    
-    google_is_enabled_raw = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_GOOGLE_ENABLE) or "false"
-    # Convert to boolean
-    login_google_enable = google_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
-    
-    # Get login email config
-    email_is_enabled_raw = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_EMAIL_ENABLE) or "false"
-    # Convert to boolean
-    login_email_enable = email_is_enabled_raw.lower() in ("true", "t", "yes", "y", "1")
-    login_email_mode = sysconfig_service.get_value_by_key(sys_config_key.KEY_LOGIN_EMAIL_MODE)
-    if not login_email_mode:
-        login_email_mode = "password"
-    
-
-    # Get email configuration
-    email_smtp_host = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_HOST)
-    email_smtp_port = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PORT)
-    email_smtp_user = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_USER)
-    email_smtp_password = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_PASSWORD)
-    email_smtp_sender = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMAIL_SMTP_SENDER)
-
-    domain = sysconfig_service.get_value_by_key(sys_config_key.KEY_DOMAIN)
-    is_showcased_raw = sysconfig_service.get_value_by_key(sys_config_key.KEY_IS_SHOWCASED) or "false"
-    is_showcased = is_showcased_raw.lower() in ("true", "t", "yes", "y", "1")
-
-    mcp_server_prefix = sysconfig_service.get_value_by_key(sys_config_key.KEY_MCP_SERVER_PREFIX)
 
     return ResponseUtils.success(
         data={
             "platform": {
-                "name": platform_name,
-                "logo": platform_logo,
-                "url": platform_url,
-                "website_title": website_title,
-                "headline": headline,
-                "subheadline": subheadline,
-                "language": language,
-                "theme": theme,
-                "about_page": about_page,
-                "domain": domain,
-                "is_showcased": is_showcased,
-                "mcp_server_prefix": mcp_server_prefix,
+                "name": small_values.get(sys_config_key.KEY_PLATFORM_NAME, ""),
+                "logo": small_values.get(sys_config_key.KEY_PLATFORM_LOGO, ""),
+                "url": small_values.get(sys_config_key.KEY_PLATFORM_URL, ""),
+                "website_title": small_values.get(sys_config_key.KEY_WEBSITE_TITLE, ""),
+                "headline": small_values.get(sys_config_key.KEY_HEADLINE, ""),
+                "subheadline": small_values.get(sys_config_key.KEY_SUBHEADLINE, ""),
+                "language": small_values.get(sys_config_key.KEY_LANGUAGE, ""),
+                "theme": small_values.get(sys_config_key.KEY_THEME, ""),
+                "about_page": large_values.get(sys_config_key.KEY_ABOUT_PAGE, ""),
+                "domain": small_values.get(sys_config_key.KEY_DOMAIN, ""),
+                "is_showcased": small_values.get(sys_config_key.KEY_IS_SHOWCASED, ""),
+                "mcp_server_prefix": small_values.get(sys_config_key.KEY_MCP_SERVER_PREFIX, ""),
+                "meta_description": small_values.get(sys_config_key.KEY_META_DESCRIPTION, ""),
+                "x_title": small_values.get(sys_config_key.KEY_X_TITLE, ""),
+                "x_description": small_values.get(sys_config_key.KEY_X_DESCRIPTION, ""),
+                "x_image_url": small_values.get(sys_config_key.KEY_X_IMAGE_URL, ""),
+                "facebook_title": small_values.get(sys_config_key.KEY_FACEBOOK_TITLE, ""),
+                "facebook_description": small_values.get(sys_config_key.KEY_FACEBOOK_DESCRIPTION, ""),
+                "facebook_image_url": small_values.get(sys_config_key.KEY_FACEBOOK_IMAGE_URL, ""),
+                "social_account_facebook_url": small_values.get(sys_config_key.KEY_SOCIAL_ACCOUNT_FACEBOOK_URL, ""),
+                "social_account_x_url": small_values.get(sys_config_key.KEY_SOCIAL_ACCOUNT_X_URL, ""),
             },
             "account": {
                 "username": admin_username,
             },
             "email": {
-                "smtp_host": email_smtp_host,
-                "smtp_port": email_smtp_port,
-                "smtp_user": email_smtp_user,
-                "smtp_password": email_smtp_password,
-                "smtp_sender": email_smtp_sender,
+                "smtp_host": small_values.get(sys_config_key.KEY_EMAIL_SMTP_HOST, ""),
+                "smtp_port": small_values.get(sys_config_key.KEY_EMAIL_SMTP_PORT, ""),
+                "smtp_user": small_values.get(sys_config_key.KEY_EMAIL_SMTP_USER, ""),
+                "smtp_password": small_values.get(sys_config_key.KEY_EMAIL_SMTP_PASSWORD, ""),
+                "smtp_sender": small_values.get(sys_config_key.KEY_EMAIL_SMTP_SENDER, ""),
             },
             "login": {
                 "google": {
-                    "client_id": login_google_client,
-                    "client_secret": login_google_secret,
-                    "is_enabled": login_google_enable,
+                    "client_id": small_values.get(sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, ""),
+                    "client_secret": small_values.get(sys_config_key.KEY_LOGIN_GOOGLE_SECRET, ""),
+                    "is_enabled": small_values.get(sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, "").lower() in ("true", "t", "yes", "y", "1"),
                 },
                 "email":{
-                    "is_enabled": login_email_enable,
-                    "mode": login_email_mode,
+                    "is_enabled": small_values.get(sys_config_key.KEY_LOGIN_EMAIL_ENABLE, "").lower() in ("true", "t", "yes", "y", "1"),
+                    "mode": small_values.get(sys_config_key.KEY_LOGIN_EMAIL_MODE, ""),
                 }
             },
         }
@@ -210,6 +190,15 @@ def set_sysconfig(
         domain = platform.get("domain")
         is_showcased = platform.get("is_showcased")
         mcp_server_prefix = platform.get("mcp_server_prefix")
+        meta_description = platform.get("meta_description")
+        x_title = platform.get("x_title")
+        x_description = platform.get("x_description")
+        x_image_url = platform.get("x_image_url")
+        facebook_title = platform.get("facebook_title")
+        facebook_description = platform.get("facebook_description")
+        facebook_image_url = platform.get("facebook_image_url")
+        social_account_facebook_url = platform.get("social_account_facebook_url")
+        social_account_x_url = platform.get("social_account_x_url")
 
         account = body.get("account", {})
         admin_username = account.get("username")
@@ -248,6 +237,15 @@ def set_sysconfig(
             (sys_config_key.KEY_DOMAIN, domain, "Domain"),
             (sys_config_key.KEY_IS_SHOWCASED, is_showcased, "Is showcased"),
             (sys_config_key.KEY_MCP_SERVER_PREFIX, mcp_server_prefix, "MCP server prefix"),
+            (sys_config_key.KEY_META_DESCRIPTION, meta_description, "Meta description"),
+            (sys_config_key.KEY_X_TITLE, x_title, "X title"),
+            (sys_config_key.KEY_X_DESCRIPTION, x_description, "X description"),
+            (sys_config_key.KEY_X_IMAGE_URL, x_image_url, "X image URL"),
+            (sys_config_key.KEY_FACEBOOK_TITLE, facebook_title, "Facebook title"),
+            (sys_config_key.KEY_FACEBOOK_DESCRIPTION, facebook_description, "Facebook description"),
+            (sys_config_key.KEY_FACEBOOK_IMAGE_URL, facebook_image_url, "Facebook image URL"),
+            (sys_config_key.KEY_SOCIAL_ACCOUNT_FACEBOOK_URL, social_account_facebook_url, "Facebook URL"),
+            (sys_config_key.KEY_SOCIAL_ACCOUNT_X_URL, social_account_x_url, "X URL"),
             (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "Google login client ID"),
             (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "Google login client secret"),
             (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "谷歌登录是否启用"),
@@ -287,6 +285,15 @@ def set_sysconfig(
                 "domain": domain,
                 "is_showcased": is_showcased,
                 "mcp_server_prefix": mcp_server_prefix,
+                "meta_description": meta_description,
+                "x_title": x_title,
+                "x_description": x_description,
+                "x_image_url": x_image_url,
+                "facebook_title": facebook_title,
+                "facebook_description": facebook_description,
+                "facebook_image_url": facebook_image_url,
+                "social_account_facebook_url": social_account_facebook_url,
+                "social_account_x_url": social_account_x_url,
             }
             
             # Use background reporting to avoid blocking the main configuration update

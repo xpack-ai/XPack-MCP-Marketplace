@@ -20,7 +20,7 @@ class PaymentChannelRepository:
         payment_channel = self.payment_channel_get(id)
         if payment_channel:
             payment_channel.status = status
-            payment_channel.update_at = datetime.now(timezone.utc)
+            payment_channel.updated_at = datetime.now(timezone.utc)
             self.db.commit()
             return payment_channel
         return None
@@ -29,7 +29,7 @@ class PaymentChannelRepository:
         payment_channel = self.payment_channel_get(id)
         if payment_channel:
             payment_channel.config = config
-            payment_channel.update_at = datetime.now(timezone.utc)
+            payment_channel.updated_at = datetime.now(timezone.utc)
             self.db.commit()
             self.db.refresh(payment_channel)
             return payment_channel

@@ -879,11 +879,12 @@ upgrade_xpack_mcp_market() {
 }
 
 run_xpack_mcp_market() {
+  imageName=$(download_package_docker "program.xpack_mcp_market")
   dockerCmd="docker run -dt --name ${XPACK_MCP_MARKET_CONTAINER_NAME} --restart=always --privileged=true \
   --network=${NETWORK_NAME} -p ${XPACK_MCP_MARKET_WEB_MAP_PORT}:3000 -p ${XPACK_MCP_MARKET_MCP_MAP_PORT}:8002 \
   ${imageName}"
   echo -e `${dockerCmd}`
-
+  
   write_env_var ${ENV_XPACK_MCP_MARKET_WEB_PORT} ${XPACK_MCP_MARKET_WEB_MAP_PORT}
   write_env_var ${ENV_XPACK_MCP_MARKET_MCP_PORT} ${XPACK_MCP_MARKET_MCP_MAP_PORT}
 
@@ -1079,10 +1080,10 @@ operate() {
   elif [[ "$programChoice" == "3" ]]; then
     echo_logo
     print_xpack_mcp_market_info
-  elif [[ "$programChoice" == "3" ]]; then
+  elif [[ "$programChoice" == "4" ]]; then
     clear_all
     operate_another
-  elif [[ "$programChoice" == "4" ]]; then
+  elif [[ "$programChoice" == "5" ]]; then
     exit 0
   fi
 }
