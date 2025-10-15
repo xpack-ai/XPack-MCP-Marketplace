@@ -24,6 +24,7 @@ from services.admin_service.controllers import admin_stats
 from services.admin_service.controllers import user_stats
 from services.admin_service.controllers import email_test
 from services.admin_service.controllers import upload
+from services.admin_service.controllers import user_task
 
 
 
@@ -166,6 +167,9 @@ app.include_router(admin_stats.router, prefix="/api/overview")
 app.include_router(user_stats.router, prefix="/api/stats")
 app.include_router(email_test.router, prefix="/api/email_test")
 app.include_router(upload.router, prefix="/api/upload")
+app.include_router(user_task.router, prefix="/api/onboarding")
+
+
 
 # Logging is already configured by setup_logging("admin_service")
 # 创建uploads目录（如果不存在）

@@ -1,14 +1,17 @@
 from fastapi import APIRouter, Depends, Request,Body
 from sqlalchemy.orm import Session
 from services.common.database import get_db
+from services.admin_service.constants.user_task import user_task_ids
 from services.common.utils.response_utils import ResponseUtils
 from services.common.response.user_response import UserResponse
 from services.common.response.user_wallet_response import UserWalletResponse
 from services.admin_service.utils.user_utils import UserUtils
 from services.admin_service.services.user_wallet_service import UserWalletService
+from services.admin_service.services.user_task_service import UserTaskService
 from services.admin_service.services.auth_service import AuthService
 
 router = APIRouter()
+
 
 
 def get_user_wallet(db: Session = Depends(get_db)) -> UserWalletService:
@@ -17,9 +20,11 @@ def get_user_wallet(db: Session = Depends(get_db)) -> UserWalletService:
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     return AuthService(db)
 
+def get_user_task_service(db: Session = Depends(get_db)) -> UserTaskService:
+    return UserTaskService(db)
 
 @router.get("/info", response_model=dict)
-def get_user(request: Request, user_wallet: UserWalletService = Depends(get_user_wallet)):
+def get_user(request: Request, user_wallet: UserWalletService = Depends(get_user_wallet), user_task: UserTaskService = Depends(get_user_task_service)):
     """Get current user information and wallet balance."""
     user_response = UserResponse()
     user_wallet_resp = UserWalletResponse()
@@ -35,12 +40,17 @@ def get_user(request: Request, user_wallet: UserWalletService = Depends(get_user
         user_response.user_name = user.name
         user_response.user_email = user.email
         user_response.created_at = getattr(user, "created_at", None)
-        user_response.wallet = user_wallet_resp
-        user_response.register_type = user.register_type
+        
+        user_response.register_type = user.register_type.value
+        
+        user_tasks = user_task.user_tasks_by_id(user.id)
+        completed_task_ids = {t.task_id for t in user_tasks if getattr(t, "task_status", 0) == 1}
+        user_response.onboarding_tasks = [{"task_id": tid, "task_status": 1 if tid in completed_task_ids else 0} for tid in user_task_ids]
+
         # print("register_type",user.register_type)
         # if user.register_type:
         #     user_response.register_type = user.register_type.value
-
+        user_response.wallet = user_wallet_resp
         return ResponseUtils.success(user_response)
     return ResponseUtils.error(message="not found user", code=500)
 
