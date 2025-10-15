@@ -34,10 +34,11 @@ class McpServiceRepository:
         existing_service.slug_name = mcp_service.slug_name
         existing_service.short_description = mcp_service.short_description
         existing_service.long_description = mcp_service.long_description
-        existing_service.auth_method = mcp_service.auth_method
+        # existing_service.auth_method = mcp_service.auth_method
         existing_service.base_url = mcp_service.base_url
-        existing_service.auth_header = mcp_service.auth_header
-        existing_service.auth_token = mcp_service.auth_token
+        # existing_service.auth_header = mcp_service.auth_header
+        # existing_service.auth_token = mcp_service.auth_token
+        existing_service.headers = mcp_service.headers
         existing_service.charge_type = mcp_service.charge_type
         existing_service.price = mcp_service.price
 

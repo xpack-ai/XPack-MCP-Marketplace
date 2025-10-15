@@ -12,3 +12,4 @@ class UserResponse(BaseModel):
     created_at: Optional[datetime.datetime] = None
     wallet: Optional[UserWalletResponse] = None
     register_type: Optional[str] = None
+    onboarding_tasks: Optional[list] = None
