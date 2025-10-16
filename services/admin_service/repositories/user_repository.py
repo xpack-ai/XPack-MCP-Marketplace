@@ -32,7 +32,7 @@ class UserRepository:
         from services.common.models.user import RegisterType
 
         name = email.split("@")[0] if "@" in email else email
-
+        now = datetime.now()
         user = User(
             id=str(uuid4()),
             name=name,
@@ -43,6 +43,8 @@ class UserRepository:
             is_deleted=0,
             register_type=RegisterType(register_type),
             role_id=role_id,
+            created_at=now,
+            updated_at=now
         )
         self.db.add(user)
         self.db.commit()
