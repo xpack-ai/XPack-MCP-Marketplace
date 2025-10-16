@@ -177,11 +177,11 @@ class McpServerFactory:
             logger.info(f"Found tool configuration: {tool_config.name}")
 
             # Get service authentication info
-            auth_info = mcp_service.get_service_auth_info(service_id)
-            logger.debug(f"Authentication info: {auth_info}")
+            call_params = mcp_service.get_service_call_params(service_id)
+            logger.debug(f"Call params: {call_params}")
 
             # Execute tool
-            result = await self.tool_service.execute_tool(tool_config, arguments, auth_info)
+            result = await self.tool_service.execute_tool(tool_config, arguments, call_params)
             call_success = True
             logger.info(f"Tool call successful - User ID: {user_id}, Tool: {name}")
             

@@ -257,26 +257,17 @@ class McpService:
             Optional[McpServiceModel]: Service information, returns None if not found
         """
         return self.service_repository.get_by_id(service_id)
-
-    def get_service_auth_info(self, service_id: str) -> dict:
-        """
-        Get service authentication information
-        
-        Args:
-            service_id: Service ID
-            
-        Returns:
-            dict: Dictionary containing base_url and authentication information
-        """
+    def get_service_call_params(self, service_id: str) -> dict:
         service = self.service_repository.get_by_id(service_id)
         if not service:
             return {}
-        
-        auth_info = {
+        headers = {}
+        if service.headers:
+            for item in json.loads(service.headers):
+                if "name" in item and "value" in item:
+                    headers[item["name"]] = item["value"]
+        return {
             "base_url": service.base_url or "",
-            "auth_method": service.auth_method.value if service.auth_method else "free",
-            "auth_header": service.auth_header or "",
-            "auth_token": service.auth_token or ""
+            "headers": headers
         }
-        
-        return auth_info
+

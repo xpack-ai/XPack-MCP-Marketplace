@@ -168,29 +168,10 @@ class McpManagerService:
                 existing_service.headers = json.dumps(body["headers"])
         else:
             existing_service.headers = "[]"
-        # if "auth_method" in body:
-        #     auth_method_value = body["auth_method"]
-        #     # If auth_method is None, empty string, or "none", default to free
-        #     if auth_method_value is None or auth_method_value == "" or auth_method_value == "none":
-        #         existing_service.auth_method = AuthMethod.FREE
-        #     else:
-        #         # Ensure the provided value is a valid AuthMethod value
-        #         try:
-        #             if isinstance(auth_method_value, str):
-        #                 existing_service.auth_method = AuthMethod(auth_method_value.lower())
-        #             else:
-        #                 existing_service.auth_method = auth_method_value
-        #         except ValueError:
-        #             # If the provided value is not a valid AuthMethod, default to FREE
-        #             existing_service.auth_method = AuthMethod.FREE
-        # else:
-        #     existing_service.auth_method = AuthMethod.FREE
+        
         if "base_url" in body and body["base_url"] is not None:
             existing_service.base_url = body["base_url"]
-        # if "auth_header" in body and body["auth_header"] is not None:
-        #     existing_service.auth_header = body["auth_header"]
-        # if "auth_token" in body and body["auth_token"] is not None:
-        #     existing_service.auth_token = body["auth_token"]
+       
         if "charge_type" in body and body["charge_type"] is not None:
             charge_type_value = body["charge_type"]
             try:
@@ -287,12 +268,10 @@ class McpManagerService:
         service_info = {
             "id": service.id,
             "name": service.name,
+            "slug_name": service.slug_name,
             "short_description": service.short_description,
             "long_description": service.long_description,
             "base_url": service.base_url,
-            # "auth_method": service.auth_method.value if service.auth_method != AuthMethod.FREE else "none",
-            # "auth_header": service.auth_header,
-            # "auth_token": service.auth_token,
             "headers":json.loads(service.headers) if service.headers else [],
             "charge_type": service.charge_type.value if service.charge_type else None,
             "price": str(float(service.price)) if service.price and service.charge_type == ChargeType.PER_CALL else "0.00",
@@ -344,10 +323,7 @@ class McpManagerService:
             mcp_service.slug_name = slug_name
             mcp_service.short_description = openapi_data.description[:255] if openapi_data.description else openapi_data.title
             mcp_service.long_description = openapi_data.description
-            # mcp_service.auth_method = AuthMethod.FREE  # Default to free
             mcp_service.base_url = ""  # Requires user configuration later
-            # mcp_service.auth_header = ""
-            # mcp_service.auth_token = ""
             mcp_service.headers = "[]"
             mcp_service.charge_type = ChargeType.FREE  # Default to free
             mcp_service.price = 0.0
@@ -468,9 +444,6 @@ class McpManagerService:
                 "short_description": temp_service.short_description,
                 "long_description": temp_service.long_description,
                 "base_url": temp_service.base_url,
-                # "auth_method": temp_service.auth_method.value if temp_service.auth_method else None,
-                # "auth_header": temp_service.auth_header,
-                # "auth_token": temp_service.auth_token,
                 "headers": json.loads(temp_service.headers) if temp_service.headers else [],
                 "charge_type": temp_service.charge_type.value if temp_service.charge_type else None,
                 "price": str(float(temp_service.price)) if temp_service.price and temp_service.charge_type == ChargeType.PER_CALL else "0.00",

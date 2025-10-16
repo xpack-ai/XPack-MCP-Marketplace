@@ -6,6 +6,7 @@ import json
 import uuid
 import logging
 from datetime import datetime, timezone
+ 
 from decimal import Decimal
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -14,6 +15,7 @@ from services.common.models.billing import BillingMessage
 from services.common.models.mcp_call_log import McpCallLog, ProcessStatus
 from services.common.models.user_wallet_history import UserWalletHistory, TransactionType, PaymentMethod
 from services.admin_service.repositories.mcp_call_log_repository import McpCallLogRepository
+from services.admin_service.repositories.stats_mcp_service_date_repository import StatsMcpServiceDateRepository
 from services.admin_service.repositories.user_wallet_repository import UserWalletRepository
 from services.admin_service.repositories.user_wallet_history_repository import UserWalletHistoryRepository
 from services.common.redis import redis_client
@@ -26,6 +28,7 @@ class BillingMessageHandler:
 
     def __init__(self, db: Session):
         self.db = db
+        self.stats_repo = StatsMcpServiceDateRepository(db)
         self.call_log_repo = McpCallLogRepository(db)
         self.wallet_repo = UserWalletRepository(db)
         self.wallet_history_repo = UserWalletHistoryRepository(db)
@@ -59,7 +62,13 @@ class BillingMessageHandler:
                     # Update record status to failed
                     self.call_log_repo.update_status(call_log_id, ProcessStatus.FAILED, "Billing processing failed")
                     return False
-
+            # Update stats_mcp_service_date record
+            # 统计按小时分桶（UTC 时区），对齐到整点
+            start_dt = billing_message.call_start_time
+            start_utc = start_dt.replace(tzinfo=timezone.utc) if start_dt.tzinfo is None else start_dt.astimezone(timezone.utc)
+            # Store as naive UTC datetime to match MySQL DATETIME behavior
+            stats_date = start_utc.replace(minute=0, second=0, microsecond=0, tzinfo=None)
+            self.stats_repo.increment(billing_message.service_id, stats_date, 1)
             # Update record status to processed
             self.call_log_repo.update_status(call_log_id, ProcessStatus.PROCESSED)
             logger.info(f"Billing message processed successfully - User ID: {billing_message.user_id}, Tool: {billing_message.tool_name}")
@@ -203,6 +212,8 @@ class BillingMessageHandler:
 
             # Update API call record's actual deduction amount and associated history record ID
             self.call_log_repo.update_status(call_log_id, ProcessStatus.PROCESSED, None, history_id)
+
+            
 
             # Update wallet balance cache in Redis
             self._update_wallet_cache(user_id, new_balance)

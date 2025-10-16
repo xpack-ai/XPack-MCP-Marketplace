@@ -17,7 +17,7 @@ class McpToolService:
     def __init__(self):
         self.http_builder = HttpRequestBuilder()
     
-    async def execute_tool(self, tool_config, arguments: dict, auth_info: dict) -> List[types.Content]:
+    async def execute_tool(self, tool_config, arguments: dict, call_params: dict) -> List[types.Content]:
         """
         Execute tool call
         
@@ -33,7 +33,7 @@ class McpToolService:
             logger.info(f"Starting tool execution: {tool_config.name}")
             
             # Build HTTP request
-            request_info = self.http_builder.build_request(tool_config, arguments, auth_info)
+            request_info = self.http_builder.build_request(tool_config, arguments, call_params)
             
             # Send HTTP request
             response_text = await self._send_http_request(request_info)

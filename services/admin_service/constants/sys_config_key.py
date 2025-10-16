@@ -40,3 +40,5 @@ KEY_FACEBOOK_IMAGE_URL = "facebook_image_url"
 
 KEY_SOCIAL_ACCOUNT_FACEBOOK_URL = "social_account_facebook_url"
 KEY_SOCIAL_ACCOUNT_X_URL = "social_account_x_url"
+
+KEY_CNAME_A_IP = "cname_a_ip"

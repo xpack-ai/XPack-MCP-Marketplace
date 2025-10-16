@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, Body
 import json
+import socket
+import urllib.request
+from typing import Optional
 from sqlalchemy import false, table
 from sqlalchemy.orm import Session
 from services.common.database import get_db
@@ -10,6 +13,7 @@ from services.admin_service.services.user_service import UserService
 from services.admin_service.services.platform_report_service import PlatformReportService
 from services.admin_service.constants import sys_config_key
 from services.common.logging_config import get_logger
+from services.admin_service.utils.ip import get_public_ip, get_local_ip
 
 logger = get_logger(__name__)
 
@@ -95,6 +99,15 @@ def get_sysconfig(
     small_values = sysconfig_service.get_all()
     large_values = sysconfig_service.get_all(large_keys, is_large=True)
 
+    
+
+    cname_a_ip = small_values.get(sys_config_key.KEY_CNAME_A_IP, "")
+    if not cname_a_ip:
+        # 获取外网IP，若无法连接外网，则获取局域网IP
+        public_ip = get_public_ip()
+        cname_a_ip = public_ip if public_ip else get_local_ip()
+        sysconfig_service.set_value_by_key(sys_config_key.KEY_CNAME_A_IP, cname_a_ip,"CNAME A IP")
+
     # 管理员用户名
     admin_username = ""
     if admin_user and admin_user.name:
@@ -124,6 +137,7 @@ def get_sysconfig(
                 "facebook_image_url": small_values.get(sys_config_key.KEY_FACEBOOK_IMAGE_URL, ""),
                 "social_account_facebook_url": small_values.get(sys_config_key.KEY_SOCIAL_ACCOUNT_FACEBOOK_URL, ""),
                 "social_account_x_url": small_values.get(sys_config_key.KEY_SOCIAL_ACCOUNT_X_URL, ""),
+                "cname_a_ip": cname_a_ip,
             },
             "account": {
                 "username": admin_username,

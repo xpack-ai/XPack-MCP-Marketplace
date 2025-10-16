@@ -196,8 +196,15 @@ class BillingService:
 
             if not service:
                 raise ValueError(f"Service not found: {service_id}")
-
+            if not service.price:
+                service.price = 0 
+            if not service.input_token_price:
+                service.input_token_price = 0
+            if not service.output_token_price:
+                service.output_token_price = 0
             price = Decimal(str(service.price))
+            
+    
             input_token_price = Decimal(str(service.input_token_price))
             output_token_price = Decimal(str(service.output_token_price))
             charge_type = service.charge_type
