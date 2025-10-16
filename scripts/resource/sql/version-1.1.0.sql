@@ -8,6 +8,35 @@ ALTER TABLE `mcp_service` ADD COLUMN `sort` int NOT NULL DEFAULT 0 COMMENT 'Sort
 
 ALTER TABLE `mcp_service` ADD COLUMN `service_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Service type, optional values: openapi' AFTER `sort`;
 
+UPDATE mcp_service
+SET headers = CASE
+  WHEN auth_method = 'apikey'
+       AND COALESCE(auth_header, '') <> ''
+       AND COALESCE(auth_token, '') <> ''
+    THEN JSON_ARRAY(
+      JSON_OBJECT(
+        'name', auth_header,
+        'value', auth_token,
+        'description', 'auto migrate'
+      )
+    )
+  WHEN auth_method = 'token'
+       AND COALESCE(auth_token, '') <> ''
+    THEN JSON_ARRAY(
+      JSON_OBJECT(
+        'name', 'Authorization',
+        'value', CONCAT('Bearer ', auth_token),
+        'description', 'auto migrate'
+      )
+    )
+  ELSE JSON_ARRAY()
+END;
+
+ALTER TABLE `mcp_service` DROP COLUMN `auth_method`;
+ALTER TABLE `mcp_service` DROP COLUMN `auth_header`;
+ALTER TABLE `mcp_service` DROP COLUMN `auth_token`;
+
+
 CREATE TABLE `onboarding_task`  (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `task_id` char(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '任务ID',
