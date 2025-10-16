@@ -157,6 +157,8 @@ class McpManagerService:
             existing_service.name = body["name"]
         if "slug_name" in body and body["slug_name"] is not None:
             existing_service.slug_name = body["slug_name"]
+        if "enabled" in body and body["enabled"] is not None:
+            existing_service.enabled = body["enabled"]
         if "short_description" in body and body["short_description"] is not None:
             existing_service.short_description = body["short_description"]
         if "long_description" in body and body["long_description"] is not None:

@@ -24,13 +24,14 @@ class StatsService:
         Returns:
             dict: Registered stats
         """
-        now = datetime.now()
-        pass30 = now - timedelta(days=30)
+        # 当天0点
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        pass30 = today_start - timedelta(days=30)
         
         return {
             "total": self.user_repository.get_registered_user_count(),
-            "today": self.user_repository.get_registered_user_count(now),
-            "days": self.user_repository.get_registered_user_trend(pass30, now)
+            "today": self.user_repository.get_registered_user_count(today_start),
+            "days": self.user_repository.get_registered_user_trend(pass30)
         }
     def get_deposit_stats(self) -> dict:
         """
@@ -39,13 +40,14 @@ class StatsService:
         Returns:
             dict: Deposit stats
         """
-        now = datetime.now()
-        pass30 = now - timedelta(days=30)
+        # 当天0点
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        pass30 = today_start - timedelta(days=30)
         
         return {
             "total": self.user_wallet_repository.stats_deposit_amount(),
-            "today": self.user_wallet_repository.stats_deposit_amount(now),
-            "days": self.user_wallet_repository.stats_deposit_amount_trend(pass30, now)
+            "today": self.user_wallet_repository.stats_deposit_amount(today_start),
+            "days": self.user_wallet_repository.stats_deposit_amount_trend(pass30)
         }
     def get_call_stats(self) -> dict:
         """
@@ -54,13 +56,14 @@ class StatsService:
         Returns:
             dict: Call stats
         """
-        now = datetime.now()
-        pass30 = now - timedelta(days=30)
+        # 当天0点
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        pass30 = today_start - timedelta(days=30)
         
         return {
             "total": self.stats_mcp_service_date_repository.stats_call_count(),
-            "today": self.stats_mcp_service_date_repository.stats_call_count(now),
-            "days": self.stats_mcp_service_date_repository.stats_call_count_trend(pass30, now)
+            "today": self.stats_mcp_service_date_repository.stats_call_count(today_start),
+            "days": self.stats_mcp_service_date_repository.stats_call_count_trend(pass30)
         }
         
     def get_call_stats_group_by_service(self) -> list:
@@ -73,7 +76,7 @@ class StatsService:
         now = datetime.now()
         pass30 = now - timedelta(days=30)
         # 获取统计数据（仅包含有调用的服务）
-        stats = self.stats_mcp_service_date_repository.stats_call_count_group_by_service(pass30, now)
+        stats = self.stats_mcp_service_date_repository.stats_call_count_group_by_service(pass30)
         stats_map = {item["service_id"]: int(item.get("count", 0)) for item in stats}
 
         # 遍历所有服务，填充缺失调用数为 0，并按调用数降序
