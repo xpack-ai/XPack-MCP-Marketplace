@@ -5,7 +5,8 @@ from services.common.models.user_wallet_history import UserWalletHistory
 from services.common.models.user_wallet import UserWallet
 from services.common.models.user_wallet_history import TransactionType, PaymentMethod
 from uuid import uuid4
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from sqlalchemy import func, literal_column
 
 class UserWalletHistoryRepository:
     """
@@ -302,3 +303,93 @@ class UserWalletHistoryRepository:
             query = query.filter(UserWalletHistory.created_at <= end)
 
         return query.order_by(UserWalletHistory.created_at.desc()).all()
+
+    def stats_deposit_amount(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> float:
+        """
+        Get total deposit amount within optional date range.
+
+        Args:
+            start: Start date for filtering
+            end: End date for filtering
+
+        Returns:
+            float: Total deposit amount
+        """
+        # Apply server-local time when filtering by range to match UI expectations
+        offset_td = datetime.now().astimezone().utcoffset() or timedelta(0)
+        offset_minutes = int(offset_td.total_seconds() // 60)
+        local_dt = func.timestampadd(literal_column('MINUTE'), offset_minutes, UserWalletHistory.created_at)
+
+        query = self.db.query(func.sum(UserWalletHistory.amount)).filter(
+            UserWalletHistory.type == TransactionType.DEPOSIT,
+            UserWalletHistory.status == 1,
+        )
+
+        if start is not None:
+            start_local = start.astimezone().replace(tzinfo=None) if start.tzinfo is not None else start
+            query = query.filter(local_dt >= start_local)
+
+        if end is not None:
+            end_local = end.astimezone().replace(tzinfo=None) if end.tzinfo is not None else end
+            query = query.filter(local_dt <= end_local)
+
+        result = query.scalar()
+        return float(result) if result is not None else 0.0
+
+    def stats_deposit_amount_trend(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[dict]:
+        """
+        Get daily deposit amount trend within date range, filling missing dates with 0 amount.
+        Uses server-local day boundaries, consistent with registered user trend.
+        """
+        # Shift UTC created_at by server timezone offset and group by local DATE
+        offset_td = datetime.now().astimezone().utcoffset() or timedelta(0)
+        offset_minutes = int(offset_td.total_seconds() // 60)
+        local_dt = func.timestampadd(literal_column('MINUTE'), offset_minutes, UserWalletHistory.created_at)
+        day_col = func.date(local_dt)
+
+        query = (
+            self.db.query(
+                day_col.label("stats_day"),
+                func.coalesce(func.sum(UserWalletHistory.amount), 0).label("amount"),
+            )
+            .filter(
+                UserWalletHistory.type == TransactionType.DEPOSIT,
+                UserWalletHistory.status == 1,
+            )
+        )
+
+        # Apply range filters using server-local time for consistency with grouping
+        if start is not None:
+            start_local = start.astimezone().replace(tzinfo=None) if start.tzinfo is not None else start
+            query = query.filter(local_dt >= start_local)
+        if end is not None:
+            end_local = end.astimezone().replace(tzinfo=None) if end.tzinfo is not None else end
+            query = query.filter(local_dt <= end_local)
+
+        rows = query.group_by(day_col).order_by(day_col.asc()).all()
+
+        amounts_by_day = {row.stats_day: float(row.amount or 0.0) for row in rows}
+
+        # Determine start and end days (server-local date)
+        if start is not None:
+            start_day = (start.astimezone().date() if start.tzinfo is not None else start.date())
+        else:
+            start_day = rows[0].stats_day if rows else None
+
+        if end is not None:
+            end_day = (end.astimezone().date() if end.tzinfo is not None else end.date())
+        else:
+            end_day = rows[-1].stats_day if rows else start_day
+
+        # If no data and no explicit range, return empty
+        if start_day is None or end_day is None:
+            return []
+
+        # Generate continuous date sequence with zero-fill
+        result = []
+        current_day = start_day
+        while current_day <= end_day:
+            result.append({"stats_day": current_day, "amount": amounts_by_day.get(current_day, 0.0)})
+            current_day += timedelta(days=1)
+
+        return result

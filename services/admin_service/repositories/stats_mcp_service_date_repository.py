@@ -1,7 +1,7 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional, List, Tuple, cast
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, literal_column
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.sql.schema import Table
@@ -136,5 +136,128 @@ class StatsMcpServiceDateRepository:
                 synchronize_session=False,
             )
             self.db.commit()
-
     
+    def stats_call_count(
+        self,
+        start_at: Optional[datetime] = None,
+        end_at: Optional[datetime] = None,
+    ) -> int:
+        """Get total call count within optional local-time range for a service.
+
+        Applies server timezone offset to stored UTC hourly timestamps and
+        filters by local datetime range before summing call_count.
+        """
+        # Convert stored UTC timestamp to server-local time for range filtering
+        offset_td = datetime.now().astimezone().utcoffset() or timedelta(0)
+        offset_minutes = int(offset_td.total_seconds() // 60)
+        local_dt = func.timestampadd(literal_column('MINUTE'), offset_minutes, StatsMcpServiceDate.stats_date)
+
+        query = (
+            self.db.query(func.coalesce(func.sum(StatsMcpServiceDate.call_count), 0))
+        )
+
+        if start_at is not None:
+            start_local = start_at.astimezone().replace(tzinfo=None) if start_at.tzinfo is not None else start_at
+            query = query.filter(local_dt >= start_local)
+
+        if end_at is not None:
+            end_local = end_at.astimezone().replace(tzinfo=None) if end_at.tzinfo is not None else end_at
+            query = query.filter(local_dt <= end_local)
+
+        total = query.scalar()
+        return int(total or 0)
+
+    def stats_call_count_trend(
+        self,
+        start_at: Optional[datetime] = None,
+        end_at: Optional[datetime] = None,
+    ) -> list:
+        """
+        Get per-day call count trend for a service, filling missing dates with zero.
+
+        Grouping and range filtering use server-local timezone: stored UTC hourly
+        timestamps are shifted by the server offset, then aggregated by DATE.
+        """
+        # Shift UTC to local time for consistent day grouping and filtering
+        offset_td = datetime.now().astimezone().utcoffset() or timedelta(0)
+        offset_minutes = int(offset_td.total_seconds() // 60)
+        local_dt = func.timestampadd(literal_column('MINUTE'), offset_minutes, StatsMcpServiceDate.stats_date)
+        day_col = func.date(local_dt)
+
+        query = (
+            self.db.query(
+                day_col.label("stats_day"),
+                func.coalesce(func.sum(StatsMcpServiceDate.call_count), 0).label("total_count"),
+            )
+        )
+
+        # Apply local-time range filters to match grouping
+        if start_at is not None:
+            start_local = start_at.astimezone().replace(tzinfo=None) if start_at.tzinfo is not None else start_at
+            query = query.filter(local_dt >= start_local)
+        if end_at is not None:
+            end_local = end_at.astimezone().replace(tzinfo=None) if end_at.tzinfo is not None else end_at
+            query = query.filter(local_dt <= end_local)
+
+        rows = query.group_by(day_col).order_by(day_col.asc()).all()
+        counts_by_day = {row.stats_day: int(row.total_count or 0) for row in rows}
+
+        # Determine start/end days (local date)
+        if start_at is not None:
+            start_day = start_at.astimezone().date() if start_at.tzinfo is not None else start_at.date()
+        else:
+            start_day = rows[0].stats_day if rows else None
+
+        if end_at is not None:
+            end_day = end_at.astimezone().date() if end_at.tzinfo is not None else end_at.date()
+        else:
+            end_day = rows[-1].stats_day if rows else start_day
+
+        if start_day is None or end_day is None:
+            return []
+
+        # Generate continuous date sequence with zero-fill for missing days
+        result = []
+        current_day = start_day
+        while current_day <= end_day:
+            result.append({"stats_day": current_day, "count": counts_by_day.get(current_day, 0)})
+            current_day += timedelta(days=1)
+        return result
+        
+    def stats_call_count_group_by_service(
+        self,
+        start_at: Optional[datetime] = None,
+        end_at: Optional[datetime] = None,
+    ) -> list:
+        """
+        Get total call counts grouped by service within optional local-time range.
+
+        Applies server-local timezone offset when filtering by datetime range to
+        match aggregation semantics used elsewhere.
+
+        Returns:
+            list: [{"service_id": str, "count": int}, ...]
+        """
+        # Shift stored UTC timestamps to server-local time for range filtering
+        offset_td = datetime.now().astimezone().utcoffset() or timedelta(0)
+        offset_minutes = int(offset_td.total_seconds() // 60)
+        local_dt = func.timestampadd(literal_column('MINUTE'), offset_minutes, StatsMcpServiceDate.stats_date)
+
+        query = (
+            self.db.query(
+                StatsMcpServiceDate.service_id.label("service_id"),
+                func.coalesce(func.sum(StatsMcpServiceDate.call_count), 0).label("total_count"),
+            )
+        )
+
+        # Apply local-time range filters if provided
+        if start_at is not None:
+            start_local = start_at.astimezone().replace(tzinfo=None) if start_at.tzinfo is not None else start_at
+            query = query.filter(local_dt >= start_local)
+        if end_at is not None:
+            end_local = end_at.astimezone().replace(tzinfo=None) if end_at.tzinfo is not None else end_at
+            query = query.filter(local_dt <= end_local)
+
+        rows = query.group_by(StatsMcpServiceDate.service_id).order_by(func.sum(StatsMcpServiceDate.call_count).desc()).all()
+
+        return [{"service_id": row.service_id, "count": int(row.total_count or 0)} for row in rows]
