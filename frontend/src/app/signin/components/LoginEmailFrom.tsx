@@ -30,7 +30,7 @@ export const LoginEmailFrom = ({ setEmail, setStep }: LoginEmailFromProps) => {
     formState: { errors, isSubmitting, isValid },
   } = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
-    mode: "all",
+    mode: "onBlur",
   });
 
   const onSubmit = async (data: EmailFormData) => {
@@ -61,7 +61,9 @@ export const LoginEmailFrom = ({ setEmail, setStep }: LoginEmailFromProps) => {
         type="submit"
         color="primary"
         isLoading={isSubmitting}
-        className="w-full"
+        size="lg"
+        className="w-full font-semibold bg-default-900"
+        isDisabled={!isValid}
       >
         {t("Continue")}
       </Button>

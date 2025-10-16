@@ -1,9 +1,13 @@
+input::placeholder,
+textarea::placeholder {
+  --nextui-foreground-500: 240 5.03% 64.9%;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Import theme styles */
-@import '../styles/themes.css';
+@import "../styles/themes.css";
 
 html,
 body {
@@ -83,4 +87,11 @@ body {
     8px 8px; /* 调整两层背景的偏移 */
   background-size: 16px 16px; /* 每个格子的尺寸 */
   background-repeat: repeat;
+}
+.wmde-markdown ul,
+.wmde-markdown ol {
+  list-style-type: revert;
+}
+.wmde-markdown {
+  background-color: inherit !important;
 }

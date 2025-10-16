@@ -15,6 +15,7 @@ interface LoginSettingsContentProps {
   loginConfig: LoginConfig;
   saveLoginConfig: (config: LoginConfig) => Promise<boolean>;
   emailConfig: EmailConfig;
+  type?: "email" | "google";
 }
 
 export const LoginSettingsContent: React.FC<LoginSettingsContentProps> = ({
@@ -22,6 +23,7 @@ export const LoginSettingsContent: React.FC<LoginSettingsContentProps> = ({
   loginConfig,
   saveLoginConfig,
   emailConfig,
+  type = "email",
 }) => {
   const [googleSubmitLoading, setGoogleSubmitLoading] = useState(false);
   const [emailSubmitLoading, setEmailSubmitLoading] = useState(false);
@@ -83,20 +85,24 @@ export const LoginSettingsContent: React.FC<LoginSettingsContentProps> = ({
   return (
     <div className="space-y-4 w-full">
       {/* email config */}
-      <EmailConfigForm
-        config={loginConfig}
-        emailConfig={emailConfig}
-        onSave={handleSaveLoginConfig}
-        isLoading={emailSubmitLoading}
-        onTabNavigate={onTabNavigate}
-      />
+      {type === "email" && (
+        <EmailConfigForm
+          config={loginConfig}
+          emailConfig={emailConfig}
+          onSave={handleSaveLoginConfig}
+          isLoading={emailSubmitLoading}
+          onTabNavigate={onTabNavigate}
+        />
+      )}
 
       {/* google auth config */}
-      <GoogleAuthConfigForm
-        config={loginConfig.google}
-        onSave={handleSaveGoogleAuthConfig}
-        isLoading={googleSubmitLoading}
-      />
+      {type === "google" && (
+        <GoogleAuthConfigForm
+          config={loginConfig.google}
+          onSave={handleSaveGoogleAuthConfig}
+          isLoading={googleSubmitLoading}
+        />
+      )}
     </div>
   );
 };

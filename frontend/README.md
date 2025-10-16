@@ -14,7 +14,7 @@ XPack WebUI is the flagship frontend interface for the MCP Store ecosystem, desi
 
 ### ✨ Key Features
 
-- **🛍️ Comprehensive Marketplace**: Browse, search, and discover MCP services across multiple categories
+- **🛍️ Comprehensive Marketplace**: Browse, search, and discover MCP servers across multiple categories
 - **👤 Multi-tier Authentication**: Secure user and admin authentication systems
 - **⚙️ Advanced Admin Console**: Complete service management, user administration, and revenue tracking
 - **🌐 Full Internationalization**: Native support for English and Chinese with extensible i18n framework
@@ -110,7 +110,7 @@ src/
 │   ├── console/           # Admin console components
 │   ├── dashboard/         # User dashboard components
 │   ├── marketplace/       # Marketplace components
-│   ├── mcp-services/      # MCP service management
+│   ├── mcp-services/      # MCP server management
 │   ├── user-management/   # User administration
 │   ├── revenue-management/# Revenue tracking
 │   ├── system-setting/    # System configuration
@@ -129,7 +129,7 @@ src/
 │   └── utils/            # Utility functions
 ├── services/             # Backend API integration
 │   ├── marketplaceService.ts  # Marketplace API
-│   ├── mcpService.ts         # MCP service API
+│   ├── mcpService.ts         # MCP server API
 │   ├── userService.ts        # User management API
 │   ├── revenueService.ts     # Revenue tracking API
 │   ├── paymentChannelService.ts # Payment API
@@ -139,7 +139,7 @@ src/
 ├── hooks/                # App-specific hooks
 │   ├── useAdminLogin.tsx     # Admin authentication
 │   ├── useLogin.tsx          # User authentication
-│   ├── useMCPServicesList.ts # MCP services data
+│   ├── useMCPServicesList.ts # MCP servers data
 │   ├── useMCPServiceDetail.ts # Service details
 │   ├── useUserManagement.ts  # User management
 │   ├── useRevenueManagement.ts # Revenue data
@@ -150,7 +150,7 @@ src/
 ├── types/                # TypeScript type definitions
 │   ├── admin.ts          # Admin types
 │   ├── dashboard.ts      # Dashboard types
-│   ├── mcp-service.ts    # MCP service types
+│   ├── mcp-service.ts    # MCP server types
 │   ├── payment.ts        # Payment types
 │   ├── revenue.ts        # Revenue types
 │   ├── system.ts         # System types
@@ -166,7 +166,7 @@ src/
 
 ### Marketplace Experience
 
-- **Service Discovery**: Advanced search and filtering capabilities for MCP services
+- **Service Discovery**: Advanced search and filtering capabilities for MCP servers
 - **Service Catalog**: Browse services by categories with detailed information
 - **Service Details**: Comprehensive service documentation and API specifications
 - **Installation Guides**: Step-by-step integration instructions for developers
@@ -178,7 +178,7 @@ src/
 
 ### Admin Console
 
-- **MCP Services Management**: Complete CRUD operations for MCP services
+- **MCP Servers Management**: Complete CRUD operations for MCP servers
   - Service creation and editing with OpenAPI generator
   - OpenAPI document parsing from files or URLs
   - Service status management (enabled/disabled)

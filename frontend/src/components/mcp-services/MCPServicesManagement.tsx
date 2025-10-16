@@ -1,41 +1,37 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useMCPServicesList } from "@/hooks/useMCPServicesList";
-import { MCPService, MCPServiceFormData, EnabledEnum } from "@/types/mcp-service";
+import { MCPService, MCPServiceFormData } from "@/shared/types/mcp-service";
 import { useTranslation } from "@/shared/lib/useTranslation";
 
-import { ServiceFiltersBar } from "./ServiceFiltersBar";
-import { ServiceTable } from "./ServiceTable";
-import { ServiceEditPage } from "./ServiceEditPage";
-import { OpenAPIGeneratorModal } from "./OpenAPIGeneratorModal";
+import { ServiceFiltersBar } from "@/shared/components/mcp-services/ServiceFiltersBar";
+import { ServiceEditPage } from "@/components/mcp-services/ServiceEditPage";
 import { DeleteConfirmModal } from "@/shared/components/modal/DeleteConfirmModal";
 import DashboardDemoContent from "@/shared/components/DashboardDemoContent";
+import { ServiceTable } from "@/shared/components/mcp-services/ServiceTable";
+import { OpenAPIGeneratorModal } from "@/shared/components/mcp-services/OpenAPIGeneratorModal";
 
 type ViewMode = "list" | "edit" | "create";
 
 export const MCPServicesManagement: React.FC = () => {
   const { t } = useTranslation();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const {
     services,
     loading,
     pagination,
-    searchTerm,
-    setSearchTerm,
-    statusFilter,
-    setStatusFilter,
     onPageChange,
     createService,
     updateService,
     deleteService,
     toggleServiceStatus,
     parseOpenAPIDocument,
-    loadServices
+    loadServices,
   } = useMCPServicesList();
+  const [addServiceType, setAddServiceType] = useState<string | null>(null);
 
   // Get initial state from URL
   const getInitialViewMode = (): ViewMode => {
@@ -57,26 +53,29 @@ export const MCPServicesManagement: React.FC = () => {
   );
 
   // Update URL when view mode or service ID changes
-  const updateURL = useCallback((mode: ViewMode, serviceId?: string | null) => {
-    const params = new URLSearchParams(searchParams);
+  const updateURL = useCallback(
+    (mode: ViewMode, serviceId?: string | null) => {
+      const params = new URLSearchParams(searchParams);
 
-    // Always keep the tab parameter
-    params.set("tab", "mcp-services");
+      // Always keep the tab parameter
+      params.set("tab", "mcp-services");
 
-    if (mode === "list") {
-      params.delete("mode");
-      params.delete("serviceId");
-    } else {
-      params.set("mode", mode);
-      if (serviceId) {
-        params.set("serviceId", serviceId);
-      } else {
+      if (mode === "list") {
+        params.delete("mode");
         params.delete("serviceId");
+      } else {
+        params.set("mode", mode);
+        if (serviceId) {
+          params.set("serviceId", serviceId);
+        } else {
+          params.delete("serviceId");
+        }
       }
-    }
 
-    router.push(`/console?${params.toString()}`, { scroll: false });
-  }, [router, searchParams]);
+      window.history.pushState({}, "", `/admin/console?${params.toString()}`);
+    },
+    [searchParams]
+  );
 
   // Sync state with URL on mount and URL changes
   useEffect(() => {
@@ -94,29 +93,38 @@ export const MCPServicesManagement: React.FC = () => {
     null
   );
 
-  // Service CRUD operations
-  const handleCreateService = useCallback(() => {
-    setSelectedServiceId(null);
-    setViewMode("create");
-    updateURL("create");
-  }, [updateURL]);
+  // Server CRUD operations
+  const handleCreateService = (type: string) => {
+    setAddServiceType(type);
+    setIsOpenAPIModalOpen(true);
+  };
 
-  const handleEditService = useCallback((service: MCPService) => {
-    setSelectedServiceId(service.id);
-    setViewMode("edit");
-    updateURL("edit", service.id);
-  }, [updateURL]);
+  const handleEditService = useCallback(
+    (service: MCPService) => {
+      setSelectedServiceId(service.id);
+      setViewMode("edit");
+      updateURL("edit", service.id);
+    },
+    [updateURL]
+  );
 
   const handleSaveService = useCallback(
-    async (formData: MCPServiceFormData) => {
+    async (formData: MCPServiceFormData, isDraft?: boolean) => {
       try {
-        const result = selectedServiceId ? await updateService(selectedServiceId, formData) : await createService(formData);
-        if (!result) return
+        const result = selectedServiceId
+          ? await updateService(selectedServiceId, formData)
+          : await createService(formData);
+        if (!result) return false;
+        if (isDraft) {
+          return true;
+        }
         setViewMode("list");
         setSelectedServiceId(null);
         updateURL("list");
+        return true;
       } catch (error) {
-        console.error("Failed to save service:", error);
+        console.error("Failed to save server:", error);
+        return false;
       }
     },
     [selectedServiceId, updateService, createService, updateURL]
@@ -140,27 +148,21 @@ export const MCPServicesManagement: React.FC = () => {
         setIsDeleteModalOpen(false);
         setServiceToDelete(null);
       } catch (error) {
-        console.error("Failed to delete service:", error);
+        console.error("Failed to delete server:", error);
       }
     }
   }, [serviceToDelete, deleteService]);
 
   const handleToggleStatus = useCallback(
-    async (service: MCPService) => {
+    async (serviceId: string) => {
       try {
-        await toggleServiceStatus(service.id);
+        await toggleServiceStatus(serviceId);
       } catch (error) {
-        console.error("Failed to toggle service status:", error);
+        console.error("Failed to toggle server status:", error);
       }
     },
     [toggleServiceStatus]
   );
-
-  // OpenAPI operations
-  const handleOpenAPIGenerate = useCallback(() => {
-    setIsOpenAPIModalOpen(true);
-  }, []);
-
 
   const handleEditGeneratedService = useCallback(
     async (serviceId: string) => {
@@ -172,7 +174,7 @@ export const MCPServicesManagement: React.FC = () => {
         setIsOpenAPIModalOpen(false);
         loadServices(1);
       } catch (error) {
-        console.error("Failed to navigate to generated service:", error);
+        console.error("Failed to navigate to generated server:", error);
       }
     },
     [updateURL]
@@ -196,31 +198,26 @@ export const MCPServicesManagement: React.FC = () => {
         onSave={handleSaveService}
         onCancel={handleCancelEdit}
         loading={loading}
+        onUnpublish={handleToggleStatus}
+        onRefreshList={() => {
+          loadServices(1);
+        }}
       />
     );
   }
 
   return (
     <DashboardDemoContent
-      title="MCP Services"
-      description="Manage your MCP services, configure APIs, and monitor service status"
+      title={t("MCP")}
+      description={t(
+        "Manage your MCP servers, configure APIs, and monitor server status"
+      )}
     >
       <div className="space-y-6 w-full">
         {/* comming soon:Filters and Actions */}
-        <ServiceFiltersBar
-          filters={{
-            search: searchTerm,
-            status: statusFilter,
-          }}
-          onFiltersChange={(filters) => {
-            setSearchTerm(filters.search);
-            setStatusFilter(filters.status);
-          }}
-          onAddService={handleCreateService}
-          onImportOpenAPI={handleOpenAPIGenerate}
-        />
+        <ServiceFiltersBar onAddService={handleCreateService} />
 
-        {/* Services Table */}
+        {/* Servers Table */}
         <ServiceTable
           services={services}
           loading={loading}
@@ -232,25 +229,27 @@ export const MCPServicesManagement: React.FC = () => {
         />
 
         {/* Modals */}
-        {
-          isOpenAPIModalOpen && (
-            <OpenAPIGeneratorModal
-              isOpen={true}
-              onClose={handleCloseOpenAPIModal}
-              onGenerate={parseOpenAPIDocument}
-              onEditGenerated={handleEditGeneratedService}
-            />
-          )
-        }
+        {isOpenAPIModalOpen && (
+          <OpenAPIGeneratorModal
+            isOpen={true}
+            onClose={handleCloseOpenAPIModal}
+            onGenerate={parseOpenAPIDocument}
+            onEditGenerated={handleEditGeneratedService}
+            serverType={addServiceType || "openapi"}
+          />
+        )}
 
         <DeleteConfirmModal
           isOpen={isDeleteModalOpen}
           onClose={handleCloseDeleteModal}
           onConfirm={handleConfirmDelete}
-          title={t('Confirm Delete')}
-          description={t('Are you sure you want to delete this "{{name}}" service?', {
-            name: serviceToDelete?.name || "",
-          })}
+          title={t("Confirm Delete")}
+          description={t(
+            'Are you sure you want to delete this "{{name}}" server?',
+            {
+              name: serviceToDelete?.name || "",
+            }
+          )}
         />
       </div>
     </DashboardDemoContent>

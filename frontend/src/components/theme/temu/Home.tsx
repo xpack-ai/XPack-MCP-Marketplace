@@ -94,7 +94,10 @@ export const Home: React.FC<HomeProps> = ({
             {/* Title */}
             <h1 className="text-4xl lg:text-6xl font-bold mb-6 text-white">
               {t(
-                platformConfig.headline || _DefaultPlatformConfig.headline || ""
+                platformConfig.headline ||
+                  platformConfig.name ||
+                  _DefaultPlatformConfig.headline ||
+                  ""
               )}
             </h1>
 
@@ -111,7 +114,7 @@ export const Home: React.FC<HomeProps> = ({
             <div className="max-w-2xl mx-auto mb-8">
               <div className="flex gap-3">
                 <Input
-                  placeholder={t("Search services...")}
+                  placeholder={t("Search MCP servers")}
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && onSearch()}
@@ -167,7 +170,7 @@ export const Home: React.FC<HomeProps> = ({
               {services.map((service) => (
                 <Link
                   key={service.service_id}
-                  href={`/marketplace/${service.service_id}`}
+                  href={`/server/${service.service_id}`}
                 >
                   <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200 hover:border-orange-200 h-[200px]">
                     <CardBody className="p-0">

@@ -32,7 +32,7 @@ export class PlatformConfigService {
           method: "GET",
         }
       );
-      console.info("Global get platform config: ", response.data);
+      // debug: console.info("Global get platform config: ", response.data);
 
       if (!response.success) {
         throw new Error(response.error_message);

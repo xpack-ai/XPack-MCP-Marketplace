@@ -12,10 +12,10 @@ import {
   NavbarMenu,
   NavbarMenuItem,
 } from "@nextui-org/react";
-import { ArrowRightIcon, ShoppingCart } from "lucide-react";
 import { DynamicLogo } from "@/shared/components/DynamicLogo";
 import { useAuth } from "@/shared/lib/useAuth";
 import { NavigationItem } from "@/shared/components/Navigation";
+import { ArrowRightIcon } from "lucide-react";
 
 interface NavigationProps {
   items?: NavigationItem[];
@@ -46,7 +46,7 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
           />
           <div className="flex justify-start bg-transparent w-max">
             <Link href="/">
-              <DynamicLogo alt="Platform Logo" className="h-[24px]" />
+              <DynamicLogo alt="Platform Logo" className="h-[32px]" />
             </Link>
           </div>
           <div className="hidden lg:flex gap-8 justify-center ml-8">
@@ -63,13 +63,16 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
           </div>
         </NavbarContent>
         <NavbarContent justify="end" className="items-center gap-2 sm:gap-4">
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2">
+            <Button onPress={handleLogin} variant="light">
+              <b className="text-md"> {t("Sign In")}</b>
+            </Button>
             <Button
               className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 h-[40px] transition-all duration-200"
               radius="md"
               onPress={handleLogin}
             >
-              {t("Sign In")}
+              {t("Get Started")}
             </Button>
           </div>
           <div className="sm:hidden">
@@ -89,14 +92,6 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
               className="text-gray-700 hover:text-orange-500 font-medium text-lg"
             >
               Home
-            </Link>
-          </NavbarMenuItem>
-          <NavbarMenuItem className="mb-4">
-            <Link
-              href="/marketplace"
-              className="text-gray-700 hover:text-orange-500 font-medium text-lg"
-            >
-              Marketplace
             </Link>
           </NavbarMenuItem>
           <NavbarMenuItem className="mt-6">

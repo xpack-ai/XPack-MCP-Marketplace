@@ -24,6 +24,14 @@ export interface PlatformConfig {
   domain?: string; // platform domain
   is_showcased?: boolean; // whether to showcase in xpack official case list
   mcp_server_prefix?: string; // MCP server domain prefix for API calls
+  x_title?: string; // x title
+  x_description?: string; // x description
+  x_image_url?: string; // x image url
+  facebook_title?: string; // facebook title
+  facebook_description?: string; // facebook description
+  facebook_image_url?: string; // facebook image url
+  meta_description?: string; // meta description
+  [key: string]: any;
 }
 
 export type ThemeType = Theme;

@@ -2,10 +2,11 @@
 
 import React from "react";
 import { useTranslation } from "@/shared/lib/useTranslation";
-import { Button, Divider, Link } from "@nextui-org/react";
+import { Button, Divider } from "@nextui-org/react";
 import { LogOut } from "lucide-react";
 import { DashboardSidebarProps } from "@/shared/types/dashboard";
 import { DynamicLogo } from "@/shared/components/DynamicLogo";
+import Link from "next/link";
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   activeTab,
@@ -14,6 +15,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   bottomPanel,
   sidebarItems,
   userProfilePanel,
+  langNode,
 }) => {
   const { t } = useTranslation();
 
@@ -23,13 +25,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         {/* Header */}
         <div className="mb-8 flex flex-col gap-2">
           <div className="flex justify-between items-center gap-2">
-            <Link href={process.env.NEXT_PUBLIC_DOMAIN || "/"}>
-              <DynamicLogo alt="Platform Logo" className="h-[20px]" />
+            <Link href="/" prefetch>
+              <DynamicLogo alt="Platform Logo" className="h-[32px]" />
             </Link>
+            {langNode}
           </div>
-          <p className="text-default-600 text-sm">
-            {t("Build incredible AI agents together")}
-          </p>
         </div>
 
         {/* User Profile */}
@@ -48,7 +48,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             >
               <div className="flex flex-col items-start">
                 <div className="font-medium">{t(item.label)}</div>
-                <div className="text-xs opacity-80">{t(item.description)}</div>
+                <div className="text-xs opacity-80">{t(item.description || "")}</div>
               </div>
             </Button>
           ))}

@@ -24,10 +24,23 @@ export type NavigationItem = {
 interface NavigationProps {
   items?: NavigationItem[];
   langNode?: React.ReactNode;
+  navbarBrand?: React.ReactNode;
+  onLogin?: () => void;
+  classNames?: {
+    logo?: string;
+  };
+  signinText?: string;
 }
 
 // Client-side wrapper for interactive functionality
-function NavigationClient({ items = [], langNode }: NavigationProps) {
+function NavigationClient({
+  items = [],
+  langNode,
+  navbarBrand,
+  onLogin,
+  classNames,
+  signinText = "Get Started",
+}: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useTranslation();
   const { handleLogin } = useAuth();
@@ -51,20 +64,19 @@ function NavigationClient({ items = [], langNode }: NavigationProps) {
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             className="sm:hidden"
           />
-          <div className="flex  justify-start bg-transparent w-max">
+          <div className="flex items-center gap-2 justify-start bg-transparent w-max">
             {/* Logo using dynamic platform config */}
-            <Link href="/">
-              <DynamicLogo alt="Platform Logo" className="h-[20px]" />
+            <Link href="/" prefetch>
+              <DynamicLogo
+                alt="Platform Logo"
+                className={classNames?.logo || "h-[32px]"}
+              />
             </Link>
-            <Link
-              href="https://xpack.ai/techblog"
-              target="_blank"
-              className="hidden"
-            ></Link>
+            {navbarBrand}
           </div>
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex gap-6 justify-center">
-            {items.map((item) => (
+          <div className="hidden lg:flex gap-2 justify-center">
+            {items?.map((item) => (
               <NavbarItem key={item.href}>
                 <Link
                   color="foreground"
@@ -82,7 +94,13 @@ function NavigationClient({ items = [], langNode }: NavigationProps) {
 
         {/* Right Side Actions */}
         <NavbarContent justify="end" className="items-center gap-2 sm:gap-4">
-          {langNode}
+          {langNode ? (
+            langNode
+          ) : (
+            <Button onPress={handleLogin} variant="light">
+              <b className="text-md"> {t("Sign In")}</b>
+            </Button>
+          )}
 
           {/* Desktop Auth Button */}
           <div className="hidden sm:block">
@@ -90,9 +108,9 @@ function NavigationClient({ items = [], langNode }: NavigationProps) {
               color="primary"
               className="bg-black flex items-center justify-center gap-4 pr-1 h-[45px]"
               radius="full"
-              onPress={handleLogin}
+              onPress={onLogin || handleLogin}
             >
-              <b className="text-md"> {t("Get Started")}</b>
+              <b className="text-md"> {t(signinText)}</b>
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-[#9ab0f2] flex items-center justify-center rounded-full">
                 <ArrowRightIcon
                   size={16}
@@ -103,16 +121,22 @@ function NavigationClient({ items = [], langNode }: NavigationProps) {
           </div>
 
           {/* Mobile Auth Button */}
-          <div className="sm:hidden">
-            <Button color="primary" onPress={handleLogin} size="sm">
-              <b className="text-md"> {t("Get Started")}</b>
-            </Button>
-          </div>
+          {!langNode && (
+            <div className="sm:hidden">
+              <Button
+                color="primary"
+                onPress={onLogin || handleLogin}
+                size="sm"
+              >
+                <b className="text-md"> {t(signinText)}</b>
+              </Button>
+            </div>
+          )}
         </NavbarContent>
 
         {/* Mobile Menu */}
         <NavbarMenu className="pt-6 pb-6">
-          {items.map((item, index) => (
+          {items?.map((item, index) => (
             <NavbarMenuItem key={`${item.href}-${index}`}>
               <Link
                 color="foreground"
@@ -130,9 +154,9 @@ function NavigationClient({ items = [], langNode }: NavigationProps) {
               color="primary"
               className="w-full bg-black flex items-center justify-between gap-4 pr-1 h-[45px]"
               radius="full"
-              onPress={handleLogin}
+              onPress={onLogin || handleLogin}
             >
-              <b className="text-md"> {t("Get Started")}</b>
+              <b className="text-md"> {t(signinText)}</b>
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-[#9ab0f2] flex items-center justify-center rounded-full">
                 <ArrowRightIcon
                   size={16}

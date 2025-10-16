@@ -15,6 +15,9 @@ import { NavigationItems } from "./Theme.const";
 import { copyToClipboard } from "@/shared/utils/clipboard";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { sanitizeMCPServerName } from "@/shared/utils/mcp";
+import { useNavigationItems } from "@/shared/providers/ConfigProvider";
+import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
 
 interface ProductDetailThemeSelectorProps {
   product: ServiceData;
@@ -24,7 +27,7 @@ interface ProductDetailThemeSelectorProps {
   }[];
 }
 
-export const ProductDetailThemeSelector: React.FC<
+const BasicProductDetailThemeSelector: React.FC<
   ProductDetailThemeSelectorProps
 > = ({ product, breadcrumbs }) => {
   const { platformConfig, topNavigation } = usePlatformConfig();
@@ -34,16 +37,10 @@ export const ProductDetailThemeSelector: React.FC<
   const [url, setUrl] = useState<string>("");
   const [mcpName, setMcpName] = useState<string>("");
   const { t } = useTranslation();
+  const configNavigation = useNavigationItems() || NavigationItems;
+
   const navigationItems = [
-    ...NavigationItems,
-    ...(platformConfig.about_page
-      ? [
-          {
-            label: "About",
-            href: "/about",
-          },
-        ]
-      : []),
+    ...configNavigation,
     ...topNavigation.map((item) => ({
       label: item.title,
       href: item.link,
@@ -53,29 +50,9 @@ export const ProductDetailThemeSelector: React.FC<
   useEffect(() => {
     if (url || !product.slug_name) return;
     setUrl(
-      `${
-        mcpServerPrefix ||
-        `${window.location.protocol}//${window.location.hostname}:8002`
-      }/mcp/${product.slug_name}`
+      `${mcpServerPrefix || window.location.origin}/mcp/${product.slug_name}`
     );
   }, [product.slug_name]);
-  function sanitizeMCPServerName(rawName: string | undefined): string {
-    if (!rawName) return "xpack-mcp-service";
-
-    // Lower-case & replace invalid chars with hyphen
-    let name = rawName
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]+/g, "-");
-
-    // Collapse multiple hyphens
-    name = name.replace(/-+/g, "-");
-
-    // Trim leading/trailing hyphens
-    name = name.replace(/^-+/, "").replace(/-+$/, "");
-
-    return name || "mcp-service";
-  }
   useEffect(() => {
     setMcpName(sanitizeMCPServerName(product.name));
   }, [product.name]);
@@ -85,7 +62,7 @@ export const ProductDetailThemeSelector: React.FC<
     "${mcpName || "xpack-mcp-market"}": {
       "type": "sse",
       "autoApprove":"all",
-      "url": "${url}?apikey={Your-${platformConfig?.name}-API-Key}"
+      "url": "${url}?authkey={Your-${platformConfig?.name}-Auth-Key}"
     }
   }
 }`;
@@ -165,3 +142,7 @@ export const ProductDetailThemeSelector: React.FC<
       );
   }
 };
+export const ProductDetailThemeSelector = withComponentInjection(
+  "components/theme/ProductDetailThemeSelector",
+  BasicProductDetailThemeSelector
+);

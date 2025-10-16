@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { Red_Hat_Display } from "next/font/google";
 import ClientRootProviders from "@/shared/components/ClientRootProviders";
 import "./globals.css";
-import { getCachedPlatformConfig, getDynamicTitle, createBaseMetadata } from "@/shared/utils/metadata";
+import {
+  getCachedPlatformConfig,
+  getDynamicTitle,
+  createBaseMetadata,
+} from "@/shared/utils/metadata";
 
 const redHatDisplay = Red_Hat_Display({
   subsets: ["latin"],
@@ -11,8 +15,8 @@ const redHatDisplay = Red_Hat_Display({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const title = await getDynamicTitle();
-  return createBaseMetadata(title);
+  const platformConfig = await getDynamicTitle();
+  return createBaseMetadata(platformConfig);
 }
 
 export default async function RootLayout({
@@ -23,7 +27,7 @@ export default async function RootLayout({
   const platformConfig = await getCachedPlatformConfig();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-color-mode="light">
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -32,15 +36,16 @@ export default async function RootLayout({
             `,
           }}
         />
-        {platformConfig?.embeded_html?.is_enabled && platformConfig?.embeded_html?.html && (
-          <div
-            dangerouslySetInnerHTML={{
-              __html: platformConfig.embeded_html.html,
-            }}
-          />
-        )}
       </head>
       <body className={redHatDisplay.className} suppressHydrationWarning>
+        {platformConfig?.embeded_html?.is_enabled &&
+          platformConfig?.embeded_html?.html && (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: platformConfig.embeded_html.html,
+              }}
+            />
+          )}
         <ClientRootProviders initConfig={platformConfig}>
           {children}
         </ClientRootProviders>

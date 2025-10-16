@@ -2,8 +2,8 @@
 
 import React from "react";
 import { useTranslation } from "@/shared/lib/useTranslation";
-import { Card, CardBody, Chip } from "@nextui-org/react";
-import { ChargeType, ServiceData } from "@/shared/types/marketplace";
+import { Avatar, Card, CardBody, Chip } from "@nextui-org/react";
+import { ServiceData } from "@/shared/types/marketplace";
 import Link from "next/link";
 import { Price } from "./Price";
 
@@ -26,13 +26,13 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({
       <CardBody>
         {/* Breadcrumb */}
         <nav className="text-sm text-default-500 flex items-center gap-1 mb-10">
-          <Link href="/" className="hover:underline">
+          <Link href="/" className="hover:underline" prefetch>
             {t("Home")}
           </Link>
           {breadcrumbs.map((item, index) => (
             <React.Fragment key={index}>
               <span>/</span>
-              <Link href={item.link} className="hover:underline">
+              <Link href={item.link} className="hover:underline" prefetch>
                 {t(item.name)}
               </Link>
             </React.Fragment>
@@ -42,9 +42,32 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({
         </nav>
 
         {/* Header with title and price */}
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex justify-between mb-4">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+            <div className="flex items-center gap-2 mb-2">
+              {product.supplier_info?.name && (
+                <Avatar
+                  src={product.supplier_info?.logo}
+                  size="lg"
+                  name={product.supplier_info?.name.slice(0, 1)}
+                  radius="sm"
+                  classNames={{
+                    img: "object-contain",
+                  }}
+                  className={
+                    product.supplier_info?.logo ? "bg-transparent" : ""
+                  }
+                />
+              )}
+              <div className="flex flex-col justify-between">
+                <h1 className="text-2xl font-bold">{product.name}</h1>
+                {product.supplier_info?.name && (
+                  <p className="text-xs text-default-500">
+                    @{product.supplier_info.name}
+                  </p>
+                )}
+              </div>
+            </div>
 
             {/* Tags */}
             {product.tags && product.tags.length > 0 && (
@@ -54,9 +77,9 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({
                     key={index}
                     size="sm"
                     variant="flat"
-                    color="primary"
+                    color="secondary"
                     radius="sm"
-                    className="text-xs h-5"
+                    className="text-[10px] h-5"
                   >
                     {tag}
                   </Chip>

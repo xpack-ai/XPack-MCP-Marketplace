@@ -25,6 +25,7 @@ interface DetailProps {
   // navigation items
   navItems?: NavigationItem[];
   onCopy: () => void;
+  innerHeaderNode?: React.ReactNode;
 }
 
 export const Detail: React.FC<DetailProps> = ({
@@ -34,6 +35,7 @@ export const Detail: React.FC<DetailProps> = ({
   mcpName,
   navItems = [],
   onCopy,
+  innerHeaderNode,
 }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
@@ -60,8 +62,9 @@ export const Detail: React.FC<DetailProps> = ({
           {/* Modern Product Header */}
           <div className="pt-20">
             <div className="mx-auto pt-6 px-6 max-w-7xl">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 relative">
                 <ProductHeader product={product} breadcrumbs={breadcrumbs} />
+                {innerHeaderNode}
               </div>
             </div>
           </div>
@@ -162,8 +165,8 @@ export const Detail: React.FC<DetailProps> = ({
     "${mcpName}": {
       "type": "sse",
       "autoApprove":"all",
-      "url": "${url}?apikey=`}
-                            <span className="text-success">{`{Your-${platformConfig?.name}-API-Key}`}</span>
+      "url": "${url}?authkey=`}
+                            <span className="text-success">{`{Your-${platformConfig?.name}-Auth-Key}`}</span>
                             {`"
     }
   }

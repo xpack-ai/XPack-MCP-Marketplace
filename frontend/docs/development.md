@@ -58,7 +58,7 @@ src/
 │   ├── console/           # Console management
 │   ├── dashboard/         # Dashboard components
 │   ├── marketplace/       # Marketplace components
-│   ├── mcp-services/      # MCP service management
+│   ├── mcp-services/      # MCP server management
 │   ├── revenue-management/# Revenue tracking
 │   ├── system-setting/    # System configuration
 │   ├── user-management/   # User administration
@@ -77,7 +77,7 @@ src/
 │   └── utils/           # Utility functions
 ├── services/            # Backend API integration
 │   ├── marketplaceService.ts  # Marketplace API
-│   ├── mcpService.ts         # MCP service API
+│   ├── mcpService.ts         # MCP server API
 │   ├── userService.ts        # User management API
 │   ├── revenueService.ts     # Revenue tracking API
 │   ├── paymentChannelService.ts # Payment API
@@ -87,7 +87,7 @@ src/
 ├── hooks/               # App-specific hooks
 │   ├── useAdminLogin.tsx     # Admin authentication
 │   ├── useLogin.tsx          # User authentication
-│   ├── useMCPServicesList.ts # MCP services data
+│   ├── useMCPServicesList.ts # MCP servers data
 │   ├── useMCPServiceDetail.ts # Service details
 │   ├── useUserManagement.ts  # User management
 │   ├── useRevenueManagement.ts # Revenue data
@@ -98,7 +98,7 @@ src/
 ├── types/               # TypeScript type definitions
 │   ├── admin.ts         # Admin types
 │   ├── dashboard.ts     # Dashboard types
-│   ├── mcp-service.ts   # MCP service types
+│   ├── mcp-service.ts   # MCP server types
 │   ├── payment.ts       # Payment types
 │   ├── revenue.ts       # Revenue types
 │   ├── system.ts        # System types

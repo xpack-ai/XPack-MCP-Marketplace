@@ -1,13 +1,20 @@
-'use server';
+"use server";
 
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath, revalidateTag } from "next/cache";
+import { headers } from "next/headers";
 
 export async function revalidatePlatformConfig() {
-  // 重新验证根路径和所有子路径
-  revalidatePath('/', 'layout');
-  
-  // 如果使用了标签缓存，也可以重新验证特定标签
-  revalidateTag('platform-config');
-  
-  console.log('Platform config cache revalidated');
+  // Get current host for host-specific cache invalidation
+  const headersList = await headers();
+  const host = headersList.get("host") || "default";
+
+  // Revalidate root path and all sub-paths
+  revalidatePath("/", "layout");
+
+  // Revalidate host-specific cache tag
+  revalidateTag(`platform-config-${host}`);
+
+  console.info(
+    `Platform config cache revalidated for host: platform-config-${host}`
+  );
 }

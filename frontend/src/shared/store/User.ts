@@ -32,4 +32,11 @@ export interface User {
     balance: number;
   };
   register_type: RegisterType;
+  supplier_info?: {
+    url: string; //home page url
+  };
+  tenant?: {
+    subdomain?: string;
+    bound_domain?: string;
+  };
 }

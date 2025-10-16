@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Input,
   Button,
@@ -9,6 +9,8 @@ import {
   Select,
   SelectItem,
   Switch,
+  Card,
+  Spinner,
 } from "@nextui-org/react";
 import { PlatformConfig, Theme } from "@/shared/types/system";
 import { useTranslation } from "@/shared/lib/useTranslation";
@@ -17,26 +19,37 @@ import { ThemeSelector } from "./ThemeSelector";
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
 import toast from "react-hot-toast";
+import { UploadIcon } from "lucide-react";
+import { calculateFileSha256 } from "@/shared/utils/crypto";
+import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
 
 interface PlatformConfigFormProps {
   config: PlatformConfig;
   onSave: (config: PlatformConfig) => void;
   onThemeChange?: (theme: Theme) => Promise<void>;
   isLoading?: boolean;
+  uploadImage: (file: File, sha256?: string) => Promise<string>;
 }
 
-export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
+const PlatformConfigFormBase: React.FC<PlatformConfigFormProps> = ({
   config,
   onSave,
   onThemeChange,
   isLoading = false,
+  uploadImage,
 }) => {
   const { t } = useTranslation();
+
   const [formData, setFormData] = useState<PlatformConfig>(config);
   const [validationErrors, setValidationErrors] = useState<{
     domain?: string;
     mcp_server_prefix?: string;
   }>({});
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const isValidate = useMemo(() => {
+    return formData.name.trim().length > 0 && !isUploading;
+  }, [formData, isUploading]);
 
   // when context config updated, sync to form
   useEffect(() => {
@@ -122,6 +135,42 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
     handleInputChange("theme", theme);
     onThemeChange?.(theme);
   };
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("Please select a valid image file"));
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t("Image size should be less than 5MB"));
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const sha256 = await calculateFileSha256(file);
+      const imageUrl = await uploadImage(file, sha256);
+      handleInputChange("logo", imageUrl);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error(t("Failed to upload image"));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleImageClick = () => {
+    if (!isUploading) {
+      fileInputRef.current?.click();
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -147,7 +196,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
             </div>
           }
         >
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             {/* platform name */}
             <Input
               label={t("Platform Name")}
@@ -155,16 +204,53 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
               description={t("The name displayed across the platform")}
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
+              isRequired
+              labelPlacement="outside"
             />
 
             {/* platform logo */}
-            <Input
-              label={t("Platform Logo URL")}
-              placeholder="https://example.com/logo.png"
-              description={t("URL of the platform logo image (optional)")}
-              value={formData.logo || ""}
-              onChange={(e) => handleInputChange("logo", e.target.value)}
-            />
+            <div className="space-y-2">
+              <div>
+                <label className="text-sm font-medium text-foreground">
+                  {t("Platform Logo")}
+                </label>
+                <p className="text-xs text-gray-500">
+                  {t("Support JPG, PNG, GIF. Max size 5MB")}
+                </p>
+              </div>
+              <Card
+                className={`w-32 h-32 relative group border-1 ${isUploading ? "cursor-not-allowed" : "cursor-pointer"}`}
+                style={{
+                  backgroundImage: formData.logo
+                    ? `url(${formData.logo})`
+                    : "none",
+                  backgroundSize: "contain",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
+                onPress={handleImageClick}
+                isPressable={!isUploading}
+                shadow="none"
+              >
+                <div
+                  className={`absolute top-0 right-0 bg-default-500/50 w-full h-full flex items-center justify-center transition-opacity duration-300 ${formData.logo && !isUploading ? "opacity-0" : "opacity-100"
+                    } group-hover:opacity-100`}
+                >
+                  {isUploading ? (
+                    <Spinner size="lg" color="white" />
+                  ) : (
+                    <UploadIcon size={48} className="text-white" />
+                  )}
+                </div>
+              </Card>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
 
             {/* website title */}
             <Input
@@ -177,6 +263,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
               onChange={(e) =>
                 handleInputChange("website_title", e.target.value)
               }
+              labelPlacement="outside"
             />
 
             {/* homepage headline */}
@@ -186,6 +273,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
               description={t("Main headline displayed on the homepage")}
               value={formData.headline || ""}
               onChange={(e) => handleInputChange("headline", e.target.value)}
+              labelPlacement="outside"
             />
 
             {/* homepage subheadline */}
@@ -197,6 +285,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
               )}
               value={formData.subheadline || ""}
               onChange={(e) => handleInputChange("subheadline", e.target.value)}
+              labelPlacement="outside"
             />
 
             {/* platform language */}
@@ -210,6 +299,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
                   handleInputChange("language", selectedKey);
                 }
               }}
+              labelPlacement="outside"
             >
               {SUPPORTED_LANGUAGES.map((language) => (
                 <SelectItem key={language.name} value={language.name}>
@@ -229,6 +319,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
               onChange={(e) => handleInputChange("domain", e.target.value)}
               isInvalid={!!validationErrors.domain}
               errorMessage={validationErrors.domain}
+              labelPlacement="outside"
             />
 
             {/* mcp server prefix */}
@@ -244,6 +335,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
               }
               isInvalid={!!validationErrors.mcp_server_prefix}
               errorMessage={validationErrors.mcp_server_prefix}
+              labelPlacement="outside"
             />
 
             {/* showcase in xpack */}
@@ -277,6 +369,7 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
               onPress={handleSave}
               isLoading={isLoading}
               size="sm"
+              isDisabled={!isValidate}
             >
               {t("Save")}
             </Button>
@@ -315,3 +408,12 @@ export const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
     </div>
   );
 };
+
+// Export the base component for direct use (avoiding circular dependency)
+export { PlatformConfigFormBase };
+
+// Export with component injection support
+export const PlatformConfigForm = withComponentInjection(
+  "forms/PlatformConfigForm",
+  PlatformConfigFormBase
+);

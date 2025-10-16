@@ -62,7 +62,7 @@ const UserManagement: React.FC = () => {
 
   return (
     <DashboardDemoContent
-      title={t("User Management")}
+      title={t("User")}
       description={t(
         "Manage registered users, view user information, and handle user operations"
       )}

@@ -1,8 +1,6 @@
 import { fetchAPI } from "../shared/rpc/common-function";
-import { getApiUrl } from "../shared/rpc/adapter";
-import { MOCK_SERVICES } from "../shared/data/services.mock";
 import { ServiceData } from "@/shared/types/marketplace";
-import { BaseMCPService } from "@/types/mcp-service";
+import { BaseMCPService } from "@/shared/types/mcp-service";
 
 // Types that match the API responses
 
@@ -44,18 +42,8 @@ export async function fetchServices(
     page_size: _BasePageDetail.page_size,
     page: _BasePageDetail.page,
     keyword: "",
-  },
-  isMock: boolean = false
-): Promise<ServicesResponse> {
-  if (isMock) {
-    return {
-      data: {
-        services: MOCK_SERVICES,
-      },
-      page: _BasePageDetail,
-    };
   }
-
+): Promise<ServicesResponse> {
   // Build query parameters
   const queryParams = new URLSearchParams();
   if (params.page) queryParams.append("page", params.page.toString());
@@ -63,11 +51,12 @@ export async function fetchServices(
     queryParams.append("page_size", params.page_size.toString());
   if (params.keyword) queryParams.append("keyword", params.keyword);
 
-  const url = `/api/web/mcp_services${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
-  const response = await fetchAPI<BaseMCPService[]>(getApiUrl(url));
+  const response = await fetchAPI<BaseMCPService[]>(
+    `/api/web/mcp_services${queryParams.toString() ? "?" + queryParams.toString() : ""}`
+  );
 
   if (!response.success) {
-    console.error("Failed to fetch services:", response.error_message);
+    console.error("Failed to fetch servers:", response.error_message);
     return {
       data: {
         services: [],
@@ -85,13 +74,13 @@ export async function fetchServices(
 }
 
 /**
- * Fetch a single service by ID
+ * Fetch a single server by ID
  */
 export async function fetchServiceById(
   serviceId: string
 ): Promise<ServiceData | null> {
   const response = await fetchAPI<BaseMCPService>(
-    getApiUrl(`/api/web/mcp_service_info?id=${serviceId}`),
+    `/api/web/mcp_service_info?id=${serviceId}`,
     {
       method: "GET",
       headers: {
@@ -102,7 +91,7 @@ export async function fetchServiceById(
 
   if (!response.success) {
     console.error(
-      `Failed to fetch service ${serviceId}:`,
+      `Failed to fetch server ${serviceId}:`,
       response.error_message
     );
     return null;

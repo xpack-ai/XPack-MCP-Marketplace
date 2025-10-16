@@ -93,17 +93,17 @@ const DashboardContent: React.FC = () => {
     },
   ];
 
-  const handleTabNavigate = (tab: TabKey) => {
-    setActiveTab(tab);
+  const handleTabNavigate = (tab: TabKey | string) => {
+    setActiveTab(tab as TabKey);
     // update url params
     if (tab === TabKey.OVERVIEW) {
       // when switch to dashboard, clear all query params, only keep base path
-      router.push("/dashboard", { scroll: false });
+      router.push("/console", { scroll: false });
     } else {
       // other tabs set corresponding tab params
       const params = new URLSearchParams();
       params.set("tab", tab);
-      router.push(`/dashboard?${params.toString()}`, { scroll: false });
+      router.push(`/console?${params.toString()}`, { scroll: false });
     }
   };
 

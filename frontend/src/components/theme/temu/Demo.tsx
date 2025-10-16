@@ -31,7 +31,7 @@ const TemuDemo: React.FC = () => {
 
           {/* Subtitle */}
           <p className="text-xs text-white/90 mb-3">
-            Find the perfect MCP service for your needs
+            Find the perfect MCP server for your needs
           </p>
 
           {/* Search Bar */}

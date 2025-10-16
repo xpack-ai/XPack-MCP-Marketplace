@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { MCPService } from "@/types/mcp-service";
+import { MCPService } from "@/shared/types/mcp-service";
 import {
   getMCPServiceDetail,
   parseOpenAPIDocumentForUpdate as parseOpenAPIDocumentForUpdateAPI,
@@ -14,7 +14,7 @@ export const useMCPServiceDetail = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
-  // get service detail
+  // get server detail
   const getServiceDetail = useCallback(
     async (serviceId: string): Promise<MCPService | null> => {
       setDetailLoading(true);
@@ -28,17 +28,17 @@ export const useMCPServiceDetail = () => {
           return response.data;
         } else {
           setDetailError(
-            response.error_message || "Failed to load service detail"
+            response.error_message || "Failed to load server detail"
           );
           setServiceDetail(null);
           return null;
         }
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Failed to load service detail";
+          err instanceof Error ? err.message : "Failed to load server detail";
         setDetailError(errorMessage);
         setServiceDetail(null);
-        console.error("Get service detail error:", err);
+        console.error("Get server detail error:", err);
         return null;
       } finally {
         setDetailLoading(false);
@@ -47,7 +47,7 @@ export const useMCPServiceDetail = () => {
     []
   );
 
-  // clear service detail
+  // clear server detail
   const clearServiceDetail = useCallback(() => {
     setServiceDetail(null);
     setDetailError(null);
@@ -58,20 +58,24 @@ export const useMCPServiceDetail = () => {
     async (
       serviceId: string,
       url?: string,
-      file?: File
+      file?: File,
+      apiPath?: string
     ): Promise<MCPService> => {
       setUpdateLoading(true);
       setUpdateError(null);
 
       try {
-        const response = await parseOpenAPIDocumentForUpdateAPI({
-          id: serviceId,
-          file,
-          url,
-        });
+        const response = await parseOpenAPIDocumentForUpdateAPI(
+          {
+            id: serviceId,
+            file,
+            url,
+          },
+          apiPath
+        );
 
         if (response.success && response.data) {
-          // Update the service detail with the new data
+          // Update the server detail with the new data
           setServiceDetail(response.data);
           return response.data;
         } else {

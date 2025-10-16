@@ -1,3 +1,4 @@
+import { getRequestContext } from "../lib/request-context";
 import { useSharedStore } from "../store/share";
 import { ApiResponse } from "../types";
 import { getApiUrl } from "./adapter";
@@ -16,11 +17,14 @@ const getAuth = () => {
 export const fetchAPI = async <T = any>(
   url: string,
   options: RequestInit = {}
-): Promise<ApiResponse<T>> => {
+): Promise<ApiResponse<T> | Response | any> => {
   try {
+    const ctx = getRequestContext();
+    const isFormData =
+      Object.prototype.toString.call(options.body) === "[object FormData]";
     // Add default headers
     options.headers = {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       // Prevent potential "Ill-formed language" errors by ensuring a valid default language tag
       "Accept-Language": "en-US,en;q=0.9",
       Authorization: getAuth() || undefined,
@@ -28,12 +32,13 @@ export const fetchAPI = async <T = any>(
         ? {
             noCache: true,
           }
-        : {}),
+        : window.__XPACK_GLOBAL_AJAX_HEADERS__ || {}),
+      ...(ctx?.headers || {}),
       ...(options.headers || {}),
     } as any;
 
     // Process JSON body
-    if (options.body && typeof options.body === "object") {
+    if (options.body && typeof options.body === "object" && !isFormData) {
       options.body = JSON.stringify(options.body);
     }
 
@@ -44,12 +49,13 @@ export const fetchAPI = async <T = any>(
     if (contentType?.includes("application/json")) {
       const result = await response.json();
       return result;
+    } else if (contentType && contentType.includes("text/event-stream")) {
+      return response;
     } else {
-      // Default fallback if not JSON
+      console.warn(`fetchAPI No response: ${response.statusText}`);
       return {
-        success: response.ok,
+        success: true,
         code: response.status.toString(),
-        error_message: response.ok ? undefined : response.statusText,
         data: null as T,
       };
     }

@@ -18,6 +18,7 @@ interface StripeConfigFormProps {
   onEnable: (channelId: string) => Promise<boolean>;
   onDisable: (channelId: string) => Promise<boolean>;
   isLoading?: boolean;
+  labelPlacement?: "outside" | "inside";
 }
 
 export const StripeConfigForm: React.FC<StripeConfigFormProps> = ({
@@ -26,6 +27,7 @@ export const StripeConfigForm: React.FC<StripeConfigFormProps> = ({
   onEnable,
   onDisable,
   isLoading = false,
+  labelPlacement = "inside",
 }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<StripeConfig>(config);
@@ -67,6 +69,115 @@ export const StripeConfigForm: React.FC<StripeConfigFormProps> = ({
   const isFormValid =
     formData.secret.trim() !== "" && formData.webhook_secret.trim() !== "";
 
+  const panelContent = () => {
+    return (
+      <>
+        <div
+          className={`flex flex-col gap-4 ${formData.is_enabled ? "" : "hidden"}`}
+        >
+          {/* Secret Key */}
+          <Input
+            label={t("Secret Key")}
+            placeholder={t("Enter Secret Key")}
+            description={t("Stripe secret key for server-side API calls")}
+            value={formData.secret}
+            onChange={(e) => handleInputChange("secret", e.target.value)}
+            type={showSecretKey ? "text" : "password"}
+            endContent={
+              <button
+                type="button"
+                onClick={() => setShowSecretKey(!showSecretKey)}
+                className="focus:outline-none"
+              >
+                {showSecretKey ? (
+                  <EyeOff className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <Eye className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+            }
+            isRequired
+            autoComplete="off"
+            isDisabled={!formData.is_enabled}
+            labelPlacement="outside"
+          />
+
+          {/* Webhook Secret (Optional) */}
+          <Input
+            label={t("Webhook Secret")}
+            placeholder={t("Enter Webhook Secret")}
+            description={t(
+              "Webhook signing secret for verifying Stripe events"
+            )}
+            value={formData.webhook_secret || ""}
+            onChange={(e) =>
+              handleInputChange("webhook_secret", e.target.value)
+            }
+            type={showWebhookSecret ? "text" : "password"}
+            isRequired
+            endContent={
+              <button
+                type="button"
+                onClick={() => setShowWebhookSecret(!showWebhookSecret)}
+                className="focus:outline-none"
+              >
+                {showWebhookSecret ? (
+                  <EyeOff className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <Eye className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+            }
+            autoComplete="off"
+            isDisabled={!formData.is_enabled}
+            labelPlacement="outside"
+          />
+        </div>
+
+        {/* Action Buttons */}
+        {formData.is_enabled && (
+          <div className="flex gap-3 py-4">
+            <Button
+              color="primary"
+              variant="solid"
+              onPress={handleSave}
+              isLoading={isLoading}
+              isDisabled={!isFormValid}
+              size="sm"
+            >
+              {t("Save")}
+            </Button>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  if (labelPlacement === "outside") {
+    return (
+      <div className="flex flex-col gap-4">
+        {/* Enable/Disable Toggle */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium">
+              {t("Enable Stripe Payment")}
+            </span>
+            <span className="text-xs text-gray-500">
+              {t("Toggle to enable or disable Stripe payment interface")}
+            </span>
+          </div>
+          <Switch
+            isSelected={formData.is_enabled || false}
+            onValueChange={handleEnableDisable}
+            color="primary"
+            size="sm"
+          />
+        </div>
+        {panelContent()}
+      </div>
+    );
+  }
+
   return (
     <Accordion
       variant="splitted"
@@ -98,79 +209,7 @@ export const StripeConfigForm: React.FC<StripeConfigFormProps> = ({
           </div>
         }
       >
-        <div className="space-y-4">
-          {/* Secret Key */}
-          <Input
-            label={t("Secret Key")}
-            placeholder="sk_test_... or sk_live_..."
-            description={t("Stripe secret key for server-side API calls")}
-            value={formData.secret}
-            onChange={(e) => handleInputChange("secret", e.target.value)}
-            type={showSecretKey ? "text" : "password"}
-            endContent={
-              <button
-                type="button"
-                onClick={() => setShowSecretKey(!showSecretKey)}
-                className="focus:outline-none"
-              >
-                {showSecretKey ? (
-                  <EyeOff className="w-4 h-4 text-gray-400" />
-                ) : (
-                  <Eye className="w-4 h-4 text-gray-400" />
-                )}
-              </button>
-            }
-            isRequired
-            autoComplete="off"
-            isDisabled={!formData.is_enabled}
-          />
-
-          {/* Webhook Secret (Optional) */}
-          <Input
-            label={t("Webhook Secret")}
-            placeholder="whsec_..."
-            description={t(
-              "Webhook signing secret for verifying Stripe events"
-            )}
-            value={formData.webhook_secret || ""}
-            onChange={(e) =>
-              handleInputChange("webhook_secret", e.target.value)
-            }
-            type={showWebhookSecret ? "text" : "password"}
-            isRequired
-            endContent={
-              <button
-                type="button"
-                onClick={() => setShowWebhookSecret(!showWebhookSecret)}
-                className="focus:outline-none"
-              >
-                {showWebhookSecret ? (
-                  <EyeOff className="w-4 h-4 text-gray-400" />
-                ) : (
-                  <Eye className="w-4 h-4 text-gray-400" />
-                )}
-              </button>
-            }
-            autoComplete="off"
-            isDisabled={!formData.is_enabled}
-          />
-        </div>
-
-        {/* Action Buttons */}
-        {formData.is_enabled && (
-          <div className="flex gap-3 py-4">
-            <Button
-              color="primary"
-              variant="solid"
-              onPress={handleSave}
-              isLoading={isLoading}
-              isDisabled={!isFormValid}
-              size="sm"
-            >
-              {t("Save")}
-            </Button>
-          </div>
-        )}
+        {panelContent()}
       </AccordionItem>
     </Accordion>
   );

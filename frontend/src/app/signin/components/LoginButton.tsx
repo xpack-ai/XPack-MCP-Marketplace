@@ -6,8 +6,21 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 interface LoginButtonProps {
   title: string;
   icon?: string;
-  color?: "default" | "primary" | "secondary" | "success" | "warning" | "danger";
-  variant?: "solid" | "bordered" | "light" | "flat" | "faded" | "shadow" | "ghost";
+  color?:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "warning"
+    | "danger";
+  variant?:
+    | "solid"
+    | "bordered"
+    | "light"
+    | "flat"
+    | "faded"
+    | "shadow"
+    | "ghost";
   onClick?: () => void;
 }
 

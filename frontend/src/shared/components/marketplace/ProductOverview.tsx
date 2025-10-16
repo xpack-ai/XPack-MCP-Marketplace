@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import ReactMarkdown from "react-markdown";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { Card, CardBody } from "@nextui-org/react";
 import { ServiceData } from "@/shared/types/marketplace";
+import MarkdownPreview from "@uiw/react-markdown-preview";
 
 interface ProductOverviewProps {
   product: ServiceData;
@@ -16,11 +16,11 @@ export const ProductOverview: React.FC<ProductOverviewProps> = ({
   const { t } = useTranslation();
 
   return (
-    <Card shadow="none" className="bg-transparent">
-      <CardBody className="space-y-4">
-        <div className="leading-relaxed prose prose-sm max-w-none">
+    <Card shadow="none" className="bg-transparent overflow-visible">
+      <CardBody className="space-y-4 overflow-visible">
+        <div className="leading-relaxed  max-w-none">
           {product.long_description ? (
-            <ReactMarkdown>{product.long_description}</ReactMarkdown>
+            <MarkdownPreview source={product.long_description} />
           ) : (
             <p>{t("No description available")}</p>
           )}

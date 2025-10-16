@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "@/shared/lib/useTranslation";
-import { useLogin } from "@/hooks/useLogin";
+import { useLogin } from "@/shared/hooks/useLogin";
 import { md5Encrypt } from "@/shared/utils/crypto";
 
 const emailPasswordSchema = z.object({
@@ -37,7 +37,7 @@ export const LoginEmailPasswordForm = ({
     formState: { errors, isSubmitting, isValid },
   } = useForm<EmailPasswordFormData>({
     resolver: zodResolver(emailPasswordSchema),
-    mode: "all",
+    mode: "onBlur",
   });
 
   const onSubmit = async (data: EmailPasswordFormData) => {
@@ -105,9 +105,11 @@ export const LoginEmailPasswordForm = ({
         type="submit"
         color="primary"
         isLoading={isSubmitting}
-        className="w-full"
+        size="lg"
+        className="w-full font-semibold bg-default-900"
+        isDisabled={!isValid}
       >
-        {t("Sign In")}
+        {t("Continue")}
       </Button>
     </form>
   );

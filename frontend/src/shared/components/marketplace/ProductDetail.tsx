@@ -18,6 +18,7 @@ interface ProductDetailClientProps {
   }[];
   mcpName?: string;
   url?: string;
+  innerHeaderNode?: React.ReactNode;
 }
 
 export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
@@ -25,20 +26,22 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   breadcrumbs,
   mcpName,
   url,
+  innerHeaderNode,
 }) => {
   const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <div className="flex flex-col mx-auto p-6 max-w-7xl">
+    <div className="flex flex-col mx-auto p-6 max-w-7xl relative">
       {product ? (
         <>
           <ProductHeader product={product} breadcrumbs={breadcrumbs} />
+          {innerHeaderNode}
 
-          <div className="flex gap-6 mt-6">
+          <div className="flex gap-6 mt-6 flex-col md:flex-row">
             {/* Left side - Main content */}
-            <div className="flex-1">
+            <div className="flex-1 w-full md:w-[calc(60%-2rem)]">
               <Tabs
                 selectedKey={activeTab}
                 onSelectionChange={(key) => setActiveTab(key as string)}

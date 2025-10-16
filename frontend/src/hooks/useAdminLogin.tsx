@@ -21,8 +21,7 @@ export const useAdminLogin = () => {
 
       if (result.success) {
         // login success, redirect to console
-        router.push("/console");
-        toast.success(i18n.t("Login successful"));
+        router.push("/admin/console");
         return { success: true };
       } else {
         // login failed, show error message
@@ -44,8 +43,7 @@ export const useAdminLogin = () => {
     // call store logout method
     adminLogOut();
     // redirect to login page
-    router.push("/admin");
-    toast.success(i18n.t("Logged out successfully"));
+    window.location.href = process.env.NEXT_PUBLIC_ADMIN_LOGIN_URL || "/admin";
   };
 
   return {

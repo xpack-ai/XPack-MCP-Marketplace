@@ -6,19 +6,12 @@ import DashboardDemoContent from "@/shared/components/DashboardDemoContent";
 import { useRevenueManagement } from "@/hooks/useRevenueManagement";
 
 const RevenueManagement: React.FC = () => {
-
   // use custom hook to manage revenue data
-  const {
-    records,
-    loading,
-    pagination,
-    setPage,
-  } = useRevenueManagement();
-
+  const { records, loading, pagination, setPage } = useRevenueManagement();
 
   return (
     <DashboardDemoContent
-      title="Revenue Management"
+      title="Revenue"
       description="Monitor platform revenue and view user recharge history"
     >
       <div className="space-y-6 w-full">

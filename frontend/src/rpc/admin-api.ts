@@ -23,6 +23,9 @@ export const fetchAdminAPI = async <T = any>(
       "Accept-Language": "en-US,en;q=0.9",
       Authorization: getAdminAuth() || undefined,
       ...options.headers,
+      ...(typeof window !== "undefined"
+        ? window.__XPACK_GLOBAL_AJAX_HEADERS__ || {}
+        : {}),
     } as any;
 
     // Process JSON body

@@ -102,6 +102,7 @@ export const Home: React.FC<HomeProps> = ({
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-600 via-red-500 to-orange-600">
                 {t(
                   platformConfig.headline ||
+                    platformConfig.name ||
                     _DefaultPlatformConfig.headline ||
                     ""
                 )}
@@ -130,7 +131,7 @@ export const Home: React.FC<HomeProps> = ({
                       placeholder={
                         searchSuggestions.length > 0
                           ? t(searchSuggestions[0])
-                          : t("✨ Discover amazing services...")
+                          : t("✨ Discover amazing servers...")
                       }
                       value={searchQuery}
                       onChange={(e) => onSearchChange(e.target.value)}
@@ -165,7 +166,7 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </div>
 
-      {/* Creative Service List Section */}
+      {/* Creative Server List Section */}
       {loading ? (
         <div className="relative z-10 mx-auto h-[200px] flex items-center justify-center">
           <div className="bg-white/90 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-pink-200/50">
@@ -177,7 +178,7 @@ export const Home: React.FC<HomeProps> = ({
       ) : (
         <div className="relative z-10">
           <div className="relative mx-auto px-6 py-16 max-w-8xl">
-            {/* Creative Services Grid */}
+            {/* Creative Server Grid */}
             <div className="flex flex-wrap justify-center gap-4 mb-12">
               {services.map((service, index) => {
                 const gradientBorders = [
@@ -208,7 +209,7 @@ export const Home: React.FC<HomeProps> = ({
                 return (
                   <Link
                     key={service.service_id}
-                    href={`/marketplace/${service.service_id}`}
+                    href={`/server/${service.service_id}`}
                     className="block group w-full md:w-[calc(50%-16px)] lg:w-[calc(33%-16px)] xl:w-[calc(25%-16px)]"
                   >
                     <Card
@@ -237,7 +238,7 @@ export const Home: React.FC<HomeProps> = ({
                         </div>
 
                         {/* service description */}
-                        <div className="text-gray-600 text-sm line-clamp-3 leading-relaxed mb-4">
+                        <div className="text-gray-600 text-sm line-clamp-3 leading-relaxed mb-2">
                           {service.short_description ||
                             t("No description available")}
                         </div>

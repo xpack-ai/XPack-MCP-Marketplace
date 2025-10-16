@@ -8,10 +8,10 @@
  *   1. Lower-case alphanumeric characters, hyphen (-) and underscore (_)
  *   2. Cannot start with a digit or hyphen – if it does, we prefix with "mcp-".
  *   3. Consecutive illegal characters are collapsed into a single hyphen.
- *   4. Empty or fully sanitised away strings fallback to "xpack-mcp-service".
+ *   4. Empty or fully sanitised away strings fallback to "xpack-mcp-market".
  */
 export function sanitizeMCPServerName(rawName: string | undefined): string {
-  if (!rawName) return "xpack-mcp-service";
+  if (!rawName) return "xpack-mcp-market";
 
   // Lower-case & replace invalid chars with hyphen
   let name = rawName
@@ -26,11 +26,11 @@ export function sanitizeMCPServerName(rawName: string | undefined): string {
   name = name.replace(/^-+/, "").replace(/-+$/, "");
 
   // Ensure it doesn't start with a digit or empty
-  if (!name || !/^(xpack-)/.test(name)) {
-    name = `xpack-${name}`;
-  }
+  // if (!name || !/^(xpack-)/.test(name)) {
+  //   name = `xpack-${name}`;
+  // }
 
-  return name || "xpack-mcp-service";
+  return name || "xpack-mcp-market";
 }
 
 /**
@@ -42,7 +42,7 @@ export function sanitizeMCPServerName(rawName: string | undefined): string {
  */
 export function generateMCPConfig(key: string, name?: string): string {
   const sanitizedName = sanitizeMCPServerName(name);
-  const baseUrl = `${process.env.NEXT_PUBLIC_MCP_URL}?apikey=${key}`;
+  const baseUrl = `${process.env.NEXT_PUBLIC_MCP_URL}?authkey=${key}`;
 
   const mcpConfig = {
     mcpServers: {

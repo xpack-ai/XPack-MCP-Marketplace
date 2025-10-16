@@ -22,7 +22,7 @@ const ClassicDemo: React.FC = () => {
       <div className="bg-gray-100 border-b border-gray-300 px-4 py-1">
         <div className="flex space-x-4">
           <div className="text-xs text-gray-700 font-medium">Home</div>
-          <div className="text-xs text-gray-500">Services</div>
+          <div className="text-xs text-gray-500">Servers</div>
           <div className="text-xs text-gray-500">About</div>
         </div>
       </div>
@@ -47,13 +47,13 @@ const ClassicDemo: React.FC = () => {
       {/* Content Section */}
       <div className="px-4 py-4 bg-gray-50">
         <div className="grid grid-cols-1 gap-3">
-          {/* Service Item */}
+          {/* Server Item */}
           <div className="bg-white border border-gray-200 rounded-sm p-3 shadow-sm">
             <div className="flex items-start space-x-3">
               <div className="w-4 h-4 bg-slate-600 rounded-sm mt-0.5"></div>
               <div className="flex-1">
                 <div className="text-xs font-semibold text-slate-800 mb-1">
-                  Business Service
+                  Business Server
                 </div>
                 <div className="text-xs text-gray-600">
                   Professional solutions for enterprise
@@ -62,7 +62,7 @@ const ClassicDemo: React.FC = () => {
             </div>
           </div>
 
-          {/* Service Item */}
+          {/* Server Item */}
           <div className="bg-white border border-gray-200 rounded-sm p-3 shadow-sm">
             <div className="flex items-start space-x-3">
               <div className="w-4 h-4 bg-red-600 rounded-sm mt-0.5"></div>

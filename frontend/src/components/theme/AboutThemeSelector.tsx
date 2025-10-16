@@ -11,20 +11,14 @@ import { Navigation } from "@/shared/components/Navigation";
 import { Footer } from "@/shared/components/Footer";
 import { NavigationItems } from "@/components/theme/Theme.const";
 import { AboutContent } from "@/components/about/AboutContent";
+import { useNavigationItems } from "@/shared/providers/ConfigProvider";
 
 export const AboutThemeSelector: React.FC = () => {
   const { platformConfig, topNavigation } = usePlatformConfig();
   const currentTheme = platformConfig.theme || Theme.DEFAULT;
+  const configNavigation = useNavigationItems() || NavigationItems;
   const navigationItems = [
-    ...NavigationItems,
-    ...(platformConfig.about_page
-      ? [
-          {
-            label: "About",
-            href: "/about",
-          },
-        ]
-      : []),
+    ...configNavigation,
     ...topNavigation.map((item) => ({
       label: item.title,
       href: item.link,

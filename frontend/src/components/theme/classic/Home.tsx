@@ -54,7 +54,6 @@ export const Home: React.FC<HomeProps> = ({
   total,
   pageSize,
   loading,
-  error,
   onSearchChange,
   onSearch,
   onPageChange,
@@ -64,19 +63,6 @@ export const Home: React.FC<HomeProps> = ({
   const { platformConfig } = usePlatformConfig();
   const { t } = useTranslation();
   const totalPages = Math.ceil(total / pageSize);
-
-  // 如果有错误，显示错误信息
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto h-[100px] flex items-center justify-center">
-          <div className="text-red-600 bg-white px-6 py-4 rounded-lg shadow-md border border-red-200">
-            Error: {error}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 top-0 left-0 right-0 bottom-0 flex flex-col justify-between">
@@ -97,6 +83,7 @@ export const Home: React.FC<HomeProps> = ({
               <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-slate-800">
                 {t(
                   platformConfig.headline ||
+                    platformConfig.name ||
                     _DefaultPlatformConfig.headline ||
                     ""
                 )}
@@ -122,7 +109,7 @@ export const Home: React.FC<HomeProps> = ({
                       placeholder={
                         searchSuggestions.length > 0
                           ? t(searchSuggestions[0])
-                          : t("Search services...")
+                          : t("Search MCP servers")
                       }
                       value={searchQuery}
                       onChange={(e) => onSearchChange(e.target.value)}
@@ -153,7 +140,7 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </div>
 
-        {/* Service List Section */}
+        {/* Server List Section */}
         {loading ? (
           <div className="mx-auto h-[200px] flex items-center justify-center">
             <div className="bg-white p-8 rounded-lg shadow-md">
@@ -163,24 +150,24 @@ export const Home: React.FC<HomeProps> = ({
         ) : (
           <div className="bg-gray-50 py-16">
             <div className="mx-auto px-6 max-w-7xl">
-              {/* Services Grid */}
+              {/* Server Grid */}
               <div className="flex flex-wrap justify-center gap-4 mb-12">
                 {services.map((service) => (
                   <Link
                     key={service.service_id}
-                    href={`/marketplace/${service.service_id}`}
-                    className="w-full md:w-[calc(50%-16px)] lg:w-[calc(33%-16px)] xl:w-[calc(25%-16px)]"
+                    href={`/server/${service.service_id}`}
+                    className="block group w-full md:w-[calc(50%-16px)] lg:w-[calc(33%-16px)] xl:w-[calc(25%-16px)]"
                   >
                     <Card className="group h-[200px] w-full hover:shadow-lg transition-shadow duration-200 cursor-pointer border border-gray-200 bg-white rounded-sm shadow-sm">
                       <CardBody className="p-4">
                         {/* Header */}
                         <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 w-full">
                             <div className="w-8 h-8 bg-slate-600 rounded-sm flex items-center justify-center">
                               <Star className="w-4 h-4 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-gray-900 text-base mb-1 truncate group-hover:text-slate-700 transition-colors">
+                              <h3 className="font-semibold text-gray-900 text-base mb-1 truncate group-hover:text-slate-700 transition-colors truncate">
                                 {service.name}
                               </h3>
                             </div>

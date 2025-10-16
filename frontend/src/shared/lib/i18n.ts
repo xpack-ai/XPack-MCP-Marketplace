@@ -3,15 +3,17 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 import { getDefaultLanguage } from "@/shared/utils/i18n";
+import { LangEnum } from "@/shared/types/lang";
+import type { ProjectConfig } from "@/shared/providers/ConfigProvider";
 let resources = {};
-if(typeof window !== "undefined" && !window._BACKEND_LOAD_LANG__){
-  let en=require("../../../public/locales/en/translation.json");
-  let enConfig=require("../../../public/locales/en/config.json");
-  let zhCN=require("../../../public/locales/zh-CN/translation.json");
-  let zhCNConfig=require("../../../public/locales/zh-CN/config.json");
+if (typeof window !== "undefined" && !window._BACKEND_LOAD_LANG__) {
+  let en = require("../../../public/locales/en/translation.json");
+  let enConfig = require("../../../public/locales/en/config.json");
+  let zhCN = require("../../../public/locales/zh-CN/translation.json");
+  let zhCNConfig = require("../../../public/locales/zh-CN/config.json");
   resources = {
-    en: { translation: en, config: enConfig },
-    "zh-CN": { translation: zhCN, config: zhCNConfig },
+    [LangEnum.EN]: { translation: en, config: enConfig },
+    [LangEnum.ZH_CN]: { translation: zhCN, config: zhCNConfig },
   };
 }
 
@@ -24,8 +26,8 @@ if(typeof window !== "undefined" && !window._BACKEND_LOAD_LANG__){
 const DEFAULT_LANGUAGE = getDefaultLanguage();
 
 const SUPPORTED_LANGUAGES = [
-  { name: "en", label: "English" },
-  { name: "zh-CN", label: "中文" },
+  { name: LangEnum.EN, label: "English" },
+  { name: LangEnum.ZH_CN, label: "中文" },
 ];
 export const i18nPromise = i18n
   .use(Backend)
@@ -74,6 +76,30 @@ export const i18nPromise = i18n
     // debug config (can be closed in production)
     debug: false,
   });
+
+/**
+ * Merge i18n resources from project configuration
+ * This function allows projects to extend the base i18n resources
+ *
+ * Note: With keySeparator set to false, this function now supports
+ * translation keys that contain spaces. Keys like "My Key With Spaces"
+ * will work properly without being interpreted as nested objects.
+ *
+ * @param projectConfig - Project configuration containing i18n resources
+ */
+export function mergeProjectI18nResources(projectConfig: ProjectConfig) {
+  if (!projectConfig.i18n) {
+    return;
+  }
+
+  // Merge custom translations into the 'custom' namespace
+  Object.entries(projectConfig.i18n).forEach(([lang, translations]) => {
+    if (translations && typeof translations === "object") {
+      // Add resources to the custom namespace
+      i18n.addResourceBundle(lang, "custom", translations, true, true);
+    }
+  });
+}
 
 export { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES };
 export default i18n;

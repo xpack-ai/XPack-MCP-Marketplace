@@ -18,10 +18,10 @@ export interface SidebarSubItem {
 }
 
 export interface SidebarItem {
-  key: TabKey;
+  key: TabKey | string;
   icon: React.ReactNode;
   label: string;
-  description: string;
+  description?: string;
   subItems?: SidebarSubItem[];
 }
 
@@ -30,11 +30,12 @@ export interface SidebarItemWithActive extends SidebarItem {
 }
 
 export interface DashboardSidebarProps {
-  activeTab: TabKey;
+  activeTab: TabKey | string;
   activeSubTab?: string;
-  onTabNavigate?: (tab: TabKey, subTab?: string) => void;
+  onTabNavigate?: (tab: TabKey | string, subTab?: string) => void;
   onLogout: () => void;
   bottomPanel?: React.ReactNode;
   sidebarItems: SidebarItem[];
   userProfilePanel?: React.ReactNode;
+  langNode?: React.ReactNode;
 }

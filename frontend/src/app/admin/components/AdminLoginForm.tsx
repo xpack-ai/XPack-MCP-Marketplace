@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { useAdminLogin } from "@/hooks/useAdminLogin";
-import toast from "react-hot-toast";
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, "Username is required"),
