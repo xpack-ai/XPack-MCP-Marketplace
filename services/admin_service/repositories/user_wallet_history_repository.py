@@ -334,6 +334,7 @@ class UserWalletHistoryRepository:
             query = query.filter(local_dt <= end_local)
 
         result = query.scalar()
+        self.logging.info(f"stats_deposit_amount: {result},{start}")
         return float(result) if result is not None else 0.0
 
     def stats_deposit_amount_trend(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[dict]:
@@ -389,7 +390,7 @@ class UserWalletHistoryRepository:
         result = []
         current_day = start_day
         while current_day <= end_day:
-            result.append({"stats_day": current_day, "amount": amounts_by_day.get(current_day, 0.0)})
+            result.append({"stats_day": current_day, "count": amounts_by_day.get(current_day, 0.0)})
             current_day += timedelta(days=1)
 
         return result
