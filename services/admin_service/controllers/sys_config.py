@@ -126,7 +126,7 @@ def get_sysconfig(
                 "theme": small_values.get(sys_config_key.KEY_THEME, ""),
                 "about_page": large_values.get(sys_config_key.KEY_ABOUT_PAGE, ""),
                 "domain": small_values.get(sys_config_key.KEY_DOMAIN, ""),
-                "is_showcased": small_values.get(sys_config_key.KEY_IS_SHOWCASED, ""),
+                "is_showcased": small_values.get(sys_config_key.KEY_IS_SHOWCASED, "").lower() in ("true", "t", "yes", "y", "1"),
                 "mcp_server_prefix": small_values.get(sys_config_key.KEY_MCP_SERVER_PREFIX, ""),
                 "meta_description": small_values.get(sys_config_key.KEY_META_DESCRIPTION, ""),
                 "x_title": small_values.get(sys_config_key.KEY_X_TITLE, ""),
