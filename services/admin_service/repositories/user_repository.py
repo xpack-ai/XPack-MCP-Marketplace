@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, literal_column
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from typing import Optional, Tuple, List
 from services.common.models.user import User
 
@@ -149,11 +149,39 @@ class UserRepository:
             .filter(User.role_id == 2)
         )
 
+        # Apply range filters using server-local time for consistency with grouping
         if start_at is not None:
-            query = query.filter(User.created_at >= start_at)
+            start_local = start_at.astimezone().replace(tzinfo=None) if start_at.tzinfo is not None else start_at
+            query = query.filter(local_dt >= start_local)
         if end_at is not None:
-            query = query.filter(User.created_at <= end_at)
+            end_local = end_at.astimezone().replace(tzinfo=None) if end_at.tzinfo is not None else end_at
+            query = query.filter(local_dt <= end_local)
 
         rows = query.group_by(day_col).order_by(day_col.asc()).all()
-        return [{"stats_day": row.stats_day, "count": int(row.registered_count or 0)} for row in rows]
+
+        # Build a mapping for existing days
+        counts_by_day = {row.stats_day: int(row.registered_count or 0) for row in rows}
+
+        # Determine start and end days (server-local date)
+        if start_at is not None:
+            start_day = (start_at.astimezone().date() if start_at.tzinfo is not None else start_at.date())
+        else:
+            start_day = rows[0].stats_day if rows else None
+
+        if end_at is not None:
+            end_day = (end_at.astimezone().date() if end_at.tzinfo is not None else end_at.date())
+        else:
+            end_day = rows[-1].stats_day if rows else start_day
+
+        # If no data and no explicit range, return empty
+        if start_day is None or end_day is None:
+            return []
+
+        # Generate continuous date sequence with zero-fill
+        result = []
+        current_day = start_day
+        while current_day <= end_day:
+            result.append({"stats_day": current_day, "count": counts_by_day.get(current_day, 0)})
+            current_day += timedelta(days=1)
+        return result
         

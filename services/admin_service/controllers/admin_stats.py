@@ -19,12 +19,17 @@ def get_stats_service(db: Session = Depends(get_db)) -> StatsService:
 async def stats(
     stats_service: StatsService = Depends(get_stats_service)
 ):
-    """Get total number of registered users."""
     try:
-        total_registered_users = stats_service.get_total_registered_users()
-        return ResponseUtils.success({"total_registered_users": total_registered_users})
+        return ResponseUtils.success(
+            {
+                "user_register": stats_service.get_registered_user_stats(),
+                "user_pay": stats_service.get_deposit_stats(),
+                "mcp_call": stats_service.get_call_stats(),
+                "top_services": stats_service.get_call_stats_group_by_service()
+            }
+        )
     except Exception as e:
-        return ResponseUtils.error(f"Failed to get total registered users: {str(e)}", 500)
+        return ResponseUtils.error(f"Failed to get stats analytics: {str(e)}", 500)
 
 # @router.get("/platform")
 # async def get_platform_overview(db: Session = Depends(get_db)):
