@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone
+from sqlalchemy import func, literal_column
+from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple, List
 from services.common.models.user import User
 
@@ -97,3 +98,62 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(admin_user)
         return admin_user
+    
+    def get_registered_user_count(self, start_at: Optional[datetime] = None, end_at: Optional[datetime] = None) -> int:
+        """
+        Get total number of registered users
+
+        Args:
+            start_at (Optional[datetime], optional): Start time. Defaults to None.
+            end_at (Optional[datetime], optional): End time. Defaults to None.
+
+        Returns:
+            int: Total number of registered users
+        """
+        query = self.db.query(User).filter(User.role_id == 2)
+
+        # Apply server timezone when filtering by time range
+        offset_td = datetime.now().astimezone().utcoffset() or timedelta(0)
+        offset_minutes = int(offset_td.total_seconds() // 60)
+        local_dt = func.timestampadd(literal_column('MINUTE'), offset_minutes, User.created_at)
+
+        if start_at:
+            start_local = start_at.astimezone().replace(tzinfo=None) if start_at.tzinfo is not None else start_at
+            query = query.filter(local_dt >= start_local)
+        if end_at:
+            end_local = end_at.astimezone().replace(tzinfo=None) if end_at.tzinfo is not None else end_at
+            query = query.filter(local_dt <= end_local)
+        return query.count()
+    
+    def get_registered_user_trend(self, start_at: Optional[datetime] = None, end_at: Optional[datetime] = None) -> list:
+        """
+        Get registered user trend by day
+
+        Args:
+            start_at (Optional[datetime], optional): Start time. Defaults to None.
+            end_at (Optional[datetime], optional): End time. Defaults to None.
+
+        Returns:
+            list: Registered user trend by day
+        """
+        # Group by server-local day: shift UTC created_at by server TZ offset, then take DATE
+        offset_td = datetime.now().astimezone().utcoffset() or timedelta(0)
+        offset_minutes = int(offset_td.total_seconds() // 60)
+        local_dt = func.timestampadd(literal_column('MINUTE'), offset_minutes, User.created_at)
+        day_col = func.date(local_dt)
+        query = (
+            self.db.query(
+                day_col.label("stats_day"),
+                func.count(User.id).label("registered_count"),
+            )
+            .filter(User.role_id == 2)
+        )
+
+        if start_at is not None:
+            query = query.filter(User.created_at >= start_at)
+        if end_at is not None:
+            query = query.filter(User.created_at <= end_at)
+
+        rows = query.group_by(day_col).order_by(day_col.asc()).all()
+        return [{"stats_day": row.stats_day, "count": int(row.registered_count or 0)} for row in rows]
+        

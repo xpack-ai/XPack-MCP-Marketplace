@@ -73,7 +73,7 @@ class HttpRequestBuilder:
         logger.warning(f"Failed to parse {param_type} parameters. Data: {params_str[:100]}...")
         return []
     
-    def build_request(self, tool_config, arguments: dict, auth_info: dict) -> Dict[str, Any]:
+    def build_request(self, tool_config, arguments: dict, call_params: dict) -> Dict[str, Any]:
         """
         Build HTTP request information
         
@@ -89,12 +89,12 @@ class HttpRequestBuilder:
         logger.debug(f"Original path: {tool_config.path}")
         logger.debug(f"HTTP method: {tool_config.method.value}")
         logger.debug(f"Input arguments: {arguments}")
-        
+        logger.debug(f"Call parameters: {call_params}")
         # Build URL
-        url = self._build_url(tool_config, arguments, auth_info)
+        url = self._build_url(tool_config, arguments, call_params.get("base_url", ""))
         
         # Build headers
-        headers = self._build_headers(tool_config, arguments, auth_info)
+        headers = self._build_headers(tool_config, arguments, call_params.get("headers", {}))
         
         # Build query parameters
         query_params = self._build_query_params(tool_config, arguments)
@@ -113,7 +113,7 @@ class HttpRequestBuilder:
         logger.debug(f"Built request information: {request_info}")
         return request_info
     
-    def _build_url(self, tool_config, arguments: dict, auth_info: dict) -> str:
+    def _build_url(self, tool_config, arguments: dict, base_url: str) -> str:
         """
         Build request URL
         
@@ -125,7 +125,6 @@ class HttpRequestBuilder:
         Returns:
             str: Complete request URL
         """
-        base_url = auth_info.get("base_url", "")
         url = tool_config.path
         
         logger.debug(f"Service Base URL: {base_url}")
@@ -177,7 +176,7 @@ class HttpRequestBuilder:
         
         return url
     
-    def _build_headers(self, tool_config, arguments: dict, auth_info: dict) -> Dict[str, str]:
+    def _build_headers(self, tool_config, arguments: dict, headers: dict) -> Dict[str, str]:
         """
         Build request headers
         
@@ -189,10 +188,11 @@ class HttpRequestBuilder:
         Returns:
             Dict[str, str]: Request headers dictionary
         """
-        headers = {"User-Agent": "MCP Tool Server (XPack)"}
         
+        # headers = {"User-Agent": "MCP Tool Server (XPack)"}
+        headers["User-Agent"] = "MCP Tool Server (XPack)"
         # Add authentication headers
-        self._add_auth_headers(headers, auth_info)
+        # self._add_auth_headers(headers, auth_info)
         
         # Add custom headers
         self._add_custom_headers(tool_config, arguments, headers)
@@ -200,25 +200,25 @@ class HttpRequestBuilder:
         logger.debug(f"Final request headers: {headers}")
         return headers
     
-    def _add_auth_headers(self, headers: Dict[str, str], auth_info: dict) -> None:
-        """
-        Add authentication headers
+    # def _add_auth_headers(self, headers: Dict[str, str], auth_info: dict) -> None:
+    #     """
+    #     Add authentication headers
         
-        Args:
-            headers: Request headers dictionary
-            auth_info: Authentication information
-        """
-        auth_method = auth_info.get("auth_method", "free")
-        logger.debug(f"Authentication method: {auth_method}")
+    #     Args:
+    #         headers: Request headers dictionary
+    #         auth_info: Authentication information
+    #     """
+    #     auth_method = auth_info.get("auth_method", "free")
+    #     logger.debug(f"Authentication method: {auth_method}")
         
-        if auth_method != "free":
-            auth_header = auth_info.get("auth_header")
-            auth_token = auth_info.get("auth_token")
-            if auth_header and auth_token:
-                headers[auth_header] = auth_token
-                # Hide token details, only show first few characters
-                token_display = auth_token[:8] + "..." if len(auth_token) > 8 else "***"
-                logger.debug(f"Added auth header: {auth_header} = {token_display}")
+    #     if auth_method != "free":
+    #         auth_header = auth_info.get("auth_header")
+    #         auth_token = auth_info.get("auth_token")
+    #         if auth_header and auth_token:
+    #             headers[auth_header] = auth_token
+    #             # Hide token details, only show first few characters
+    #             token_display = auth_token[:8] + "..." if len(auth_token) > 8 else "***"
+    #             logger.debug(f"Added auth header: {auth_header} = {token_display}")
     
     def _add_custom_headers(self, tool_config, arguments: dict, headers: Dict[str, str]) -> None:
         """

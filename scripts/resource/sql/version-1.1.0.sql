@@ -20,7 +20,7 @@ CREATE TABLE `onboarding_task`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '新手引导任务表' ROW_FORMAT = DYNAMIC;
 
 CREATE TABLE `stats_mcp_service_date`  (
-  `stats_date` date NOT NULL,
+  `stats_date` DATETIME NOT NULL COMMENT '统计时间（小时，UTC）',
   `service_id` char(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `call_count` int NOT NULL DEFAULT 0 COMMENT '调用次数',
   `created_at` timestamp NULL DEFAULT NULL,
