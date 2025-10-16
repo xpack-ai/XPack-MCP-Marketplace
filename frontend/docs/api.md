@@ -47,7 +47,7 @@ const result = await rpcClient.call("marketplace.getServices", {
 Located in `src/services/marketplaceService.ts`:
 
 ```typescript
-// Fetch all MCP services
+// Fetch all MCP servers
 export async function fetchServices(): Promise<ServiceData[]>;
 
 // Fetch service by ID
@@ -352,7 +352,7 @@ function ServicesPage() {
 
 ### Public Endpoints
 
-- `GET /api/web/mcp_services` - List all MCP services
+- `GET /api/web/mcp_services` - List all MCP servers
 - `POST /api/web/mcp_service_info` - Get service details by ID
 - `GET /api/web/categories` - List service categories
 - `POST /api/auth/login` - User login

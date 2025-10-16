@@ -24,6 +24,7 @@ interface DetailProps {
   // navigation items
   navItems?: NavigationItem[];
   onCopy: () => void;
+  innerHeaderNode?: React.ReactNode;
 }
 
 export const Detail: React.FC<DetailProps> = ({
@@ -33,6 +34,7 @@ export const Detail: React.FC<DetailProps> = ({
   mcpName,
   navItems = [],
   onCopy,
+  innerHeaderNode,
 }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
@@ -47,7 +49,7 @@ export const Detail: React.FC<DetailProps> = ({
       <div>
         {/* Temu Style Product Header */}
         <div className="bg-white border-b border-gray-200 shadow-sm pt-20">
-          <div className="mx-auto p-6 max-w-7xl">
+          <div className="mx-auto p-6 max-w-7xl relative">
             {/* Breadcrumbs */}
             {breadcrumbs && breadcrumbs.length > 0 && (
               <nav className="mb-4">
@@ -70,6 +72,7 @@ export const Detail: React.FC<DetailProps> = ({
             )}
 
             <ProductHeader product={product} breadcrumbs={breadcrumbs} />
+            {innerHeaderNode}
           </div>
         </div>
 
@@ -139,7 +142,7 @@ export const Detail: React.FC<DetailProps> = ({
                         <Card>
                           <CardBody>
                             <p className="text-center">
-                              {t("No tools available in this service.")}
+                              {t("No tools available in this server.")}
                             </p>
                           </CardBody>
                         </Card>
@@ -182,8 +185,8 @@ export const Detail: React.FC<DetailProps> = ({
     "${mcpName}": {
       "type": "sse",
       "autoApprove":"all",
-      "url": "${url}?apikey=`}
-                            <span className="text-success">{`{Your-${platformConfig?.name}-API-Key}`}</span>
+      "url": "${url}?authkey=`}
+                            <span className="text-success">{`{Your-${platformConfig?.name}-Auth-Key}`}</span>
                             {`"
     }
   }

@@ -1,5 +1,6 @@
 export interface Admin {
   username: string;
+  [key: string]: any;
 }
 
 export interface AdminLoginFormData {

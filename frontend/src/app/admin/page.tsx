@@ -15,8 +15,10 @@ const AdminLoginHeader = () => {
   return (
     <div className="flex flex-col items-center pb-6">
       <DynamicLogo alt="Platform Logo" className="h-[40px]" />
-      <p className="text-xl font-medium mt-4">{t("Admin Portal")}</p>
-      <p className="text-sm text-default-500">{t("Log in to admin console")}</p>
+      <p className="text-xl font-medium mt-4">{t("Welcome")}</p>
+      <p className="text-sm text-default-500">
+        {t("Log in to your admin account to continue")}
+      </p>
     </div>
   );
 };
@@ -28,7 +30,7 @@ const AdminLoginPageContent = () => {
   const handleCheckLogin = async () => {
     const res = await getAdminUser();
     if (res.success) {
-      router.push("/console");
+      router.push("/admin/console");
     }
   };
 

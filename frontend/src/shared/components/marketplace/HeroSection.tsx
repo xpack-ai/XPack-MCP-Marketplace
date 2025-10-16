@@ -79,8 +79,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <div className="relative overflow-hidden mx-auto p-6 py-24 max-w-7xl">
       <div className="text-center mb-12">
-        <h1 className="text-5xl lg:text-6xl font-bold mb-6 leading-tight text-primary">
-          {t(platformConfig.headline || _DefaultPlatformConfig.headline || "")}
+        <h1 className="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+          {t(
+            platformConfig.headline ||
+              platformConfig.name ||
+              _DefaultPlatformConfig.headline ||
+              ""
+          )}
         </h1>
         <p className="text-2xl font-medium max-w-3xl mx-auto leading-relaxed">
           {t(
@@ -101,7 +106,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               ? ""
               : searchSuggestions.length > 0
                 ? animatedText
-                : t("Search services...")
+                : t("Search MCP servers")
           }
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}

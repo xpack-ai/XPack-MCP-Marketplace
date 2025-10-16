@@ -2,7 +2,7 @@
 
 import React, { useEffect, Suspense } from "react";
 import { Spinner, Button } from "@nextui-org/react";
-import { useLogin } from "@/hooks/useLogin";
+import { useLogin } from "@/shared/hooks/useLogin";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { useTranslation } from "@/shared/lib/useTranslation";
@@ -22,7 +22,7 @@ function LoginSuccessContent() {
 
   const backHome = () => {
     const dynamicParams = new URLSearchParams(searchParams?.get("state") || "");
-    router.push(`/login?${dynamicParams.toString()}`);
+    router.push(`/?${dynamicParams.toString()}`);
   };
 
   return (
@@ -31,22 +31,14 @@ function LoginSuccessContent() {
         <Spinner size="lg" color="default" />
       ) : status === "success" ? (
         <>
-          <Icon
-            fontSize={70}
-            className="text-success"
-            icon="mi:circle-check"
-          />
+          <Icon fontSize={70} className="text-success" icon="mi:circle-check" />
           <div className="text-xl font-bold text-success">
             {t("Login Success")}
           </div>
         </>
       ) : (
         <>
-          <Icon
-            fontSize={70}
-            className="text-danger"
-            icon="mi:circle-error"
-          />
+          <Icon fontSize={70} className="text-danger" icon="mi:circle-error" />
           <div className="text-xl font-bold text-danger">
             {t("Login Error")}
           </div>
@@ -59,7 +51,13 @@ function LoginSuccessContent() {
 
 export default function LoginSuccessPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center mt-40"><Spinner size="lg" color="default" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex justify-center mt-40">
+          <Spinner size="lg" color="default" />
+        </div>
+      }
+    >
       <LoginSuccessContent />
     </Suspense>
   );

@@ -16,9 +16,16 @@ export const ProductTools: React.FC<ProductToolsProps> = ({ product }) => {
     <div className="space-y-4 px-3">
       {product.tools.length > 0 ? (
         product.tools.map((tool, index) => (
-          <Card radius="sm" key={`${product.service_id}-tool-${index}`} shadow="none" className="border-1">
+          <Card
+            radius="sm"
+            key={`${product.service_id}-tool-${index}`}
+            shadow="none"
+            className="border-1"
+          >
             <CardBody>
-              <h4 className="font-semibold text-sm mb-2 text-primary">{tool.name}</h4>
+              <h4 className="font-semibold text-sm mb-2 text-primary">
+                {tool.name}
+              </h4>
               <p className="text-sm mb-3">
                 {tool.description || t("No description available")}
               </p>
@@ -29,7 +36,7 @@ export const ProductTools: React.FC<ProductToolsProps> = ({ product }) => {
         <Card>
           <CardBody>
             <p className="text-center">
-              {t("No tools available in this service.")}
+              {t("No tools available in this server.")}
             </p>
           </CardBody>
         </Card>

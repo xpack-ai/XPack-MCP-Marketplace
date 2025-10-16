@@ -23,7 +23,7 @@ export const Footer: React.FC<FooterProps> = ({}) => {
               </h3>
               <p className="text-gray-600 text-sm mb-4">
                 {t(
-                  "A marketplace for AI tools and services. Discover and integrate powerful AI solutions for your projects."
+                  "A marketplace for AI tools and servers. Discover and integrate powerful AI solutions for your projects."
                 )}
               </p>
               <div className="flex items-center gap-2 text-orange-500">

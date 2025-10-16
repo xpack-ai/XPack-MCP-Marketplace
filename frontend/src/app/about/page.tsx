@@ -4,8 +4,8 @@ import { createBaseMetadata, getDynamicTitle } from "@/shared/utils/metadata";
 import { AboutThemeSelector } from "@/components/theme/AboutThemeSelector";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const title = await getDynamicTitle("About");
-  return createBaseMetadata(title);
+  const platformConfig = await getDynamicTitle("About");
+  return createBaseMetadata(platformConfig);
 }
 
 export default async function AboutPage() {

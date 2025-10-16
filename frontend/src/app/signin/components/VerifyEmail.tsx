@@ -5,11 +5,11 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect, useRef, useState } from "react";
-import { useLogin } from "@/hooks/useLogin";
+import { useLogin } from "@/shared/hooks/useLogin";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import toast from "react-hot-toast";
 import { fetchAPI } from "@/shared/rpc/common-function";
-import { getEmail } from "@/utils/getEmail";
+import { getEmail } from "@/shared/utils/getEmail";
 
 const schema = z.object({
   captcha: z

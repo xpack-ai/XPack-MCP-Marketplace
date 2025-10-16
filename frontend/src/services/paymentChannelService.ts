@@ -228,5 +228,4 @@ export class PaymentChannelService {
   }
 }
 
-// export service instance
 export const paymentChannelService = new PaymentChannelService();

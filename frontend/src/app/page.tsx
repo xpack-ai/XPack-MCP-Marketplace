@@ -6,8 +6,8 @@ import type { ServiceData } from "@/shared/types/marketplace";
 import { ThemeSelector } from "@/components/theme/ThemeSelector";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const title = await getDynamicTitle();
-  return createBaseMetadata(title);
+  const platformConfig = await getDynamicTitle();
+  return createBaseMetadata(platformConfig);
 }
 
 export default async function HomePage({
@@ -36,8 +36,8 @@ export default async function HomePage({
     services = response?.data?.services || [];
     total = response?.page?.total || 0;
   } catch (err) {
-    console.error("Error fetching services:", err);
-    error = "Failed to load services";
+    console.error("Error fetching servers:", err);
+    error = "Failed to load servers";
   }
 
   return (

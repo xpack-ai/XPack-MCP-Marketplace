@@ -18,12 +18,18 @@ export const _DefaultPlatformConfig: PlatformConfig = {
   language: "en",
   website_title: "Connect Your AI Agent to the Real World - XPack",
   headline: "Connect Your AI Agent to the Real World",
-  subheadline:
-    "Open‑source MCP marketplace — publish or consume APIs in minutes.",
+  subheadline: "",
   theme: Theme.DEFAULT,
   domain: "",
   is_showcased: false,
   mcp_server_prefix: "",
+  x_title: "",
+  x_description: "",
+  x_image_url: "",
+  facebook_title: "",
+  facebook_description: "",
+  facebook_image_url: "",
+  meta_description: "",
 };
 interface PlatformConfigContextType {
   platformConfig: PlatformConfig;

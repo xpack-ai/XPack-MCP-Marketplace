@@ -1,156 +1,108 @@
 "use client";
 
 import React, { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslation } from "react-i18next";
+import { useSearchParams } from "next/navigation";
+import { useTranslation } from "@/shared/lib/useTranslation";
 import { useAdminStore } from "@/store/admin";
 import DashboardDemoContent from "@/shared/components/DashboardDemoContent";
-import ConsoleStats from "@/components/console/ConsoleStats";
-import PaymentChannelsContent from "@/components/console/PaymentChannelsContent";
-import SystemSettingsContent from "@/components/console/SystemSettingsContent";
 import { SidebarItem, TabKey } from "@/shared/types/dashboard";
 import { useAdminLogin } from "@/hooks/useAdminLogin";
 import { MCPServicesManagement } from "@/components/mcp-services/MCPServicesManagement";
 import UserManagement from "@/components/user-management/UserManagement";
 import RevenueManagement from "@/components/revenue-management/RevenueManagement";
-import {
-  CreditCard,
-  DollarSign,
-  Home,
-  Settings,
-  Users,
-  ServerIcon,
-} from "lucide-react";
 import ConsoleSidebar from "./Sidebar";
+import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
+import { DollarSign, Home, ServerIcon, Users } from "lucide-react";
+import OnboardingWelcome, { REQUIRED_TASK_KEYS } from "./OnboardingWelcome";
+import ConsoleStats from "./ConsoleStats";
+import SystemSettingsModal from "./SystemSettingsModal";
+import SharePlatformModal from "./SharePlatformModal";
+import {
+  OnboardingTaskKey,
+  TaskItem,
+  TaskStatusEnum,
+  updateAdminOnboardingTasks,
+} from "@/api/onboard.api";
 
 const ConsoleContent: React.FC = () => {
   const { t } = useTranslation();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [admin_token] = useAdminStore((state) => [state.admin_token]);
-
-  const _DefaultSubTab = "general";
+  const [admin_token, getAdminUser] = useAdminStore((state) => [
+    state.admin_token,
+    state.getAdminUser,
+  ]);
 
   const getInitialTab = (): TabKey => {
     const tabFromUrl = searchParams.get("tab") as TabKey;
     if (
       tabFromUrl &&
-      [
-        "mcp-services",
-        "user-management",
-        "revenue-management",
-        "payment-channels",
-        "login-settings",
-        "system-settings",
-      ].includes(tabFromUrl)
+      ["mcp-services", "user-management", "revenue-management"].includes(
+        tabFromUrl
+      )
     ) {
       return tabFromUrl;
     }
     return TabKey.CONSOLE;
   };
 
-  const getInitialSubTab = (): string | undefined => {
-    const subTabFromUrl = searchParams.get("subtab");
-    return subTabFromUrl || _DefaultSubTab;
-  };
-
   const [activeTab, setActiveTab] = useState<TabKey>(getInitialTab);
-  const [activeSubTab, setActiveSubTab] = useState<string | undefined>(
-    getInitialSubTab
-  );
+  const isSkipOnboarding =
+    typeof window !== "undefined" &&
+    localStorage.getItem("admin_onboarding_skip") === "1";
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+  const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] =
+    useState<boolean>(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
+  const [settingModalKeyword, setSettingModalKeyword] = useState<string>("");
   const sidebarItems: SidebarItem[] = [
     {
       key: TabKey.CONSOLE,
       icon: <Home size={18} />,
-      label: t("Dashboard"),
-      description: t("Overview and analytics"),
+      label: t("Analytics"),
+      description: t("Analyze platform usage and revenue"),
     },
     {
       key: TabKey.MCP_SERVICES,
       icon: <ServerIcon size={18} />,
-      label: t("MCP Services"),
-      description: t("Manage MCP services and API tools"),
+      label: t("MCP"),
+      description: t("Manage MCP servers and API tools"),
     },
     {
       key: TabKey.USER_MANAGEMENT,
       icon: <Users size={18} />,
-      label: t("User Management"),
+      label: t("User"),
       description: t("Manage registered users"),
     },
     {
       key: TabKey.REVENUE_MANAGEMENT,
       icon: <DollarSign size={18} />,
-      label: t("Revenue Management"),
+      label: t("Revenue"),
       description: t("View user recharge history"),
-    },
-    {
-      key: TabKey.PAYMENT_CHANNELS,
-      icon: <CreditCard size={18} />,
-      label: t("Payment Channels"),
-      description: t("Configure payment channels"),
-    },
-    {
-      key: TabKey.SYSTEM_SETTINGS,
-      icon: <Settings size={18} />,
-      label: t("System Settings"),
-      description: t("Platform basic configuration"),
-      // Sub-menu items for System Settings
-      subItems: [
-        {
-          key: "general",
-          label: "General",
-          description: "Platform basic configuration",
-        },
-        {
-          key: "login-settings",
-          label: "Login Settings",
-          description: "Configure authentication methods",
-        },
-        {
-          key: "homepage",
-          label: "Homepage",
-          description: "Homepage content and theme settings",
-        },
-        {
-          key: "about-page",
-          label: "About Page",
-          description: "About page content configuration",
-        },
-        {
-          key: "email-admin",
-          label: "Email & Admin",
-          description: "Email and administrator settings",
-        },
-      ],
     },
   ];
 
   // If admin is not logged in, redirect to admin login page
   useEffect(() => {
     if (!admin_token) {
-      router.push("/admin");
+      window.location.href =
+        process.env.NEXT_PUBLIC_ADMIN_LOGIN_URL || "/admin";
     }
-  }, [admin_token, router]);
+  }, [admin_token]);
 
-  const handleTabNavigate = (tab: TabKey, subTab?: string) => {
-    setActiveTab(tab);
-    setActiveSubTab(subTab || _DefaultSubTab);
+  const handleTabNavigate = (tab: TabKey | string, _subTab?: string) => {
+    setActiveTab(tab as TabKey);
 
     // update url params
     if (tab === TabKey.CONSOLE) {
       // when switch to dashboard, clear all query params, only keep base path
-      router.push("/console", { scroll: false });
+      window.history.pushState({}, "", "/admin/console");
     } else {
       // other tabs set corresponding tab params
       const params = new URLSearchParams();
       params.set("tab", tab);
 
-      // add subtab parameter if provided
-      if (subTab) {
-        params.set("subtab", subTab);
-      }
-
-      router.push(`/console?${params.toString()}`, { scroll: false });
+      window.history.pushState({}, "", `/admin/console?${params.toString()}`);
     }
   };
 
@@ -159,6 +111,94 @@ const ConsoleContent: React.FC = () => {
   const handleLogout = () => {
     // use admin logout method
     adminLogout();
+  };
+
+  const handleSettingsClick = () => {
+    setIsSettingsModalOpen(true);
+  };
+
+  const handleSettingsModalClose = () => {
+    setIsSettingsModalOpen(false);
+    setSettingModalKeyword("");
+  };
+  const initOnboarding = async () => {
+    const res = await getAdminUser();
+    if (!res.success) {
+      adminLogout();
+      return;
+    }
+    try {
+      const completedTasks: string[] = (res.data.onboarding_tasks || [])
+        .filter(
+          (task: TaskItem) => task.task_status === TaskStatusEnum.COMPLETED
+        )
+        .map((task: TaskItem) => task.task_id);
+      setCompletedTasks(completedTasks);
+      setShowOnboarding(completedTasks.length !== REQUIRED_TASK_KEYS.length);
+    } catch (e) {
+      // Fallback to show onboarding if localStorage not available
+      setShowOnboarding(false);
+    }
+  };
+  //todo: onboarding
+  // Initialize onboarding state from localStorage
+  useEffect(() => {
+    if (isSkipOnboarding) {
+      setShowOnboarding(false);
+      return;
+    }
+    initOnboarding();
+  }, []);
+
+  const handleSkipOnboarding = () => {
+    localStorage.setItem("admin_onboarding_skip", "1");
+    setShowOnboarding(false);
+  };
+
+  const markTaskAsCompleted = async (taskKey: OnboardingTaskKey) => {
+    // Mark task as completed
+    const next = Array.from(new Set([...completedTasks, taskKey]));
+    setCompletedTasks(next);
+    const result = await updateAdminOnboardingTasks({
+      task_id: taskKey,
+      task_status: TaskStatusEnum.COMPLETED,
+    });
+    if (!result) return;
+
+    if (next.length === REQUIRED_TASK_KEYS.length) {
+      localStorage.setItem("admin_onboarding_skip", "1");
+      setShowOnboarding(false);
+    }
+  };
+
+  const handleTaskClick = async (taskKey: OnboardingTaskKey) => {
+    switch (taskKey) {
+      case OnboardingTaskKey.PLATFORM_SETUP:
+        setIsSettingsModalOpen(true);
+        await markTaskAsCompleted(taskKey);
+        break;
+      case OnboardingTaskKey.MCP_SERVICES:
+        handleTabNavigate(TabKey.MCP_SERVICES);
+        await markTaskAsCompleted(taskKey);
+        break;
+      case OnboardingTaskKey.REVENUE_MANAGEMENT:
+        setSettingModalKeyword("Payment");
+        setIsSettingsModalOpen(true);
+        await markTaskAsCompleted(taskKey);
+        break;
+      case OnboardingTaskKey.SHARE_PLATFORM:
+        setIsShareModalOpen(true);
+        // 不在这里标记完成，等待实际分享后再标记
+        break;
+    }
+  };
+
+  const handleShareComplete = async () => {
+    await markTaskAsCompleted(OnboardingTaskKey.SHARE_PLATFORM);
+  };
+
+  const handleShareModalClose = () => {
+    setIsShareModalOpen(false);
   };
 
   // render different content based on activeTab
@@ -178,30 +218,24 @@ const ConsoleContent: React.FC = () => {
             <RevenueManagement />
           </div>
         );
-      case TabKey.PAYMENT_CHANNELS:
-        return (
-          <DashboardDemoContent
-            title={t("Payment Channels")}
-            description={t("Configure payment channels")}
-          >
-            <PaymentChannelsContent />
-          </DashboardDemoContent>
-        );
-      case "system-settings":
-        return (
-          <SystemSettingsContent
-            activeSubTab={activeSubTab}
-            subTab={sidebarItems
-              .find((item) => item.key === activeTab)
-              ?.subItems?.find((item) => item.key === activeSubTab)}
-            onTabNavigate={handleTabNavigate}
-          />
-        );
       default:
-        return (
+        return showOnboarding ? (
+          <OnboardingWelcome
+            onSkipOnboarding={handleSkipOnboarding}
+            onTaskClick={handleTaskClick}
+            completedTasks={completedTasks}
+          />
+        ) : (
           <DashboardDemoContent
-            title={t("Admin Dashboard")}
-            description={t("Platform management and analytics")}
+            title={
+              <div className="flex items-center gap-2">
+                <span>{t("Analytics")}</span>
+                <span className="text-primary text-lg font-medium">
+                  {t("(30 days)")}
+                </span>
+              </div>
+            }
+            description={t("Analyze platform usage and revenue")}
           >
             <ConsoleStats />
           </DashboardDemoContent>
@@ -215,15 +249,33 @@ const ConsoleContent: React.FC = () => {
         {/* Sidebar */}
         <ConsoleSidebar
           activeTab={activeTab}
-          activeSubTab={activeSubTab}
           onTabNavigate={handleTabNavigate}
           onLogout={handleLogout}
           sidebarItems={sidebarItems}
+          onSettingsClick={handleSettingsClick}
         />
 
         {/* Main Content */}
         <div className="flex-1 h-screen overflow-y-auto">{renderContent()}</div>
       </div>
+
+      {/* Settings Modal */}
+      {isSettingsModalOpen && (
+        <SystemSettingsModal
+          isOpen={true}
+          onClose={handleSettingsModalClose}
+          keyword={settingModalKeyword}
+        />
+      )}
+
+      {/* Share Platform Modal */}
+      {isShareModalOpen && (
+        <SharePlatformModal
+          isOpen={true}
+          onClose={handleShareModalClose}
+          onShareComplete={handleShareComplete}
+        />
+      )}
     </div>
   );
 };
@@ -244,4 +296,8 @@ const ConsoleMain: React.FC = () => {
   );
 };
 
-export default ConsoleMain;
+// Export the base component for direct use
+export { ConsoleMain as ConsoleMainBase };
+
+// Export with component injection support
+export default withComponentInjection("console/Main", ConsoleMain);

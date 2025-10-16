@@ -20,9 +20,9 @@ export type GlobalStore = {
    */
   isNewUser: boolean;
   setIsNewUser: (isNewUser: boolean) => void;
-  getUser: () => Promise<ApiResponse>;
-  useGetUser: () => SWRResponse<any, any>;
-  logOut: () => void;
+  getUser: (url?: string) => Promise<ApiResponse>;
+  useGetUser: (url?: string, logoutUrl?: string) => SWRResponse<any, any>;
+  logOut: (url?: string) => void;
   changePassword: (password: string) => Promise<ApiResponse>;
 };
 
@@ -33,18 +33,20 @@ export const useGlobalStore = createWithEqualityFn<GlobalStore>()(
         (set, get): GlobalStore => ({
           isNewUser: false,
           setIsNewUser: (isNewUser: boolean) => set({ isNewUser }),
-          getUser: async () => {
+          getUser: async (url: string = "/api/user/info") => {
             const { setUser } = useSharedStore.getState();
-            const res = await fetchAPI("/api/user/info");
+            const res = await fetchAPI(url);
             if (res.success) {
               setUser(res.data);
+            } else {
+              setUser(null);
             }
             return res;
           },
-          useGetUser: () => {
+          useGetUser: (url: string = "/api/user/info", logoutUrl?: string) => {
             const { logOut } = get();
 
-            return useSWR(`/api/user/info`, async (url: string) => {
+            return useSWR(url, async (url: string) => {
               const { user_token, setUser } = useSharedStore.getState();
               if (!user_token) {
                 console.warn(
@@ -60,18 +62,18 @@ export const useGlobalStore = createWithEqualityFn<GlobalStore>()(
                 return { success: false };
               }
               if (!res?.success) {
-                logOut();
+                logOut(logoutUrl);
                 return res;
               }
               setUser(res.data);
               return res;
             });
           },
-          logOut: () => {
+          logOut: (url: string = "/api/auth/logout") => {
             const { setUserToken, setUser } = useSharedStore.getState();
             try {
               // 退出登录，异步处理
-              fetchAPI("/api/auth/logout", {
+              fetchAPI(url, {
                 method: "DELETE",
               });
             } catch (e) {

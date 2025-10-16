@@ -14,7 +14,7 @@ export class PlatformConfigService {
 
     // 创建新的请求
     this.pendingRequest = this.fetchPlatformConfig();
-    
+
     try {
       const result = await this.pendingRequest;
       return result;
@@ -25,16 +25,32 @@ export class PlatformConfigService {
   }
 
   private async fetchPlatformConfig(): Promise<PlatformConfigResponse> {
-    const response = await fetchAPI<PlatformConfigResponse>(
-      "/api/common/config",
-      {
-        method: "GET",
-      }
-    );
-    console.info("Global get platform config: ", response.data);
+    try {
+      const response = await fetchAPI<PlatformConfigResponse>(
+        "/api/common/config",
+        {
+          method: "GET",
+        }
+      );
+      // debug: console.info("Global get platform config: ", response.data);
 
-    if (!response.success) {
-      console.error(response.error_message);
+      if (!response.success) {
+        throw new Error(response.error_message);
+      }
+
+      // 确保返回的数据结构正确
+      const data = response.data;
+      return {
+        platform: data.platform || _DefaultPlatformConfig,
+        login: data.login,
+        faq: data.faq || [],
+        top_navigation: data.top_navigation || [],
+        embeded_html: data.embeded_html,
+        payment_channels: data.payment_channels || [],
+        is_installed: data.is_installed || false,
+      };
+    } catch (Err) {
+      console.error(Err);
       return {
         platform: _DefaultPlatformConfig,
         login: undefined,
@@ -45,18 +61,6 @@ export class PlatformConfigService {
         is_installed: false,
       };
     }
-
-    // 确保返回的数据结构正确
-    const data = response.data;
-    return {
-      platform: data.platform || _DefaultPlatformConfig,
-      login: data.login,
-      faq: data.faq || [],
-      top_navigation: data.top_navigation || [],
-      embeded_html: data.embeded_html,
-      payment_channels: data.payment_channels || [],
-      is_installed: data.is_installed || false,
-    };
   }
 }
 

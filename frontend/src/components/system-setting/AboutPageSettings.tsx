@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, AccordionItem, Accordion } from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import { PlatformConfig } from "@/shared/types/system";
 import { useTranslation } from "@/shared/lib/useTranslation";
@@ -53,7 +53,6 @@ export const AboutPageSettings: React.FC<AboutPageSettingsProps> = ({
           preview="live"
           hideToolbar={false}
           visibleDragbar={false}
-          data-color-mode="light"
           textareaProps={{
             placeholder: t("Enter about page content (supports Markdown)"),
             style: {

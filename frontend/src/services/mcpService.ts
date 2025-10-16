@@ -4,15 +4,15 @@ import {
   MCPService,
   MCPServiceFormData,
   OpenAPIParseResponse,
-} from "@/types/mcp-service";
+} from "@/shared/types/mcp-service";
 import { toast } from "react-hot-toast";
 import i18n from "@/shared/lib/i18n";
 
-// MCP service list API response interface
+// MCP server list API response interface
 export interface MCPServiceListApiResponse
   extends ApiArrayResponse<MCPService> {}
 
-// MCP service detail API response interface
+// MCP server detail API response interface
 export interface MCPServiceDetailApiResponse
   extends ApiObjectResponse<MCPService> {}
 
@@ -20,7 +20,7 @@ export interface MCPServiceDetailApiResponse
 export interface OpenAPIParseApiResponse
   extends ApiObjectResponse<OpenAPIParseResponse> {}
 
-// get MCP service list params interface
+// get MCP server list params interface
 export interface GetMCPServiceListParams {
   page: number;
   page_size: number;
@@ -28,7 +28,7 @@ export interface GetMCPServiceListParams {
   status?: string;
 }
 
-// get MCP service detail params interface
+// get MCP server detail params interface
 export interface GetMCPServiceDetailParams {
   id: string;
 }
@@ -47,7 +47,7 @@ export interface ParseOpenAPIUpdateParams {
 }
 
 /**
- * get MCP service list
+ * get MCP server list
  */
 export const getMCPServiceList = async (
   params: GetMCPServiceListParams
@@ -74,7 +74,7 @@ export const getMCPServiceList = async (
 };
 
 /**
- * get MCP service detail
+ * get MCP server detail
  */
 export const getMCPServiceDetail = async (
   params: GetMCPServiceDetailParams
@@ -94,25 +94,25 @@ export const getMCPServiceDetail = async (
 };
 
 /**
- * save MCP service (create or update)
+ * save MCP server (create or update)
  */
 export const saveMCPService = async (
   formData: MCPServiceFormData
 ): Promise<boolean> => {
   const response = await fetchAdminAPI("/api/mcp/service", {
     method: "PUT",
-    body: formData as unknown as string,
+    body: formData as unknown as BodyInit,
   });
   if (!response.success) {
-    toast.error(response.error_message || i18n.t("Failed to update service"));
+    toast.error(response.error_message || i18n.t("Failed to update server"));
     return false;
   }
-  toast.success(i18n.t("Service updated successfully"));
+  toast.success(i18n.t("Server updated successfully"));
   return true;
 };
 
 /**
- * delete MCP service
+ * delete MCP server
  */
 export const deleteMCPService = async (id: string): Promise<boolean> => {
   const response = await fetchAdminAPI("/api/mcp/service", {
@@ -121,10 +121,10 @@ export const deleteMCPService = async (id: string): Promise<boolean> => {
   });
 
   if (!response.success) {
-    toast.error(response.error_message || i18n.t("Failed to delete service"));
+    toast.error(response.error_message || i18n.t("Failed to delete server"));
     return false;
   }
-  toast.success(i18n.t("Service deleted successfully"));
+  toast.success(i18n.t("Server deleted successfully"));
   return true;
 };
 
@@ -149,7 +149,7 @@ export const toggleMCPServiceStatus = async (
     );
     return false;
   }
-  toast.success(i18n.t("Service status toggled successfully"));
+  toast.success(i18n.t("Server status toggled successfully"));
   return true;
 };
 
@@ -157,7 +157,8 @@ export const toggleMCPServiceStatus = async (
  * parse OpenAPI document
  */
 export const parseOpenAPIDocument = async (
-  params: ParseOpenAPIParams
+  params: ParseOpenAPIParams,
+  apiPath?: string
 ): Promise<OpenAPIParseApiResponse> => {
   const formData = new FormData();
 
@@ -169,7 +170,7 @@ export const parseOpenAPIDocument = async (
   }
 
   const response = await fetchAdminAPI<OpenAPIParseResponse>(
-    "/api/mcp/openapi_parse",
+    apiPath || "/api/mcp/openapi_parse",
     {
       method: "POST",
       body: formData,
@@ -187,7 +188,8 @@ export const parseOpenAPIDocument = async (
  * parse OpenAPI document for update
  */
 export const parseOpenAPIDocumentForUpdate = async (
-  params: ParseOpenAPIUpdateParams
+  params: ParseOpenAPIUpdateParams,
+  apiPath?: string
 ): Promise<ApiObjectResponse<MCPService>> => {
   const formData = new FormData();
 
@@ -200,7 +202,7 @@ export const parseOpenAPIDocumentForUpdate = async (
   formData.append("id", params.id);
 
   const response = await fetchAdminAPI<MCPService>(
-    "/api/mcp/openapi_parse_update",
+    apiPath || "/api/mcp/openapi_parse_update",
     {
       method: "POST",
       body: formData,

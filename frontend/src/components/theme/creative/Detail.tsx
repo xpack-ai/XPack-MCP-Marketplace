@@ -24,6 +24,7 @@ interface DetailProps {
   // navigation items
   navItems?: NavigationItem[];
   onCopy: () => void;
+  innerHeaderNode?: React.ReactNode;
 }
 
 export const Detail: React.FC<DetailProps> = ({
@@ -33,6 +34,7 @@ export const Detail: React.FC<DetailProps> = ({
   mcpName,
   navItems = [],
   onCopy,
+  innerHeaderNode,
 }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
@@ -63,8 +65,9 @@ export const Detail: React.FC<DetailProps> = ({
           {/* Creative Product Header */}
           <div className="pt-24">
             <div className="mx-auto p-6 max-w-7xl">
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-pink-200/50">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-pink-200/50 relative">
                 <ProductHeader product={product} breadcrumbs={breadcrumbs} />
+                {innerHeaderNode}
               </div>
             </div>
           </div>
@@ -121,7 +124,7 @@ export const Detail: React.FC<DetailProps> = ({
                           </div>
                         }
                       >
-                        <div className="p-6 pt-4">
+                        <div className="p-6 pt-4 space-y-4">
                           {product.tools.length > 0 ? (
                             product.tools.map((tool, index) => (
                               <Card
@@ -145,7 +148,7 @@ export const Detail: React.FC<DetailProps> = ({
                             <Card>
                               <CardBody>
                                 <p className="text-center">
-                                  {t("No tools available in this service.")}
+                                  {t("No tools available in this server.")}
                                 </p>
                               </CardBody>
                             </Card>
@@ -195,8 +198,8 @@ export const Detail: React.FC<DetailProps> = ({
     "${mcpName}": {
       "type": "sse",
       "autoApprove":"all",
-      "url": "${url}?apikey=`}
-                            <span className="text-success">{`{Your-${platformConfig?.name}-API-Key}`}</span>
+      "url": "${url}?authkey=`}
+                            <span className="text-success">{`{Your-${platformConfig?.name}-Auth-Key}`}</span>
                             {`"
     }
   }

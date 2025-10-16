@@ -4,6 +4,7 @@ import React from "react";
 import { Pagination } from "@nextui-org/react";
 import { ServiceData } from "@/shared/types/marketplace";
 import { ServiceCard } from "./ServiceCard";
+import { useTranslation } from "@/shared/lib/useTranslation";
 
 interface ServiceListSectionProps {
   services: ServiceData[];
@@ -11,6 +12,7 @@ interface ServiceListSectionProps {
   total: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  showSupplier?: boolean;
 }
 
 export const ServiceListSection: React.FC<ServiceListSectionProps> = ({
@@ -19,15 +21,28 @@ export const ServiceListSection: React.FC<ServiceListSectionProps> = ({
   total,
   pageSize,
   onPageChange,
+  showSupplier = false,
 }) => {
+  const { t } = useTranslation();
   const totalPages = Math.ceil(total / pageSize);
+  if (services.length === 0) {
+    return (
+      <div className="mx-auto px-6 py-12 max-w-7xl">
+        <p className="text-center text-gray-500">{t("No servers found")}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto px-6 py-12 max-w-7xl">
-      {/* Services Grid */}
+      {/* Server Grid */}
       <div className="flex flex-wrap justify-center gap-4 mb-12">
         {services.map((service) => (
-          <ServiceCard key={service.service_id} service={service} />
+          <ServiceCard
+            key={service.service_id}
+            service={service}
+            showSupplier={showSupplier}
+          />
         ))}
       </div>
 

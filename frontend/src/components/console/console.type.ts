@@ -1,0 +1,17 @@
+export enum SettingModalTab {
+  TITLE_DESCRIPTION = "title-description",
+  META_DATA = "meta-data",
+  CUSTOM_DOMAIN = "custom-domain",
+  BRANDING = "branding",
+  THEME = "theme",
+  PAYMENT = "payment",
+  CODE_INJECTION = "code-injection",
+  XPACK_EXPLORE = "xpack-explore",
+  NAVIGATION = "navigation",
+  FAQ = "faq",
+  CHANGE_PASSWORD = "change-password",
+  EMAIL_LOGIN_SETTINGS = "email-login-settings",
+  GOOGLE_LOGIN_SETTINGS = "google-login-settings",
+  SMTP_SETTINGS = "smtp-settings",
+  PLATFORM_LANGUAGE = "platform-language",
+}

@@ -15,6 +15,7 @@ import { MarketplaceMain } from "../marketplace/Main";
 import { Footer } from "@/shared/components/Footer";
 import { NavigationItems } from "./Theme.const";
 import { Faq } from "../marketplace/Faq";
+import { useNavigationItems } from "@/shared/providers/ConfigProvider";
 
 interface ThemeSelectorProps {
   initialServices: ServiceData[];
@@ -36,8 +37,9 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   const router = useRouter();
   const { platformConfig, topNavigation } = usePlatformConfig();
   const currentTheme = platformConfig.theme || Theme.DEFAULT;
+  const configNavigation = useNavigationItems() || NavigationItems;
   const navigationItems = [
-    ...NavigationItems,
+    ...configNavigation,
     ...topNavigation.map((item) => ({
       label: item.title,
       href: item.link,
@@ -53,7 +55,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   const [loading, setLoading] = useState(false);
 
   // search suggestion
-  const searchSuggestions = ["Search services..."];
+  const searchSuggestions = ["Search MCP servers"];
 
   // loading service data
   const loadServices = async (page: number, search: string) => {
@@ -69,7 +71,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
       setTotal(result.page.total);
       setCurrentPage(page);
     } catch (error) {
-      console.error("Failed to load services:", error);
+      console.error("Failed to load servers:", error);
     } finally {
       setLoading(false);
     }

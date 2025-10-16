@@ -37,7 +37,7 @@ const DefaultDemo: React.FC = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search services..."
+                placeholder="Search MCP servers"
                 className="w-full px-4 py-3 border border-gray-300 rounded-full text-sm focus:outline-none focus:border-blue-500"
               />
               <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -45,12 +45,12 @@ const DefaultDemo: React.FC = () => {
           </div>
         </div>
 
-        {/* Services Grid */}
+        {/* Server Grid */}
         <div className="grid grid-cols-4 gap-4 max-w-4xl mx-auto">
-          {/* Service Card 1 */}
+          {/* Server Card 1 */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
             <h3 className="font-medium text-gray-900 mb-1 text-sm">测试1</h3>
-            <p className="text-xs text-gray-600 mb-2">xpack-opensource-1</p>
+            <p className="text-xs text-gray-600 mb-2">XPack-1</p>
             <div className="flex items-center justify-between">
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                 Beta
@@ -59,12 +59,10 @@ const DefaultDemo: React.FC = () => {
             </div>
           </div>
 
-          {/* Service Card 2 */}
+          {/* Server Card 2 */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-            <h3 className="font-medium text-gray-900 mb-1 text-sm">
-              xpack-opensource
-            </h3>
-            <p className="text-xs text-gray-600 mb-2">xpack-opensource-1</p>
+            <h3 className="font-medium text-gray-900 mb-1 text-sm">XPack</h3>
+            <p className="text-xs text-gray-600 mb-2">XPack-1</p>
             <div className="flex items-center justify-between">
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                 Beta
@@ -73,12 +71,10 @@ const DefaultDemo: React.FC = () => {
             </div>
           </div>
 
-          {/* Service Card 3 */}
+          {/* Server Card 3 */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-            <h3 className="font-medium text-gray-900 mb-1 text-sm">
-              xpack-opensource
-            </h3>
-            <p className="text-xs text-gray-600 mb-2">xpack-opensource</p>
+            <h3 className="font-medium text-gray-900 mb-1 text-sm">XPack</h3>
+            <p className="text-xs text-gray-600 mb-2">XPack</p>
             <div className="flex items-center justify-between">
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                 Beta
@@ -87,7 +83,7 @@ const DefaultDemo: React.FC = () => {
             </div>
           </div>
 
-          {/* Service Card 4 */}
+          {/* Server Card 4 */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
             <h3 className="font-medium text-gray-900 mb-1 text-sm">
               Pet Store API

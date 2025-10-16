@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
-import { 
-  PlatformConfig, 
-  LoginConfig, 
-  EmailMode, 
-  FaqItem, 
-  TopNavigationItem, 
-  EmbeddedHtmlConfig, 
-  PaymentChannel 
+import {
+  PlatformConfig,
+  LoginConfig,
+  EmailMode,
+  FaqItem,
+  TopNavigationItem,
+  EmbeddedHtmlConfig,
+  PaymentChannel,
 } from "@/shared/types/system";
 import { systemConfigService } from "@/services/systemConfigService";
 import { AdminConfig, EmailConfig } from "@/types/system";
@@ -68,9 +68,13 @@ export const useSystemConfigManagement = () => {
   const [navigationError, setNavigationError] = useState<string | null>(null);
 
   // embedded html config
-  const [embeddedHtml, setEmbeddedHtml] = useState<EmbeddedHtmlConfig | null>(null);
+  const [embeddedHtml, setEmbeddedHtml] = useState<EmbeddedHtmlConfig | null>(
+    null
+  );
   const [embeddedHtmlLoading, setEmbeddedHtmlLoading] = useState(false);
-  const [embeddedHtmlError, setEmbeddedHtmlError] = useState<string | null>(null);
+  const [embeddedHtmlError, setEmbeddedHtmlError] = useState<string | null>(
+    null
+  );
 
   // payment channels config
   const [paymentChannels, setPaymentChannels] = useState<PaymentChannel[]>([]);
@@ -200,9 +204,12 @@ export const useSystemConfigManagement = () => {
   const saveFaqConfig = useCallback(async (items: FaqItem[]) => {
     setFaqLoading(true);
     setFaqError(null);
-    const result = await systemConfigService.updateSystemConfig({
-      faq: items,
-    }, "faq");
+    const result = await systemConfigService.updateSystemConfig(
+      {
+        faq: items,
+      },
+      "faq"
+    );
     if (result) {
       setFaqItems(items);
     }
@@ -211,46 +218,64 @@ export const useSystemConfigManagement = () => {
   }, []);
 
   // save top navigation config
-  const saveTopNavigationConfig = useCallback(async (items: TopNavigationItem[]) => {
-    setNavigationLoading(true);
-    setNavigationError(null);
-    const result = await systemConfigService.updateSystemConfig({
-      top_navigation: items,
-    }, "navigation");
-    if (result) {
-      setTopNavigation(items);
-    }
-    setNavigationLoading(false);
-    return result;
-  }, []);
+  const saveTopNavigationConfig = useCallback(
+    async (items: TopNavigationItem[]) => {
+      setNavigationLoading(true);
+      setNavigationError(null);
+      const result = await systemConfigService.updateSystemConfig(
+        {
+          top_navigation: items,
+        },
+        "navigation"
+      );
+      if (result) {
+        setTopNavigation(items);
+      }
+      setNavigationLoading(false);
+      return result;
+    },
+    []
+  );
 
   // save embedded html config
-  const saveEmbeddedHtmlConfig = useCallback(async (config: EmbeddedHtmlConfig) => {
-    setEmbeddedHtmlLoading(true);
-    setEmbeddedHtmlError(null);
-    const result = await systemConfigService.updateSystemConfig({
-      embeded_html: config,
-    }, "embedded_html");
-    if (result) {
-      setEmbeddedHtml(config);
-    }
-    setEmbeddedHtmlLoading(false);
-    return result;
-  }, []);
+  const saveEmbeddedHtmlConfig = useCallback(
+    async (config: EmbeddedHtmlConfig) => {
+      setEmbeddedHtmlLoading(true);
+      setEmbeddedHtmlError(null);
+      const result = await systemConfigService.updateSystemConfig(
+        {
+          embeded_html: config,
+        },
+        "embedded_html"
+      );
+      if (result) {
+        setEmbeddedHtml(config);
+      }
+      setEmbeddedHtmlLoading(false);
+      return result;
+    },
+    []
+  );
 
   // save payment channels config
-  const savePaymentChannelsConfig = useCallback(async (channels: PaymentChannel[]) => {
-    setPaymentLoading(true);
-    setPaymentError(null);
-    const result = await systemConfigService.updateSystemConfig({
-      payment_channels: channels,
-    }, "payment");
-    if (result) {
-      setPaymentChannels(channels);
-    }
-    setPaymentLoading(false);
-    return result;
-  }, []);
+  const savePaymentChannelsConfig = useCallback(
+    async (channels: PaymentChannel[]) => {
+      setPaymentLoading(true);
+      setPaymentError(null);
+      const result = await systemConfigService.updateSystemConfig(
+        {
+          payment_channels: channels,
+        },
+        "payment"
+      );
+      if (result) {
+        setPaymentChannels(channels);
+      }
+      setPaymentLoading(false);
+      return result;
+    },
+    []
+  );
 
   // clear errors
   const clearPlatformError = useCallback(() => setPlatformError(null), []);
@@ -259,7 +284,10 @@ export const useSystemConfigManagement = () => {
   const clearLoginError = useCallback(() => setLoginError(null), []);
   const clearFaqError = useCallback(() => setFaqError(null), []);
   const clearNavigationError = useCallback(() => setNavigationError(null), []);
-  const clearEmbeddedHtmlError = useCallback(() => setEmbeddedHtmlError(null), []);
+  const clearEmbeddedHtmlError = useCallback(
+    () => setEmbeddedHtmlError(null),
+    []
+  );
   const clearPaymentError = useCallback(() => setPaymentError(null), []);
 
   // load configs on init

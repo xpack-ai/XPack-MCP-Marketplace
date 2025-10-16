@@ -29,7 +29,7 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({
     "${mcpName || "xpack-mcp-market"}": {
       "type": "sse",
       "autoApprove":"all",
-      "url": "${url}?apikey={Your-${platformConfig?.name}-API-Key}"
+      "url": "${url}?authkey={Your-${platformConfig?.name}-Auth-Key}"
     }
   }
 }`;
@@ -45,11 +45,11 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({
   };
 
   return (
-    <div className="min-w-[400px] w-[40%] max-w-100 flex-shrink-0 mt-12">
+    <div className="min-w-full md:min-w-[40%] w-[40%] max-w-100 flex-shrink-0 mt-12">
       <div className="mb-4 mt-1">
         <FlipButton
           className="w-full rounded-md"
-          text={t("Try for free")}
+          text={t("Sign up to get the auth key")}
           onPress={handleLogin}
         />
       </div>
@@ -79,8 +79,8 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({
     "${mcpName || "xpack-mcp-market"}": {
       "type": "sse",
       "autoApprove":"all",
-      "url": "${url}?apikey=`}
-              <span className="text-success">{`{Your-${platformConfig?.name}-API-Key}`}</span>
+      "url": "${url}?authkey=`}
+              <span className="text-success">{`{Your-${platformConfig?.name}-Auth-Key}`}</span>
               {`"
     }
   }

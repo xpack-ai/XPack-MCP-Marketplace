@@ -6,7 +6,13 @@ import { AlipayConfigForm } from "../payment/AlipayConfigForm";
 import { WechatConfigForm } from "../payment/WechatConfigForm";
 import { usePaymentChannelManagement } from "@/hooks/usePaymentChannelManagement";
 
-export const PaymentChannelsContent: React.FC = () => {
+interface PaymentChannelsContentProps {
+  labelPlacement?: "outside" | "inside";
+}
+
+export const PaymentChannelsContent: React.FC<PaymentChannelsContentProps> = ({
+  labelPlacement = "inside",
+}) => {
   const {
     stripeConfig,
     alipayConfig,
@@ -30,6 +36,7 @@ export const PaymentChannelsContent: React.FC = () => {
         onEnable={enableChannel}
         onDisable={disableChannel}
         isLoading={isStripeSaving}
+        labelPlacement={labelPlacement}
       />
       {/* coming soon */}
       {/* alipay configuration */}

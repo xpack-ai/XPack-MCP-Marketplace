@@ -1,50 +1,53 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { Button, Tabs, Tab, Spinner } from "@nextui-org/react";
+import { ChevronLeftIcon } from "lucide-react";
+import { useTranslation } from "@/shared/lib/useTranslation";
 import {
-  Button,
-  Tabs,
-  Tab,
-  Spinner,
-} from '@nextui-org/react';
-import { ChevronLeftIcon } from 'lucide-react';
-import { useTranslation } from '@/shared/lib/useTranslation';
-import { AuthMethod, MCPServiceFormData } from '@/types/mcp-service';
+  AuthMethod,
+  EnabledEnum,
+  MCPServiceFormData,
+} from "@/shared/types/mcp-service";
 import { useMCPServiceDetail } from "@/hooks/useMCPServiceDetail";
-import { BasicInfoTab } from './BasicInfoTab';
-import { PricingTab } from './PricingTab';
-import { DescriptionTab } from './DescriptionTab';
-import { ToolsTab } from './ToolsTab';
-import { OpenAPIGeneratorModal } from './OpenAPIGeneratorModal';
-import { ChargeType } from '@/shared/types/marketplace';
+import { BasicInfoTab } from "@/shared/components/mcp-services/BasicInfoTab";
+import { PricingTab } from "@/shared/components/mcp-services/PricingTab";
+import { DescriptionTab } from "@/shared/components/mcp-services/DescriptionTab";
+import { ToolsTab } from "@/shared/components/mcp-services/ToolsTab";
+import { OpenAPIGeneratorModal } from "@/shared/components/mcp-services/OpenAPIGeneratorModal";
+import { ChargeType } from "@/shared/types/marketplace";
+import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
+
 const _DefaultFormData: MCPServiceFormData = {
-  id: '',
-  name: '',
-  short_description: '',
-  long_description: '',
-  base_url: '',
+  id: "",
+  name: "",
+  short_description: "",
+  long_description: "",
+  base_url: "",
   auth_method: AuthMethod.None,
-  auth_header: '',
-  auth_token: '',
+  auth_header: "",
+  auth_token: "",
   charge_type: ChargeType.Free,
-  price: '',
+  price: "",
   enabled: 0,
   tags: [],
-  apis: []
-}
+  apis: [],
+};
 
 interface ServiceEditPageProps {
   serviceId?: string;
-  onSave: (data: MCPServiceFormData) => void;
+  onSave: (data: MCPServiceFormData, isDraft?: boolean) => void;
   onCancel: () => void;
   loading?: boolean;
+  onUnpublish?: (serviceId: string) => void;
+  onRefreshList?: () => void;
 }
 
-export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
+const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
   serviceId,
   onSave,
   onCancel,
-  loading = false
+  loading = false,
 }) => {
   const { t } = useTranslation();
   const isEditing = !!serviceId;
@@ -54,19 +57,21 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
     serviceDetail: service,
     detailLoading: dataLoading,
     getServiceDetail,
-    clearServiceDetail
+    clearServiceDetail,
+    parseOpenAPIDocumentForUpdate,
+    updateLoading,
   } = useMCPServiceDetail();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDraft, setIsDraft] = useState(false);
 
-  // use services list hook for OpenAPI update
-  const { parseOpenAPIDocumentForUpdate, updateLoading } = useMCPServiceDetail();
-
-  const [formData, setFormData] = useState<MCPServiceFormData>(_DefaultFormData);
-  const [newTag, setNewTag] = useState('');
+  const [formData, setFormData] =
+    useState<MCPServiceFormData>(_DefaultFormData);
+  const [newTag, setNewTag] = useState("");
 
   // OpenAPI modal state
   const [isOpenAPIModalOpen, setIsOpenAPIModalOpen] = useState(false);
 
-  // get service detail
+  // get server detail
   useEffect(() => {
     if (serviceId) {
       getServiceDetail(serviceId);
@@ -80,42 +85,70 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
 
   // when service data loaded, fill form
   useEffect(() => {
-    if (!serviceId || !service) return
+    if (!serviceId || !service) return;
     setFormData({
       ...formData,
-      ...service
+      ...service,
     });
-
   }, [service, serviceId]);
 
   const handleInputChange = (field: keyof MCPServiceFormData, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-
-
   const handleAddTag = () => {
     if (newTag.trim() && !(formData.tags || []).includes(newTag.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...(prev.tags || []), newTag.trim()]
+        tags: [...(prev.tags || []), newTag.trim()],
       }));
-      setNewTag('');
+      setNewTag("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: (prev.tags || []).filter(tag => tag !== tagToRemove)
+      tags: (prev.tags || []).filter((tag) => tag !== tagToRemove),
     }));
   };
 
-  const handleSubmit = () => {
-    onSave(formData);
+  const handleSubmit = async (enabled?: EnabledEnum) => {
+    // Check if slug_name has been modified
+    const isSlugNameChanged =
+      isEditing &&
+      service?.slug_name &&
+      formData.slug_name !== service.slug_name;
+
+    if (isSlugNameChanged) {
+      const confirmed = window.confirm(
+        t(
+          "You have modified the Server ID. This will affect the MCP access URL and may break existing integrations. Are you sure you want to continue?"
+        )
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    // Proceed with save
+    setIsSaving(true);
+    const isDraft =
+      service?.enabled === EnabledEnum.Offline && enabled === undefined;
+    setIsDraft(isDraft);
+    await onSave(
+      {
+        ...formData,
+        headers: formData.headers?.filter((header) => header.name !== ""),
+        ...(enabled !== undefined ? { enabled } : {}),
+      },
+      isDraft
+    );
+    setIsSaving(false);
+    setIsDraft(false);
   };
 
   // OpenAPI update handlers
@@ -127,19 +160,26 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
     setIsOpenAPIModalOpen(false);
   };
 
-  const handleOpenAPIGenerate = async (url?: string, file?: File): Promise<{ service_id: string }> => {
+  const handleOpenAPIGenerate = async (
+    url?: string,
+    file?: File
+  ): Promise<{ service_id: string }> => {
     if (!serviceId) {
-      throw new Error('Service ID is required for update');
+      throw new Error("Server ID is required for update");
     }
 
     try {
-      const updatedService = await parseOpenAPIDocumentForUpdate(serviceId, url, file);
+      const updatedService = await parseOpenAPIDocumentForUpdate(
+        serviceId,
+        url,
+        file
+      );
 
       // update form data
       setFormData({
         ...formData,
         ...updatedService,
-        update_type: 'openapi'
+        update_type: "openapi",
       });
 
       // close modal
@@ -148,14 +188,16 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
       // return service_id format to compatible with OpenAPIGeneratorModal
       return { service_id: updatedService.id };
     } catch (error) {
-      console.error('OpenAPI update failed:', error);
+      console.error("OpenAPI update failed:", error);
       throw error;
     }
   };
 
-
   const isFormValid = () => {
-    const hasBasicInfo = formData.name.trim() && formData.short_description?.trim();
+    const hasBasicInfo =
+      formData.name.trim() &&
+      formData.short_description?.trim() &&
+      formData.slug_name?.trim();
 
     // if free, no need to validate price
     if (formData.charge_type === ChargeType.Free) {
@@ -163,9 +205,11 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
     }
 
     // if paid, need to validate price
-    return hasBasicInfo &&
+    return (
+      hasBasicInfo &&
       formData.price !== undefined &&
-      formData.price.trim() !== '';
+      formData.price.trim() !== ""
+    );
   };
 
   return (
@@ -173,16 +217,11 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
       {/* page title */}
       <div className="flex items-center justify-between mb-6 px-8">
         <div className="flex items-center gap-3">
-          <Button
-            isIconOnly
-            onPress={onCancel}
-            variant='flat'
-            size='sm'
-          >
+          <Button isIconOnly onPress={onCancel} variant="flat" size="sm">
             <ChevronLeftIcon className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-bold">
-            {isEditing ? t('Service Detail') : t('Create New Service')}
+            {isEditing ? t("Server Detail") : t("Create New Server")}
           </h1>
         </div>
         <div className="flex items-center gap-2">
@@ -192,20 +231,39 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
               onPress={handleOpenAPIUpdate}
               isDisabled={loading || dataLoading || updateLoading}
               isLoading={updateLoading}
-              size='sm'
+              size="sm"
             >
-              {t('Update from OpenAPI')}
+              {t("Update from OpenAPI")}
             </Button>
           )}
           <Button
             color="primary"
-            onPress={handleSubmit}
-            isDisabled={!isFormValid() || loading || dataLoading || updateLoading}
-            isLoading={updateLoading}
-            size='sm'
+            onPress={() => handleSubmit()}
+            isDisabled={
+              !isFormValid() || loading || dataLoading || updateLoading
+            }
+            isLoading={
+              isSaving && (isDraft || service?.enabled !== EnabledEnum.Offline)
+            }
+            size="sm"
           >
-            {t('Save')}
+            {service?.enabled === EnabledEnum.Offline
+              ? t("Save Draft")
+              : t("Save")}
           </Button>
+          {service?.enabled === EnabledEnum.Offline && (
+            <Button
+              color="success"
+              onPress={() => handleSubmit(EnabledEnum.Online)}
+              isDisabled={
+                !isFormValid() || loading || dataLoading || updateLoading
+              }
+              isLoading={isSaving && !isDraft}
+              size="sm"
+            >
+              {t("Publish")}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -214,7 +272,7 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Spinner size="lg" />
-            <p className="text-gray-600">{t('Loading service data...')}</p>
+            <p className="text-gray-600">{t("Loading server data...")}</p>
           </div>
         </div>
       )}
@@ -222,17 +280,17 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
       {/* form content */}
       {!dataLoading && (
         <Tabs
-          aria-label="Service edit tabs"
-          variant='bordered'
-          color='primary'
+          aria-label="Server edit tabs"
+          variant="bordered"
+          color="primary"
           classNames={{
-            panel: "flex-1 overflow-y-auto px-8"
+            panel: "flex-1 overflow-y-auto px-8",
           }}
-          className=' px-8'
+          className=" px-8"
         >
-          <Tab key="basic" title={t('Basic Information')}>
+          <Tab key="basic" title={t("Basic Information")}>
             <div className="pt-2 flex gap-4">
-              <div className='flex-1'>
+              <div className="flex-1">
                 <BasicInfoTab
                   formData={formData}
                   newTag={newTag}
@@ -242,7 +300,7 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
                   onRemoveTag={handleRemoveTag}
                 />
               </div>
-              <div className='w-[400px] max-w-[1/2]'>
+              <div className="w-[400px] max-w-[1/2]">
                 <PricingTab
                   formData={formData}
                   onInputChange={handleInputChange}
@@ -251,16 +309,13 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
             </div>
           </Tab>
 
-          <Tab key="tools" title={t('Tools Management')}>
+          <Tab key="tools" title={t("Tools Management")}>
             <div className="pt-2">
-              <ToolsTab
-                formData={formData}
-                onInputChange={handleInputChange}
-              />
+              <ToolsTab formData={formData} onInputChange={handleInputChange} />
             </div>
           </Tab>
 
-          <Tab key="description" title={t('Detailed Description')} >
+          <Tab key="description" title={t("Detailed Description")}>
             <div className="pt-2 h-full">
               <DescriptionTab
                 formData={formData}
@@ -272,16 +327,18 @@ export const ServiceEditPage: React.FC<ServiceEditPageProps> = ({
       )}
 
       {/* OpenAPI Generator Modal */}
-      {
-        isOpenAPIModalOpen && (
-          <OpenAPIGeneratorModal
-            isOpen={true}
-            onClose={handleCloseOpenAPIModal}
-            onGenerate={handleOpenAPIGenerate}
-            mode="update"
-          />
-        )
-      }
+      {isOpenAPIModalOpen && (
+        <OpenAPIGeneratorModal
+          isOpen={true}
+          onClose={handleCloseOpenAPIModal}
+          onGenerate={handleOpenAPIGenerate}
+          mode="update"
+        />
+      )}
     </div>
   );
 };
+export const ServiceEditPage = withComponentInjection(
+  "components/mcp-services/ServiceEditPage",
+  BaseServiceEditPage
+);

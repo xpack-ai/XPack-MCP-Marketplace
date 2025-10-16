@@ -90,7 +90,10 @@ export const Home: React.FC<HomeProps> = ({
             {/* Modern Title */}
             <h1 className="text-4xl lg:text-6xl font-bold mb-6 text-gray-900 leading-tight">
               {t(
-                platformConfig.headline || _DefaultPlatformConfig.headline || ""
+                platformConfig.headline ||
+                  platformConfig.name ||
+                  _DefaultPlatformConfig.headline ||
+                  ""
               )}
             </h1>
 
@@ -114,7 +117,7 @@ export const Home: React.FC<HomeProps> = ({
                     placeholder={
                       searchSuggestions.length > 0
                         ? t(searchSuggestions[0])
-                        : t("Search services...")
+                        : t("Search MCP servers")
                     }
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
@@ -143,7 +146,7 @@ export const Home: React.FC<HomeProps> = ({
       </div>
 
       <section>
-        {/* Service List Section */}
+        {/* Server List Section */}
         {loading ? (
           <div className="mx-auto h-[200px] flex items-center justify-center">
             <div className="bg-white p-8 rounded-lg shadow-md">
@@ -153,12 +156,12 @@ export const Home: React.FC<HomeProps> = ({
         ) : (
           <div className="py-16">
             <div className="mx-auto px-6 max-w-7xl">
-              {/* Services Grid */}
+              {/* Server Grid */}
               <div className="flex flex-wrap justify-center gap-4 mb-12">
                 {services.map((service) => (
                   <Link
                     key={service.service_id}
-                    href={`/marketplace/${service.service_id}`}
+                    href={`/server/${service.service_id}`}
                     className="w-full md:w-[calc(50%-16px)] lg:w-[calc(33%-16px)] xl:w-[calc(25%-16px)]"
                   >
                     <Card className="group h-[200px] w-full hover:shadow-lg transition-all duration-200 cursor-pointer bg-white border border-gray-100 rounded-xl shadow-sm">

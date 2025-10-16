@@ -47,7 +47,7 @@ export const MarketplaceMain: React.FC<MarketplaceMainProps> = ({
       setTotal(result.page.total);
       setCurrentPage(page);
     } catch (error) {
-      console.error('Failed to load services:', error);
+      console.error("Failed to load servers:", error);
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export const MarketplaceMain: React.FC<MarketplaceMainProps> = ({
 
   // when search query changes, scroll to the top of the page
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage, searchQuery]);
 
   // update URL parameters
@@ -63,11 +63,11 @@ export const MarketplaceMain: React.FC<MarketplaceMainProps> = ({
     const params = new URLSearchParams();
 
     if (page > 1) {
-      params.set('page', page.toString());
+      params.set("page", page.toString());
     }
 
     if (search.trim()) {
-      params.set('search', search.trim());
+      params.set("search", search.trim());
     }
 
     const queryString = params.toString();
@@ -106,7 +106,7 @@ export const MarketplaceMain: React.FC<MarketplaceMainProps> = ({
         onSearch={handleSearch}
       />
 
-      {/* Service List Section */}
+      {/* Server List Section */}
       {loading ? (
         <div className="mx-auto h-[200px] flex items-center justify-center">
           <Spinner />

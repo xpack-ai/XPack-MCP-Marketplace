@@ -44,14 +44,10 @@ export const useAuth = () => {
   }, []);
 
   const handleLogin = useCallback(() => {
-    const domain =
-      process.env.NEXT_PUBLIC_DOMAIN ||
-      (typeof window !== "undefined" ? window.location.origin : "");
-
     if (isLoggedIn) {
-      window.location.href = `${domain}/dashboard`;
+      window.location.href = `/console`;
     } else {
-      window.location.href = `${domain}/signin`;
+      window.location.href = `/signin`;
     }
   }, [isLoggedIn]);
 

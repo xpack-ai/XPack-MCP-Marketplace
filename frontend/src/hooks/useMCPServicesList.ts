@@ -7,7 +7,7 @@ import {
   OpenAPIParseResponse,
   ServiceFilters,
   ServiceStats,
-} from "@/types/mcp-service";
+} from "@/shared/types/mcp-service";
 import {
   getMCPServiceList,
   saveMCPService,
@@ -32,7 +32,7 @@ export const useMCPServicesList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // load services list
+  // load servers list
   const loadServices = useCallback(
     async (page?: number, search?: string, status?: string) => {
       setLoading(true);
@@ -60,15 +60,15 @@ export const useMCPServicesList = () => {
             total: response.page?.total || 0,
           }));
         } else {
-          setError(response.error_message || "Failed to load services");
+          setError(response.error_message || "Failed to load servers");
           setServices([]);
           setPagination((prev) => ({ ...prev, total: 0 }));
         }
       } catch (err) {
-        setError("Failed to load services");
+        setError("Failed to load servers");
         setServices([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
-        console.error("Load services error:", err);
+        console.error("Load servers error:", err);
       } finally {
         setLoading(false);
       }
@@ -76,7 +76,7 @@ export const useMCPServicesList = () => {
     [pagination.pageSize] // only depend on pageSize, avoid circular dependency
   );
 
-  // load services list when component mount
+  // load servers list when component mount
   useEffect(() => {
     loadServices(1);
   }, []); // only execute once when component mount
@@ -109,7 +109,7 @@ export const useMCPServicesList = () => {
     [loadServices, searchTerm]
   );
 
-  // get service stats
+  // get server stats
   const getServiceStats = useCallback((): ServiceStats => {
     const total = services.length;
     const online = services.filter((s) => s.enabled === 1).length;
@@ -117,7 +117,7 @@ export const useMCPServicesList = () => {
     return { total, online, offline };
   }, [services]);
 
-  // filter services
+  // filter servers
   const filterServices = useCallback(
     (filters: ServiceFilters): MCPService[] => {
       return services.filter((service) => {
@@ -147,7 +147,7 @@ export const useMCPServicesList = () => {
     [services]
   );
 
-  // create service
+  // create server
   const createService = useCallback(
     async (data: MCPServiceFormData): Promise<boolean> => {
       setLoading(true);
@@ -160,7 +160,7 @@ export const useMCPServicesList = () => {
         return result;
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Failed to create service";
+          err instanceof Error ? err.message : "Failed to create server";
         setError(errorMessage);
         throw err;
       } finally {
@@ -170,7 +170,7 @@ export const useMCPServicesList = () => {
     [loadServices]
   );
 
-  // update service
+  // update server
   const updateService = useCallback(
     async (serviceId: string, data: MCPServiceFormData): Promise<boolean> => {
       setLoading(true);
@@ -184,7 +184,7 @@ export const useMCPServicesList = () => {
         return result;
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Failed to update service";
+          err instanceof Error ? err.message : "Failed to update server";
         setError(errorMessage);
         throw err;
       } finally {
@@ -194,7 +194,7 @@ export const useMCPServicesList = () => {
     [loadServices, pagination.page]
   );
 
-  // delete service
+  // delete server
   const deleteService = useCallback(
     async (serviceId: string): Promise<void> => {
       setLoading(true);
@@ -204,12 +204,12 @@ export const useMCPServicesList = () => {
         const result = await deleteMCPService(serviceId);
 
         if (result) {
-          // reload services list
+          // reload servers list
           await loadServices();
         }
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Failed to delete service";
+          err instanceof Error ? err.message : "Failed to delete server";
         setError(errorMessage);
         throw err;
       } finally {
@@ -219,7 +219,7 @@ export const useMCPServicesList = () => {
     [loadServices]
   );
 
-  // toggle service status
+  // toggle server status
   const toggleServiceStatus = useCallback(
     async (serviceId: string): Promise<void> => {
       setLoading(true);
@@ -228,13 +228,13 @@ export const useMCPServicesList = () => {
       try {
         const service = services.find((s) => s.id === serviceId);
         if (!service) {
-          throw new Error("Service not found");
+          throw new Error("Server not found");
         }
         const newEnabled = service.enabled === 1 ? 0 : 1;
         const result = await toggleMCPServiceStatus(serviceId, newEnabled);
 
         if (result) {
-          // reload services list
+          // reload servers list
           setServices((prev) =>
             prev.map((s) =>
               s.id === serviceId ? { ...s, enabled: newEnabled } : s
@@ -243,9 +243,7 @@ export const useMCPServicesList = () => {
         }
       } catch (err) {
         const errorMessage =
-          err instanceof Error
-            ? err.message
-            : "Failed to toggle service status";
+          err instanceof Error ? err.message : "Failed to toggle server status";
         setError(errorMessage);
         throw err;
       } finally {
@@ -257,12 +255,22 @@ export const useMCPServicesList = () => {
 
   // parse OpenAPI document
   const parseOpenAPIDocument = useCallback(
-    async (url?: string, file?: File): Promise<OpenAPIParseResponse> => {
+    async (
+      url?: string,
+      file?: File,
+      apiPath?: string
+    ): Promise<OpenAPIParseResponse> => {
       setLoading(true);
       setError(null);
 
       try {
-        const response = await parseOpenAPIDocumentAPI({ file, url });
+        const response = await parseOpenAPIDocumentAPI(
+          {
+            file,
+            url,
+          },
+          apiPath
+        );
 
         if (response.success && response.data) {
           return response.data;

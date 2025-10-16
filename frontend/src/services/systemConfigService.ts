@@ -1,12 +1,12 @@
 import { fetchAdminAPI } from "@/rpc/admin-api";
 import i18n from "@/shared/lib/i18n";
-import { 
-  PlatformConfig, 
-  LoginConfig, 
-  FaqItem, 
-  TopNavigationItem, 
-  EmbeddedHtmlConfig, 
-  PaymentChannel 
+import {
+  PlatformConfig,
+  LoginConfig,
+  FaqItem,
+  TopNavigationItem,
+  EmbeddedHtmlConfig,
+  PaymentChannel,
 } from "@/shared/types/system";
 import { AdminConfig, EmailConfig, SystemConfigApiData } from "@/types/system";
 import toast from "react-hot-toast";
@@ -42,7 +42,14 @@ export class SystemConfigService {
       payment_channels?: PaymentChannel[];
       is_installed?: boolean;
     },
-    key?: "theme" | "about" | "faq" | "navigation" | "embedded_html" | "payment"
+    key?:
+      | "theme"
+      | "about"
+      | "faq"
+      | "navigation"
+      | "embedded_html"
+      | "payment"
+      | "password"
   ): Promise<boolean> {
     const response = await fetchAdminAPI("/api/sysconfig/info", {
       method: "PUT",
@@ -73,6 +80,9 @@ export class SystemConfigService {
         break;
       case "payment":
         toast.success(i18n.t("Payment channels updated successfully"));
+        break;
+      case "password":
+        toast.success(i18n.t("Password updated successfully"));
         break;
       default: {
         toast.success(i18n.t("System config updated successfully"));

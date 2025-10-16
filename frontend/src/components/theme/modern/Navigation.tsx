@@ -43,7 +43,7 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
           />
           <div className="flex justify-start bg-transparent w-max">
             <Link href="/">
-              <DynamicLogo alt="Platform Logo" className="h-[20px]" />
+              <DynamicLogo alt="Platform Logo" className="h-[32px]" />
             </Link>
           </div>
           <div className="hidden lg:flex gap-6 justify-center">
@@ -60,7 +60,10 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
           </div>
         </NavbarContent>
         <NavbarContent justify="end" className="items-center gap-2 sm:gap-4">
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex gap-2">
+            <Button onPress={handleLogin} variant="light">
+              <b className="text-md"> {t("Sign In")}</b>
+            </Button>
             <Button
               color="primary"
               className="bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 flex items-center justify-center gap-4 pr-1 h-[45px] shadow-lg"

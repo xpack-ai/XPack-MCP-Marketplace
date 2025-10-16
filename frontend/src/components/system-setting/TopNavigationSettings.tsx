@@ -26,6 +26,7 @@ import {
 interface TopNavigationSettingsProps {
   onSave?: (config: TopNavigationItem[]) => void;
   config?: TopNavigationItem[];
+  labelPlacement?: "outside" | "inside";
 }
 const defaultNavigationItems = [
   { title: "", link: "", target: TopNavigationTargetEnum.BLANK },
@@ -33,6 +34,7 @@ const defaultNavigationItems = [
 export const TopNavigationSettings: React.FC<TopNavigationSettingsProps> = ({
   onSave,
   config = [],
+  labelPlacement = "inside",
 }) => {
   const { t } = useTranslation();
   const [navigationItems, setNavigationItems] = useState<TopNavigationItem[]>(
@@ -129,6 +131,133 @@ export const TopNavigationSettings: React.FC<TopNavigationSettingsProps> = ({
     }
   };
 
+  const panelContent = () => {
+    return (
+      <div className="space-y-4">
+        {/* Navigation Table */}
+        <Table
+          aria-label="Navigation items management table"
+          className="border-1 rounded-lg overflow-hidden"
+          removeWrapper
+          classNames={{
+            thead: "[&>tr]:first:rounded-none",
+            th: "first:rounded-none last:rounded-none",
+          }}
+        >
+          <TableHeader>
+            <TableColumn className="w-8">{t("Order")}</TableColumn>
+            <TableColumn className="w-1/4">{t("Title")}</TableColumn>
+            <TableColumn>{t("Link")}</TableColumn>
+            <TableColumn className="w-32">{t("Target")}</TableColumn>
+            <TableColumn className="w-8">{t("Actions")}</TableColumn>
+          </TableHeader>
+          <TableBody emptyContent={t("No navigation items available.")}>
+            {navigationItems.map((item, index) => (
+              <TableRow
+                key={index}
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragEnter={() => handleDragEnter(index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => e.preventDefault()}
+                className="cursor-move"
+              >
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="w-4 h-4 text-gray-400" />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={item.title}
+                    onValueChange={(value) => handleTitleChange(index, value)}
+                    placeholder={t("Enter title")}
+                    size="sm"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={item.link}
+                    onValueChange={(value) => handleHrefChange(index, value)}
+                    placeholder={t("Enter link URL")}
+                    size="sm"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Select
+                    selectedKeys={[item.target]}
+                    onSelectionChange={(keys) => {
+                      const target = Array.from(keys)[0] as
+                        | TopNavigationTargetEnum.SELF
+                        | TopNavigationTargetEnum.BLANK;
+                      handleTargetChange(index, target);
+                    }}
+                    size="sm"
+                    className="min-w-24"
+                  >
+                    <SelectItem
+                      key={TopNavigationTargetEnum.SELF}
+                      value={TopNavigationTargetEnum.SELF}
+                    >
+                      {t("Same Tab")}
+                    </SelectItem>
+                    <SelectItem
+                      key={TopNavigationTargetEnum.BLANK}
+                      value={TopNavigationTargetEnum.BLANK}
+                    >
+                      {t("New Tab")}
+                    </SelectItem>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Tooltip content={t("Insert below")}>
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="light"
+                        onPress={() => handleInsertBelow(index)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={t("Delete")} color="danger">
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="light"
+                        color="danger"
+                        onPress={() => handleDelete(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </Tooltip>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <div className="flex">
+          <Button
+            color="primary"
+            onPress={handleSaveAll}
+            isLoading={isSaving}
+            isDisabled={navigationItems.length === 0}
+            size="sm"
+          >
+            {t("Save")}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  if (labelPlacement === "outside") {
+    return panelContent();
+  }
+
   return (
     <Accordion
       variant="splitted"
@@ -151,120 +280,7 @@ export const TopNavigationSettings: React.FC<TopNavigationSettingsProps> = ({
           </div>
         }
       >
-        <div className="space-y-4">
-          {/* Navigation Table */}
-          <Table
-            aria-label="Navigation items management table"
-            className="border-1 rounded-lg p-2"
-            removeWrapper
-          >
-            <TableHeader>
-              <TableColumn className="w-16">{t("Order")}</TableColumn>
-              <TableColumn className="w-1/4">{t("Title")}</TableColumn>
-              <TableColumn className="w-1/3">{t("Link")}</TableColumn>
-              <TableColumn className="w-32">{t("Target")}</TableColumn>
-              <TableColumn className="w-32">{t("Actions")}</TableColumn>
-            </TableHeader>
-            <TableBody emptyContent={t("No navigation items available.")}>
-              {navigationItems.map((item, index) => (
-                <TableRow
-                  key={index}
-                  draggable
-                  onDragStart={() => handleDragStart(index)}
-                  onDragEnter={() => handleDragEnter(index)}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={(e) => e.preventDefault()}
-                  className="cursor-move"
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <GripVertical className="w-4 h-4 text-gray-400" />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={item.title}
-                      onValueChange={(value) => handleTitleChange(index, value)}
-                      placeholder={t("Enter title")}
-                      size="sm"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={item.link}
-                      onValueChange={(value) => handleHrefChange(index, value)}
-                      placeholder={t("Enter link URL")}
-                      size="sm"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      selectedKeys={[item.target]}
-                      onSelectionChange={(keys) => {
-                        const target = Array.from(keys)[0] as
-                          | TopNavigationTargetEnum.SELF
-                          | TopNavigationTargetEnum.BLANK;
-                        handleTargetChange(index, target);
-                      }}
-                      size="sm"
-                      className="min-w-24"
-                    >
-                      <SelectItem
-                        key={TopNavigationTargetEnum.SELF}
-                        value={TopNavigationTargetEnum.SELF}
-                      >
-                        {t("Same Tab")}
-                      </SelectItem>
-                      <SelectItem
-                        key={TopNavigationTargetEnum.BLANK}
-                        value={TopNavigationTargetEnum.BLANK}
-                      >
-                        {t("New Tab")}
-                      </SelectItem>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Tooltip content={t("Insert below")}>
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          onPress={() => handleInsertBelow(index)}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </Tooltip>
-                      <Tooltip content={t("Delete")} color="danger">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          color="danger"
-                          onPress={() => handleDelete(index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          <div className="flex">
-            <Button
-              color="primary"
-              onPress={handleSaveAll}
-              isLoading={isSaving}
-              isDisabled={navigationItems.length === 0}
-              size="sm"
-            >
-              {t("Save")}
-            </Button>
-          </div>
-        </div>
+        {panelContent()}
       </AccordionItem>
     </Accordion>
   );
