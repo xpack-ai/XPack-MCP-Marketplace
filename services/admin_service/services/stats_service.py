@@ -90,16 +90,17 @@ class StatsService:
                 "id": service.id,
                 "name": service.name,
                 "short_description": service.short_description,
-                "call_count": stats_map.get(service.id, 0),
+                "call_count": stats_map.get(service.id, 0), 
                 "is_deleted": False,
             })
             # delete service.id from stats_map
-            del stats_map[service.id]
+            if service.id in stats_map:
+                del stats_map[service.id]
         drop_service_ids = []
         for key in stats_map:
             call_count = stats_map.get(key, 0)
             if call_count != 0:
-                drop_service_ids.append(key)
+                drop_service_ids.append(key) 
         # Add deleted services
         deleted_services = self.drop_mcp_service_repository.all_by_service_ids(drop_service_ids)
         for id,item in deleted_services.items():
@@ -109,7 +110,7 @@ class StatsService:
                 "short_description": item.short_description,
                 "call_count": stats_map.get(id, 0),
                 "is_deleted": True,
-            })
+            }) 
         
 
         # Sort by calls desc, then by name asc
