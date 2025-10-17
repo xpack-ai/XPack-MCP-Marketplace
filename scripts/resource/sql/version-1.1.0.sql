@@ -75,6 +75,7 @@ ALTER TABLE `user` MODIFY COLUMN `role_id` int NOT NULL COMMENT '角色 ID：0�
 
 DELETE FROM sys_config WHERE `key` = "mcp_server_prefix";
 
+
 INSERT INTO `sys_config` (`id`,`key`, `value`,`description`,`created_at`,`updated_at`)
 VALUES ('xpack-version','version', '1.1.0', 'User wallet history max count', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `description` = VALUES(`description`), `updated_at` = CURRENT_TIMESTAMP;
