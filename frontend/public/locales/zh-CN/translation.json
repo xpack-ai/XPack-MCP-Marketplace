@@ -876,5 +876,7 @@
   "or create your account": "或创建您的账户",
   "No account? Just continue—we’ll set you up.": "没有账户？继续即可，我们会为您设置。",
   "Password must be at least 6 characters": "密码必须至少6个字符",
-  "Email is required": "邮箱为必填项"
+  "Email is required": "邮箱为必填项",
+  "No servers available": "没有可用服务",
+  "(Deleted)": "(已删除)"
 }
