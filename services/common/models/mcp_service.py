@@ -67,3 +67,24 @@ class McpService(Base):
         server_onupdate=func.current_timestamp(),
         comment="Last update timestamp",
     )
+
+class DropMCPService(Base):
+    __tablename__ = "drop_mcp_service"
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        autoincrement=False,
+        comment="Primary key, service UUID",
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Service name")
+    slug_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Unique service identifier (slug format)")
+    short_description: Mapped[str] = mapped_column(String, nullable=False, comment="Brief service description")
+    long_description: Mapped[str] = mapped_column(String, nullable=True, comment="Detailed service description (Markdown)")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=True,
+        server_default=func.current_timestamp(),
+        server_onupdate=func.current_timestamp(),
+        comment="Last update timestamp",
+    )

@@ -192,7 +192,7 @@ class BillingService:
         db = next(get_db())
         try:
             service_repo = McpServiceRepository(db)
-            service = service_repo.get_by_id(service_id)
+            service = service_repo.get_by_id(service_id, force_update=True)
             
             if not service:
                 raise ValueError(f"Service not found: {service_id}")

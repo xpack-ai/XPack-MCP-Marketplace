@@ -75,6 +75,16 @@ ALTER TABLE `user` MODIFY COLUMN `role_id` int NOT NULL COMMENT 'Role ID: 0 = un
 
 DELETE FROM sys_config WHERE `key` = "mcp_server_prefix";
 
+CREATE TABLE `drop_mcp_service` (
+  `id` char(36) NOT NULL COMMENT 'Primary key, service UUID',
+  `name` varchar(255) NOT NULL COMMENT 'Service name',
+  `slug_name` varchar(255) NOT NULL COMMENT 'Unique service identifier (slug format)',
+  `short_description` text NOT NULL COMMENT 'Brief service description',
+  `long_description` longtext COMMENT 'Detailed service description (Markdown)',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Stores MCP alerady dropped service information and configurations';
+
 
 INSERT INTO `sys_config` (`id`,`key`, `value`,`description`,`created_at`,`updated_at`)
 VALUES ('xpack-version','version', '1.1.0', 'User wallet history max count', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)

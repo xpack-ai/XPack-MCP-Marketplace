@@ -9,6 +9,8 @@ from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_wallet_history_repository import UserWalletHistoryRepository
 from services.admin_service.repositories.stats_mcp_service_date_repository import StatsMcpServiceDateRepository
 from services.admin_service.repositories.mcp_service_repository import McpServiceRepository
+from services.admin_service.repositories.drop_mcp_service_repository import DropMcpServiceRepository
+
 
 class StatsService:
     def __init__(self, db: Session = SessionLocal()):
@@ -16,6 +18,7 @@ class StatsService:
         self.user_wallet_repository = UserWalletHistoryRepository(db)
         self.stats_mcp_service_date_repository = StatsMcpServiceDateRepository(db)
         self.mcp_service_repository = McpServiceRepository(db)
+        self.drop_mcp_service_repository = DropMcpServiceRepository(db)
     
     def get_registered_user_stats(self) -> dict:
         """
@@ -81,15 +84,34 @@ class StatsService:
 
         # Iterate all services, fill missing call count as 0, sort by calls desc
         services = self.mcp_service_repository.get_all()
-        result = [
-            {
+        result = []
+        for service in services:
+            result.append({
                 "id": service.id,
                 "name": service.name,
                 "short_description": service.short_description,
                 "call_count": stats_map.get(service.id, 0),
-            }
-            for service in services
-        ]
+                "is_deleted": False,
+            })
+            # delete service.id from stats_map
+            del stats_map[service.id]
+        drop_service_ids = []
+        for key in stats_map:
+            call_count = stats_map.get(key, 0)
+            if call_count != 0:
+                drop_service_ids.append(key)
+        # Add deleted services
+        deleted_services = self.drop_mcp_service_repository.all_by_service_ids(drop_service_ids)
+        for id,item in deleted_services.items():
+            result.append({
+                "id": id,
+                "name": item.name,
+                "short_description": item.short_description,
+                "call_count": stats_map.get(id, 0),
+                "is_deleted": True,
+            })
+        
+
         # Sort by calls desc, then by name asc
         result.sort(key=lambda x: (-x["call_count"], x["name"]))
         return result
