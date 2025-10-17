@@ -22,6 +22,7 @@ class UserRepository:
         user = self.get_by_id(user_id)
         if not user:
             return None
+        user.updated_at = datetime.now(timezone.utc)
         user.password = password
         self.db.commit()
         self.db.refresh(user)
@@ -32,7 +33,7 @@ class UserRepository:
         from services.common.models.user import RegisterType
 
         name = email.split("@")[0] if "@" in email else email
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         user = User(
             id=str(uuid4()),
             name=name,

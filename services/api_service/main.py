@@ -197,7 +197,7 @@ def mcp_connections_stats():
 # Create MCP Streamable HTTP routes
 # Use Starlette sub-app to handle MCP protocol's underlying SSE connections
 mcp_routes = [
-    Route("/{service_id}", endpoint=mcp.handle_sse_connection, methods=["GET"]),
+    Route("/{service_id}", endpoint=mcp.handle_sse_connection_asgi, methods=["GET"]),
     Mount("/messages/", app=mcp.get_sse_mount_handler()),
 ]
 

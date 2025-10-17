@@ -143,7 +143,7 @@ class McpServerFactory:
             return [types.TextContent(type="text", text=error_msg)]
 
         logger.info(f"Pre-deduction successful - User ID: {user_id}, Deduction amount: {pre_deduct_result.service_price}")
-
+        amount = pre_deduct_result.service_price
         # 2. Execute tool call
         db = next(get_db())
         call_success = False
@@ -162,6 +162,7 @@ class McpServerFactory:
             input_token = estimated_input_tokens
             # Calculate input token amount (prices are per million tokens)
             input_token_amount = (Decimal(str(estimated_input_tokens)) / Decimal("1000000")) * pre_deduct_result.input_token_price
+            amount = input_token_amount
         
         try:
             # Create service instance
@@ -195,6 +196,7 @@ class McpServerFactory:
                 output_token = estimated_output_tokens
                 # Calculate output token amount (prices are per million tokens)
                 output_token_amount = (Decimal(str(estimated_output_tokens)) / Decimal("1000000")) * pre_deduct_result.output_token_price
+                amount += output_token_amount
 
         except Exception as e:
             logger.error(f"Tool call failed - User ID: {user_id}, Tool: {name}: {str(e)}", exc_info=True)
@@ -214,7 +216,7 @@ class McpServerFactory:
             api_id=call_log_id,
             tool_name=name,
             input_params=json.dumps(arguments),
-            unit_price=(input_token_amount + output_token_amount).quantize(Decimal('0.000001')),
+            unit_price=amount.quantize(Decimal('0.000001')),
             input_token=Decimal(str(input_token)).quantize(Decimal('0')),
             output_token=Decimal(str(output_token)).quantize(Decimal('0')),
             charge_type=pre_deduct_result.charge_type,
