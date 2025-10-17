@@ -1,3 +1,8 @@
+"""Admin system configuration controller.
+
+Provides endpoints to read and update platform configurations, homepage content,
+and to test email settings. All responses and comments are standardized in English.
+"""
 from fastapi import APIRouter, Depends, Body
 import json
 import socket
@@ -31,32 +36,33 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 def get_homepage(
     sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
     ):
+    """Get homepage configuration including FAQ, top navigation, and embedded HTML."""
     faq = sysconfig_service.get_value_by_key(sys_config_key.KEY_FAQ) or "[]"
-    # 判断是否为空值，若非空，则json反序列化
+    # Check empty value; if not empty, deserialize JSON
     try:
-        # 数组类型
+        # Array type
         if faq.startswith("[") and faq.endswith("]"):
             faq = json.loads(faq)
         else:
-            return ResponseUtils.error("FAQ配置格式错误")
+            return ResponseUtils.error("Invalid FAQ configuration format")
     except json.JSONDecodeError:
-        return ResponseUtils.error("FAQ配置格式错误")
+        return ResponseUtils.error("Invalid FAQ configuration format")
     
 
     top_navigation = sysconfig_service.get_value_by_key(sys_config_key.KEY_TOP_NAVIGATION) or "[]"
     try:
-        # 数组类型
+        # Array type
         if top_navigation.startswith("[") and top_navigation.endswith("]"):
             top_navigation = json.loads(top_navigation)
         else:
-            return ResponseUtils.error("Top Navigation配置格式错误")
+            return ResponseUtils.error("Invalid top navigation configuration format")
     except json.JSONDecodeError:
-        return ResponseUtils.error("Top Navigation配置格式错误")
+        return ResponseUtils.error("Invalid top navigation configuration format")
     embeded_html = sysconfig_service.get_value_by_key(sys_config_key.KEY_EMBEDED_HTML,True) or "{}"
     try:
         embeded_html = json.loads(embeded_html)
     except json.JSONDecodeError:
-        return ResponseUtils.error("Embeded HTML配置格式错误")
+        return ResponseUtils.error("Invalid embedded HTML configuration format")
 
     return ResponseUtils.success(
         data={
@@ -90,7 +96,7 @@ def get_sysconfig(
 ):
     """Get all system configuration settings."""
     admin_user = user_service.get_admin_user()
-    # 批量读取配置（小表）
+    # Batch read configurations (small table)
     
     large_keys = [
         sys_config_key.KEY_ABOUT_PAGE,
@@ -103,12 +109,12 @@ def get_sysconfig(
 
     cname_a_ip = small_values.get(sys_config_key.KEY_CNAME_A_IP, "")
     if not cname_a_ip:
-        # 获取外网IP，若无法连接外网，则获取局域网IP
+        # Get public IP; if unavailable, fall back to local IP
         public_ip = get_public_ip()
         cname_a_ip = public_ip if public_ip else get_local_ip()
         sysconfig_service.set_value_by_key(sys_config_key.KEY_CNAME_A_IP, cname_a_ip,"CNAME A IP")
 
-    # 管理员用户名
+    # Admin username
     admin_username = ""
     if admin_user and admin_user.name:
         admin_username = admin_user.name
@@ -190,7 +196,7 @@ def set_sysconfig(
         email_smtp_password = ""
         email_smtp_sender = ""
 
-        # 使用 get 方法安全地获取嵌套值
+        # Safely get nested values using `.get`
         platform = body.get("platform", {})
         platform_name = platform.get("name")
         platform_logo = platform.get("logo")
@@ -222,12 +228,12 @@ def set_sysconfig(
         google_config = login.get("google", {})
         login_google_client = google_config.get("client_id")
         login_google_secret = google_config.get("client_secret")
-        login_google_enable = google_config.get("is_enabled")  # 设置默认值为 False
+        login_google_enable = google_config.get("is_enabled")  # default is False
         login_email_config = login.get("email", {})
         login_email_mode = login_email_config.get("mode")
-        login_email_is_enable = login_email_config.get("is_enabled")  # 设置默认值为 False
+        login_email_is_enable = login_email_config.get("is_enabled")  # default is False
         
-        # 获取邮件配置 - 现在从外层获取
+        # Get email configuration from outer payload
         email_config = body.get("email", {})
         email_smtp_host = email_config.get("smtp_host")
         email_smtp_port = email_config.get("smtp_port")
@@ -237,7 +243,7 @@ def set_sysconfig(
         
         
         
-        # 批量更新配置
+        # Batch update configuration
         configs = [
             (sys_config_key.KEY_PLATFORM_NAME, platform_name, "Platform name"),
             (sys_config_key.KEY_PLATFORM_LOGO, platform_logo, "Platform logo",),
@@ -262,21 +268,21 @@ def set_sysconfig(
             (sys_config_key.KEY_SOCIAL_ACCOUNT_X_URL, social_account_x_url, "X URL"),
             (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "Google login client ID"),
             (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "Google login client secret"),
-            (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "谷歌登录是否启用"),
-            (sys_config_key.KEY_EMAIL_SMTP_HOST, email_smtp_host, "邮件SMTP主机"),
-            (sys_config_key.KEY_EMAIL_SMTP_PORT, email_smtp_port, "邮件SMTP端口"),
-            (sys_config_key.KEY_EMAIL_SMTP_USER, email_smtp_user, "邮件SMTP用户名"),
-            (sys_config_key.KEY_EMAIL_SMTP_PASSWORD, email_smtp_password, "邮件SMTP密码"),
-            (sys_config_key.KEY_EMAIL_SMTP_SENDER, email_smtp_sender, "邮件发送者地址"),
-            (sys_config_key.KEY_LOGIN_EMAIL_ENABLE, login_email_is_enable, "邮件是否启用"),
-            (sys_config_key.KEY_LOGIN_EMAIL_MODE, login_email_mode, "邮件模式"),
+            (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "Google login enabled"),
+            (sys_config_key.KEY_EMAIL_SMTP_HOST, email_smtp_host, "Email SMTP host"),
+            (sys_config_key.KEY_EMAIL_SMTP_PORT, email_smtp_port, "Email SMTP port"),
+            (sys_config_key.KEY_EMAIL_SMTP_USER, email_smtp_user, "Email SMTP user"),
+            (sys_config_key.KEY_EMAIL_SMTP_PASSWORD, email_smtp_password, "Email SMTP password"),
+            (sys_config_key.KEY_EMAIL_SMTP_SENDER, email_smtp_sender, "Email sender address"),
+            (sys_config_key.KEY_LOGIN_EMAIL_ENABLE, login_email_is_enable, "Email login enabled"),
+            (sys_config_key.KEY_LOGIN_EMAIL_MODE, login_email_mode, "Email login mode"),
         ]
 
-        # 更新管理员用户名和密码
+        # Update admin username and password
         user_service.update_admin(name=admin_username, password=admin_password)
 
         for key, value, desc in configs:
-            if value is not None:  # 只更新有值的配置
+            if value is not None:  # Only update when value is not None
                 is_large = False
                 if key == sys_config_key.KEY_ABOUT_PAGE:
                     is_large = True
@@ -321,7 +327,7 @@ def set_sysconfig(
         return get_sysconfig(sysconfig_service, user_service)
 
     except Exception as e:
-        return ResponseUtils.error(f"更新系统配置失败：{str(e)}")
+        return ResponseUtils.error(f"Failed to update system configuration: {str(e)}")
 
 
 @router.post("/test_email")
@@ -333,25 +339,25 @@ def test_email_config(
     try:
         test_email = body.get("email")
         if not test_email:
-            return ResponseUtils.error("请提供测试邮箱地址")
+            return ResponseUtils.error("Please provide a test email address")
 
-        # 测试连接配置
+        # Test connection configuration
         success, message = EmailUtils.test_email_config(db)
         if not success:
             return ResponseUtils.error(message)
 
-        # 发送测试邮件
+        # Send test email
         test_success = EmailUtils.send_email(
-            db, "XPack 邮件配置测试", "这是一封测试邮件，用于验证邮件配置是否正确。如果您收到这封邮件，说明配置成功！", test_email, False
+            db, "XPack Email Configuration Test", "This is a test email to verify the email configuration. If you receive this email, the configuration is working!", test_email, False
         )
 
         if test_success:
-            return ResponseUtils.success(data={"message": "测试邮件发送成功，请检查收件箱"})
+            return ResponseUtils.success(data={"message": "Test email sent successfully, please check your inbox"})
         else:
-            return ResponseUtils.error("测试邮件发送失败")
+            return ResponseUtils.error("Failed to send test email")
 
     except Exception as e:
-        return ResponseUtils.error(f"测试邮件配置失败：{str(e)}")
+        return ResponseUtils.error(f"Failed to test email configuration: {str(e)}")
 
 
 

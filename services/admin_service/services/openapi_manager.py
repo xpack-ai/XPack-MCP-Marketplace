@@ -128,5 +128,5 @@ class OpenApiManager:
         return await HttpUtils.validate_url_accessibility(url, timeout=10)
 
 
-# 创建全局实例
+# Create global instance
 openapi_manager = OpenApiManager()

@@ -9,11 +9,13 @@ from services.admin_service.repositories.mcp_service_repository import McpServic
 from services.admin_service.repositories.mcp_tool_api_repository import McpToolApiRepository
 from services.admin_service.repositories.temp_mcp_service_repository import TempMcpServiceRepository
 from services.admin_service.repositories.temp_mcp_tool_api_repository import TempMcpToolApiRepository
-from services.common.models.mcp_service import McpService, AuthMethod, ChargeType
+from services.admin_service.repositories.drop_mcp_service_repository import DropMcpServiceRepository
+from services.common.models.mcp_service import McpService, ChargeType,DropMCPService
 from services.common.models.mcp_tool_api import McpToolApi, HttpMethod
-from services.common.models.temp_mcp_service import TempMcpService, AuthMethod as TempAuthMethod, ChargeType as TempChargeType
+from services.common.models.temp_mcp_service import TempMcpService, ChargeType as TempChargeType
 from services.common.models.temp_mcp_tool_api import TempMcpToolApi, HttpMethod as TempHttpMethod
 from services.admin_service.services.openapi_helper import OpenApiForAI
+from services.common.redis import redis_client 
 
 logger = logging.getLogger(__name__)
 
@@ -76,11 +78,40 @@ class McpManagerService:
         self.mcp_tool_api_repository = McpToolApiRepository(db)
         self.temp_mcp_service_repository = TempMcpServiceRepository(db)
         self.temp_mcp_tool_api_repository = TempMcpToolApiRepository(db)
+        self.drop_mcp_service_repository = DropMcpServiceRepository(db)
+        self.redis = redis_client
+    def _delete_service_price_cache(self, service_id: str) -> None:
+        """
+        Update wallet balance cache in Redis
+
+        Args:
+            user_id: User ID
+            new_balance: New balance
+        """
+        try:
+            cache_key = f"xpack:service:price:{service_id}"
+            self.redis.delete(cache_key)  # 5 minutes expiration
+        except Exception as e:
+            logger.warning(f"Failed to delete service price cache - Service ID: {service_id}: {str(e)}")
+
 
     def update_enabled(self, id: str, enabled: int) -> McpService:
         return self.mcp_service_repository.update_enabled(id, enabled)
 
     def delete(self, id: str) -> Optional[McpService]:
+        service = self.mcp_service_repository.get_by_id(id)
+        if not service:
+            raise ValueError("Service not found")
+        self._delete_service_price_cache(id)
+        service = self.drop_mcp_service_repository.create(DropMCPService(
+            id=id,
+            name=service.name,
+            slug_name=service.slug_name,
+            short_description=service.short_description,
+            long_description=service.long_description,
+        ))
+        if not service:
+            raise ValueError("Failed to create drop service")
         return self.mcp_service_repository.delete(id)
 
     def update(self, body: dict) -> bool:
@@ -173,25 +204,33 @@ class McpManagerService:
         
         if "base_url" in body and body["base_url"] is not None:
             existing_service.base_url = body["base_url"]
-       
         if "charge_type" in body and body["charge_type"] is not None:
             charge_type_value = body["charge_type"]
             try:
+                old_charge_type = existing_service.charge_type
                 if isinstance(charge_type_value, str):
                     existing_service.charge_type = ChargeType(charge_type_value.lower())
                 else:
                     existing_service.charge_type = charge_type_value
+                if old_charge_type != existing_service.charge_type:
+                    self._delete_service_price_cache(service_id)
             except ValueError:
                 # If the provided value is not a valid ChargeType, default to FREE
                 existing_service.charge_type = ChargeType.FREE
         match existing_service.charge_type:
             case ChargeType.PER_CALL:
                 if "price" in body and body["price"] is not None:
+                    if  body["price"] != existing_service.price:
+                        self._delete_service_price_cache(service_id)
                     existing_service.price = body["price"]
             case ChargeType.PER_TOKEN:
                 if "input_token_price" in body and body["input_token_price"] is not None:
+                    if  body["input_token_price"] != existing_service.input_token_price:
+                        self._delete_service_price_cache(service_id)
                     existing_service.input_token_price = body["input_token_price"]
                 if "output_token_price" in body and body["output_token_price"] is not None:
+                    if  body["output_token_price"] != existing_service.output_token_price:
+                        self._delete_service_price_cache(service_id)
                     existing_service.output_token_price = body["output_token_price"]
         if "tags" in body and body["tags"] is not None:
             # If provided as array, convert to string for storage

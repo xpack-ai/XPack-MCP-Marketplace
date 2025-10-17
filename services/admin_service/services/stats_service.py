@@ -9,6 +9,8 @@ from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_wallet_history_repository import UserWalletHistoryRepository
 from services.admin_service.repositories.stats_mcp_service_date_repository import StatsMcpServiceDateRepository
 from services.admin_service.repositories.mcp_service_repository import McpServiceRepository
+from services.admin_service.repositories.drop_mcp_service_repository import DropMcpServiceRepository
+
 
 class StatsService:
     def __init__(self, db: Session = SessionLocal()):
@@ -16,6 +18,7 @@ class StatsService:
         self.user_wallet_repository = UserWalletHistoryRepository(db)
         self.stats_mcp_service_date_repository = StatsMcpServiceDateRepository(db)
         self.mcp_service_repository = McpServiceRepository(db)
+        self.drop_mcp_service_repository = DropMcpServiceRepository(db)
     
     def get_registered_user_stats(self) -> dict:
         """
@@ -24,7 +27,7 @@ class StatsService:
         Returns:
             dict: Registered stats
         """
-        # 当天0点
+        # Start of day (00:00)
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         pass30 = today_start - timedelta(days=30)
         
@@ -40,7 +43,7 @@ class StatsService:
         Returns:
             dict: Deposit stats
         """
-        # 当天0点
+        # Start of day (00:00)
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         pass30 = today_start - timedelta(days=30)
         
@@ -56,7 +59,7 @@ class StatsService:
         Returns:
             dict: Call stats
         """
-        # 当天0点
+        # Start of day (00:00)
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         pass30 = today_start - timedelta(days=30)
         
@@ -75,21 +78,40 @@ class StatsService:
         """
         now = datetime.now()
         pass30 = now - timedelta(days=30)
-        # 获取统计数据（仅包含有调用的服务）
+        # Get stats (include only services with calls)
         stats = self.stats_mcp_service_date_repository.stats_call_count_group_by_service(pass30)
         stats_map = {item["service_id"]: int(item.get("count", 0)) for item in stats}
 
-        # 遍历所有服务，填充缺失调用数为 0，并按调用数降序
+        # Iterate all services, fill missing call count as 0, sort by calls desc
         services = self.mcp_service_repository.get_all()
-        result = [
-            {
+        result = []
+        for service in services:
+            result.append({
                 "id": service.id,
                 "name": service.name,
                 "short_description": service.short_description,
                 "call_count": stats_map.get(service.id, 0),
-            }
-            for service in services
-        ]
-        # 先按调用数降序，再按名称升序
+                "is_deleted": False,
+            })
+            # delete service.id from stats_map
+            del stats_map[service.id]
+        drop_service_ids = []
+        for key in stats_map:
+            call_count = stats_map.get(key, 0)
+            if call_count != 0:
+                drop_service_ids.append(key)
+        # Add deleted services
+        deleted_services = self.drop_mcp_service_repository.all_by_service_ids(drop_service_ids)
+        for id,item in deleted_services.items():
+            result.append({
+                "id": id,
+                "name": item.name,
+                "short_description": item.short_description,
+                "call_count": stats_map.get(id, 0),
+                "is_deleted": True,
+            })
+        
+
+        # Sort by calls desc, then by name asc
         result.sort(key=lambda x: (-x["call_count"], x["name"]))
         return result

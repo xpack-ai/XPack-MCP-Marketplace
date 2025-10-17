@@ -2,6 +2,8 @@ import json
 import ast
 import mcp.types as types
 from typing import List, Optional
+
+from sqlalchemy import false
 from services.common.models.mcp_tool_api import McpToolApi
 from services.common.models.mcp_service import McpService as McpServiceModel
 from services.api_service.repositories.mcp_tool_api_repository import McpToolApiRepository
@@ -246,7 +248,7 @@ class McpService:
                 return tool_api
         return None
 
-    def get_service_by_id(self, service_id: str) -> Optional[McpServiceModel]:
+    def get_service_by_id(self, service_id: str, force_update: bool = False) -> Optional[McpServiceModel]:
         """
         Get service information by service ID
         
@@ -256,9 +258,9 @@ class McpService:
         Returns:
             Optional[McpServiceModel]: Service information, returns None if not found
         """
-        return self.service_repository.get_by_id(service_id)
+        return self.service_repository.get_by_id(service_id, force_update)
     def get_service_call_params(self, service_id: str) -> dict:
-        service = self.service_repository.get_by_id(service_id)
+        service = self.service_repository.get_by_id(service_id, force_update=False)
         if not service:
             return {}
         headers = {}
@@ -270,4 +272,3 @@ class McpService:
             "base_url": service.base_url or "",
             "headers": headers
         }
-

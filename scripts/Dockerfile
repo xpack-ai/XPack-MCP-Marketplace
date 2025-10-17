@@ -4,9 +4,9 @@
 FROM  python:3.12.11-alpine3.22
 
 RUN apk add nodejs=~22 npm uv nginx
-ENV TZ=Asia/Shanghai
-RUN ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
-    && echo "Asia/Shanghai" > /etc/timezone
+# ENV TZ=Asia/Shanghai
+# RUN ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
+#     && echo "Asia/Shanghai" > /etc/timezone
 
 ARG APP XPack-MCP-Market
 ARG VERSION latest

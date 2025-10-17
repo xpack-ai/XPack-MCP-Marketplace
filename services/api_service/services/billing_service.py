@@ -66,7 +66,7 @@ class BillingService:
                         charge_type=charge_type.value
                     )
                 case ChargeType.PER_TOKEN:
-                    # 计算预估费用（按每百万Token计费）
+                    # Calculate estimated cost (charged per million tokens)
                     estimated_input_cost = (Decimal(100) / Decimal("1000000")) * input_token_price
                     estimated_output_cost = (Decimal(500) / Decimal("1000000")) * output_token_price
                     service_price = estimated_input_cost + estimated_output_cost
@@ -179,7 +179,7 @@ class BillingService:
             Tuple[Decimal, ChargeType]: Price and charge type
         """
         # Try to get from Redis cache
-        cache_key = f"service:price:{service_id}"
+        cache_key = f"xpack:service:price:{service_id}"
         cached_data = self.redis.get(cache_key)
         if cached_data:
             try:
@@ -192,7 +192,7 @@ class BillingService:
         db = next(get_db())
         try:
             service_repo = McpServiceRepository(db)
-            service = service_repo.get_by_id(service_id)
+            service = service_repo.get_by_id(service_id, force_update=True)
             
             if not service:
                 raise ValueError(f"Service not found: {service_id}")
@@ -235,7 +235,7 @@ class BillingService:
             Decimal: User balance
         """
         # Try to get from Redis cache
-        cache_key = f"wallet:balance:{user_id}"
+        cache_key = f"xpack:wallet:balance:{user_id}"
         cached_balance = self.redis.get(cache_key)
 
         if cached_balance:
@@ -273,7 +273,7 @@ class BillingService:
             user_id: User ID
             new_balance: New balance
         """
-        cache_key = f"wallet:balance:{user_id}"
+        cache_key = f"xpack:wallet:balance:{user_id}"
         self.redis.set(cache_key, str(new_balance), ex=self.WALLET_CACHE_EXPIRE)
 
     @asynccontextmanager
