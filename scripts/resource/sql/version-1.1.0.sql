@@ -32,9 +32,9 @@ SET headers = CASE
   ELSE JSON_ARRAY()
 END;
 
-ALTER TABLE `mcp_service` DROP COLUMN `auth_method`;
-ALTER TABLE `mcp_service` DROP COLUMN `auth_header`;
-ALTER TABLE `mcp_service` DROP COLUMN `auth_token`;
+-- ALTER TABLE `mcp_service` DROP COLUMN `auth_method`;
+-- ALTER TABLE `mcp_service` DROP COLUMN `auth_header`;
+-- ALTER TABLE `mcp_service` DROP COLUMN `auth_token`;
 
 
 CREATE TABLE `onboarding_task`  (
@@ -73,7 +73,7 @@ ALTER TABLE `temp_mcp_service` MODIFY COLUMN `output_token_price` decimal(10, 2)
 
 ALTER TABLE `user` MODIFY COLUMN `role_id` int NOT NULL COMMENT '角色 ID：0：未确定、1（租户）、2（租户下的普通用户）' AFTER `register_type`;
 
-DELETE FROM sys_config WHERE `key` = "mcp_server_prefix"
+DELETE FROM sys_config WHERE `key` = "mcp_server_prefix";
 
 INSERT INTO `sys_config` (`id`,`key`, `value`,`description`,`created_at`,`updated_at`)
 VALUES ('xpack-version','version', '1.1.0', 'User wallet history max count', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)

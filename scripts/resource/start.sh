@@ -39,9 +39,11 @@ nohup uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reloa
 sleep 5s
 
 nohup uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --reload > ${LOG_DIR}/api_service.log 2>&1 &
-
-cd frontend/ && nohup node server.js > ${LOG_DIR}//frontend.log 2>&1 &
+HOSTNAME=""
+cd frontend/ && nohup node server.js> ${LOG_DIR}//frontend.log 2>&1 &
 
 sleep 2s
+
+nginx
 
 tail -F ${LOG_DIR}/*.log
