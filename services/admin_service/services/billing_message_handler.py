@@ -54,6 +54,14 @@ class BillingMessageHandler:
             call_log_id = self._create_call_log(billing_message)
             if not call_log_id:
                 return False
+            
+            # Update stats_mcp_service_date record
+            # 统计按小时分桶（UTC 时区），对齐到整点
+            start_dt = billing_message.call_start_time
+            start_utc = start_dt.replace(tzinfo=timezone.utc) if start_dt.tzinfo is None else start_dt.astimezone(timezone.utc)
+            # Store as naive UTC datetime to match MySQL DATETIME behavior
+            stats_date = start_utc.replace(minute=0, second=0, microsecond=0, tzinfo=None)
+            self.stats_repo.increment(billing_message.service_id, stats_date, 1)
 
             # Process billing logic
             if billing_message.call_success and billing_message.unit_price > 0:
@@ -62,13 +70,7 @@ class BillingMessageHandler:
                     # Update record status to failed
                     self.call_log_repo.update_status(call_log_id, ProcessStatus.FAILED, "Billing processing failed")
                     return False
-            # Update stats_mcp_service_date record
-            # 统计按小时分桶（UTC 时区），对齐到整点
-            start_dt = billing_message.call_start_time
-            start_utc = start_dt.replace(tzinfo=timezone.utc) if start_dt.tzinfo is None else start_dt.astimezone(timezone.utc)
-            # Store as naive UTC datetime to match MySQL DATETIME behavior
-            stats_date = start_utc.replace(minute=0, second=0, microsecond=0, tzinfo=None)
-            self.stats_repo.increment(billing_message.service_id, stats_date, 1)
+            
             # Update record status to processed
             self.call_log_repo.update_status(call_log_id, ProcessStatus.PROCESSED)
             logger.info(f"Billing message processed successfully - User ID: {billing_message.user_id}, Tool: {billing_message.tool_name}")
@@ -125,6 +127,7 @@ class BillingMessageHandler:
         """
         try:
             log_id = str(uuid.uuid4())
+            # Calculate actual cost if call is successful
             call_log = McpCallLog(
                 id=log_id,
                 user_id=billing_message.user_id,
@@ -134,7 +137,7 @@ class BillingMessageHandler:
                 input_params=billing_message.input_params,
                 call_success=billing_message.call_success,
                 unit_price=float(billing_message.unit_price),
-                actual_cost=0.0,  # Initially 0, updated later
+                actual_cost=float(billing_message.unit_price), 
                 call_start_time=billing_message.call_start_time,
                 call_end_time=billing_message.call_end_time,
                 process_status=ProcessStatus.PENDING,

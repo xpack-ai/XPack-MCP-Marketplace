@@ -193,9 +193,11 @@ class BillingService:
         try:
             service_repo = McpServiceRepository(db)
             service = service_repo.get_by_id(service_id)
-
+            
             if not service:
                 raise ValueError(f"Service not found: {service_id}")
+            logger.info(f"Service price fetched - Service ID: {service_id}, Price: {service.price}, Input Token Price: {service.input_token_price}, Output Token Price: {service.output_token_price}, Charge Type: {service.charge_type}")
+        
             if not service.price:
                 service.price = 0 
             if not service.input_token_price:
@@ -204,7 +206,6 @@ class BillingService:
                 service.output_token_price = 0
             price = Decimal(str(service.price))
             
-    
             input_token_price = Decimal(str(service.input_token_price))
             output_token_price = Decimal(str(service.output_token_price))
             charge_type = service.charge_type

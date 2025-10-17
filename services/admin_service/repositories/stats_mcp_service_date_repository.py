@@ -97,6 +97,9 @@ class StatsMcpServiceDateRepository:
         Implementation uses MySQL's ON DUPLICATE KEY UPDATE to avoid race conditions.
         If the row does not exist, it will be inserted with call_count=inc; otherwise, call_count is increased.
         """
+        # Logger for debug purposes
+        print(f"Incrementing call count for service {service_id} on {stats_date} by {inc}")
+
         # Cast mapped table for typing compatibility with mysql_insert
         table: Table = cast(Table, StatsMcpServiceDate.__table__)
         stmt = mysql_insert(table).values(

@@ -7,6 +7,7 @@ from typing import Optional
 from datetime import datetime, timezone
 from starlette.requests import Request
 from starlette.responses import Response
+import asyncio
 from mcp.server.sse import SseServerTransport
 from services.api_service.services.mcp_server_factory import McpServerFactory
 from services.common.logging_config import get_logger
@@ -109,6 +110,119 @@ class McpController:
             'type': 'http.response.body',
             'body': response_body,
         })
+
+    async def handle_sse_connection_asgi(self, request: Request):
+        """Return an ASGI app that handles MCP SSE connections.
+
+        Starlette's Route will call this with a Request and then treat
+        the returned callable as an ASGI app. We implement the SSE handshake
+        and streaming within the returned ASGI callable using scope/receive/send.
+        """
+
+        async def asgi(scope, receive, send):
+            req = Request(scope)
+            client_ip = req.client.host if req.client else "unknown"
+            user_agent = req.headers.get("user-agent", "unknown")
+            service_id = None
+
+            try:
+                # Extract service_id from URL path (supports both ID and slug_name)
+                service_id = self._extract_service_id(req)
+                if not service_id:
+                    response_body = b"Missing service_id parameter or service not found"
+                    await send({
+                        'type': 'http.response.start',
+                        'status': 400,
+                        'headers': [
+                            [b'content-type', b'text/plain'],
+                            [b'content-length', str(len(response_body)).encode()],
+                        ],
+                    })
+                    await send({'type': 'http.response.body', 'body': response_body})
+                    return
+
+                logger.info(f"Received SSE connection request - Service ID: {service_id}, Client: {client_ip}, UA: {user_agent[:50]}...")
+
+                # Extract user ID (for billing) - must provide valid apikey
+                user_info = self._extract_user_info(req)
+                if not user_info:
+                    response_body = b"Missing or invalid apikey parameter"
+                    await send({
+                        'type': 'http.response.start',
+                        'status': 401,
+                        'headers': [
+                            [b'content-type', b'text/plain'],
+                            [b'content-length', str(len(response_body)).encode()],
+                        ],
+                    })
+                    await send({'type': 'http.response.body', 'body': response_body})
+                    return
+
+                user_id, apikey_id = user_info
+
+                # Get apikey for logging (extract first 10 characters for audit)
+                apikey = req.query_params.get("apikey", "") or req.query_params.get("authkey", "")
+                apikey_for_log = apikey[:10] if apikey else None
+
+                # Create MCP server instance (pass user_id and apikey_id for billing and logging)
+                mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
+
+                # Register connection to manager
+                connection_key = connection_manager.register_connection(service_id, user_id, client_ip)
+
+                try:
+                    # Establish SSE connection and run MCP server
+                    async with self.sse.connect_sse(scope, receive, send) as streams:
+                        logger.info(f"SSE connection established - Service ID: {service_id}, User ID: {user_id}, Client: {client_ip}")
+
+                        # Configure server initialization options
+                        init_options = mcp_server.create_initialization_options()
+                        init_options.server_name = f"mcp-service-{service_id}"
+
+                        logger.info(f"Server name set to: {init_options.server_name}")
+                        logger.info("MCP server startup complete, waiting for client messages... (ASGI endpoint)")
+
+                        try:
+                            # Run MCP server
+                            await mcp_server.run(streams[0], streams[1], init_options)
+                            logger.info(f"MCP server run completed - Service ID: {service_id}, User ID: {user_id}")
+                        except asyncio.CancelledError:
+                            # Client disconnected; treat as normal shutdown
+                            logger.info(f"SSE client disconnected - Service ID: {service_id}, User ID: {user_id}")
+                        except Exception as e:
+                            logger.error(f"Error occurred during MCP server operation: {str(e)}", exc_info=True)
+                finally:
+                    # Unregister connection
+                    connection_manager.unregister_connection(connection_key)
+
+                # End of ASGI callable; no further Response needed
+
+            except ConnectionError as e:
+                logger.warning(f"Connection error - Service ID: {service_id or 'unknown'}, Client: {client_ip}: {str(e)}")
+                response_body = b"Connection error"
+                await send({
+                    'type': 'http.response.start',
+                    'status': 503,
+                    'headers': [
+                        [b'content-type', b'text/plain'],
+                        [b'content-length', str(len(response_body)).encode()],
+                    ],
+                })
+                await send({'type': 'http.response.body', 'body': response_body})
+            except Exception as e:
+                logger.error(f"SSE connection handling failed - Service ID: {service_id or 'unknown'}, Client: {client_ip}: {str(e)}", exc_info=True)
+                response_body = f"Internal server error: {str(e)}".encode('utf-8')
+                await send({
+                    'type': 'http.response.start',
+                    'status': 500,
+                    'headers': [
+                        [b'content-type', b'text/plain'],
+                        [b'content-length', str(len(response_body)).encode()],
+                    ],
+                })
+                await send({'type': 'http.response.body', 'body': response_body})
+
+        return asgi
 
     def _extract_service_id(self, request: Request) -> Optional[str]:
         """Extract service ID from request path, supporting both ID and slug_name."""

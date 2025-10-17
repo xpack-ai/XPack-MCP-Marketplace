@@ -48,14 +48,14 @@ CREATE TABLE `onboarding_task`  (
   UNIQUE INDEX `uk`(`task_id` ASC, `user_id` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '新手引导任务表' ROW_FORMAT = DYNAMIC;
 
-CREATE TABLE `stats_mcp_service_date`  (
-  `stats_date` DATETIME NOT NULL COMMENT '统计时间（小时，UTC）',
+CREATE TABLE `stats_mcp_service_date` (
+  `stats_date` datetime NOT NULL,
   `service_id` char(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `call_count` int NOT NULL DEFAULT 0 COMMENT '调用次数',
+  `call_count` int NOT NULL DEFAULT '0' COMMENT '调用次数',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`stats_date`, `service_id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+  UNIQUE KEY `uk_stats` (`stats_date`,`service_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 
 ALTER TABLE `temp_mcp_service` ADD COLUMN `headers` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '请求头配置,[{\"name\":\"name\",\"value\":\"value\",\"description\":\"description\"}]' AFTER `auth_token`;
 
