@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class OrderInfo:
-    """订单信息数据类"""
+    """Order information data class"""
     created_time: datetime
     user_id: Optional[str] = None
     amount: Optional[float] = None
@@ -28,7 +28,7 @@ class OrderInfo:
 
 @dataclass
 class PaymentChannelConfig:
-    """支付渠道配置"""
+    """Payment channel configuration"""
     channel_id: str
     enabled: bool
     config: Dict[str, Any]
@@ -36,7 +36,7 @@ class PaymentChannelConfig:
 
 @dataclass
 class ClientStatus:
-    """客户端状态"""
+    """Client status"""
     enabled: bool
     last_check_time: datetime
     error_count: int = 0
@@ -44,57 +44,57 @@ class ClientStatus:
 
 
 class PaymentClient(ABC):
-    """支付客户端抽象基类"""
+    """Payment client abstract base class"""
     
     @abstractmethod
     def query_order_status(self, order_id: str) -> Optional[Dict[str, Any]]:
-        """查询订单状态"""
+        """Query order status"""
         pass
     
     @abstractmethod
     def parse_order_status(self, response: Dict[str, Any]) -> tuple[str, bool]:
         """
-        解析订单状态响应
+        Parse order status response
         Returns:
-            tuple[status, should_remove]: (状态描述, 是否应该从监控队列移除)
+            tuple[status, should_remove]: (status description, whether to remove from monitor queue)
         """
         pass
 
 
 class AlipayPaymentClient(PaymentClient):
-    """支付宝支付客户端"""
+    """Alipay payment client"""
     
     def __init__(self, app_id: str, app_private_key: str, alipay_public_key: str):
         self.client = AlipayClient(app_id, app_private_key, alipay_public_key)
     
     def query_order_status(self, order_id: str) -> Optional[Dict[str, Any]]:
-        """查询支付宝订单状态"""
+        """Query Alipay order status"""
         try:
             response = self.client.query_order_status(order_id)
             return response
         except Exception as e:
-            logger.error(f"查询支付宝订单 {order_id} 状态失败: {e}")
+            logger.error(f"Failed to query Alipay order {order_id} status: {e}")
             return None
     
     def parse_order_status(self, response: Dict[str, Any]) -> tuple[str, bool]:
-        """解析支付宝订单状态"""
+        """Parse Alipay order status"""
         try:
-            # 解析响应JSON
+            # Parse response JSON
             if isinstance(response, str):
                 response_data = json.loads(response)
             else:
                 response_data = response
             
-            # 获取响应内容
+            # Get response content
             alipay_response = response_data.get('alipay_trade_query_response', {})
             
             if alipay_response.get('code') != '10000':
-                logger.warning(f"支付宝订单查询失败: {alipay_response.get('msg', '未知错误')}")
+                logger.warning(f"Alipay order query failed: {alipay_response.get('msg', 'Unknown error')}")
                 return "QUERY_FAILED", False
             
             trade_status = alipay_response.get('trade_status', '')
             
-            # 根据交易状态处理
+            # Handle according to trade status
             if trade_status == 'WAIT_BUYER_PAY':
                 return "WAITING", False
             elif trade_status in ['TRADE_SUCCESS', 'TRADE_FINISHED']:
@@ -102,24 +102,24 @@ class AlipayPaymentClient(PaymentClient):
             elif trade_status in ['TRADE_CLOSED', 'TRADE_CANCELED']:
                 return "FAILED", True
             else:
-                logger.warning(f"支付宝订单未知状态: {trade_status}")
+                logger.warning(f"Unknown Alipay trade status: {trade_status}")
                 return f"UNKNOWN_{trade_status}", False
                 
         except Exception as e:
-            logger.error(f"解析支付宝订单响应失败: {e}")
+            logger.error(f"Failed to parse Alipay order response: {e}")
             return "PARSE_ERROR", False
 
 
 class WxPayPaymentClient(PaymentClient):
-    """微信支付客户端"""
+    """WeChat Pay client"""
     
     def __init__(self, app_id: str, apiv3_key: str, mch_id: str, private_key: str, cert_serial_no: str,notify_url: str):
         self.client = WxPayClient(app_id, apiv3_key, mch_id, private_key, cert_serial_no,notify_url)
     
     def query_order_status(self, order_id: str) -> Optional[Dict[str, Any]]:
-        """查询微信支付订单状态"""
+        """Query WeChat Pay order status"""
         try:
-            # 微信支付客户端是异步的，需要在事件循环中运行
+            # WeChat Pay client is async; run in event loop
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
@@ -128,15 +128,15 @@ class WxPayPaymentClient(PaymentClient):
             finally:
                 loop.close()
         except Exception as e:
-            logger.error(f"查询微信支付订单 {order_id} 状态失败: {e}")
+            logger.error(f"Failed to query WeChat Pay order {order_id} status: {e}")
             return None
     
     def parse_order_status(self, response: Dict[str, Any]) -> tuple[str, bool]:
-        """解析微信支付订单状态"""
+        """Parse WeChat Pay order status"""
         try:
             trade_state = response.get('trade_state', '')
             
-            # 根据交易状态处理
+            # Handle according to trade state
             if trade_state == 'NOTPAY':
                 return "WAITING", False
             elif trade_state == 'SUCCESS':
@@ -146,16 +146,16 @@ class WxPayPaymentClient(PaymentClient):
             elif trade_state == 'USERPAYING':
                 return "PAYING", False
             else:
-                logger.warning(f"微信支付订单未知状态: {trade_state}")
+                logger.warning(f"Unknown WeChat trade state: {trade_state}")
                 return f"UNKNOWN_{trade_state}", False
                 
         except Exception as e:
-            logger.error(f"解析微信支付订单响应失败: {e}")
+            logger.error(f"Failed to parse WeChat order response: {e}")
             return "PARSE_ERROR", False
 
 
 class OrderMonitorTask:
-    """通用支付订单状态监控服务 - 单例模式"""
+    """Generic payment order status monitoring service - singleton pattern"""
     
     _instance = None
     _lock = threading.Lock()
@@ -169,38 +169,37 @@ class OrderMonitorTask:
         return cls._instance
     
     def __init__(self):
-        # 确保只初始化一次
+        # Ensure initialization only happens once
         if hasattr(self, '_initialized') and self._initialized:
             return
 
         self.payment_clients: Dict[str, PaymentClient] = {}
-        self.client_status: Dict[str, ClientStatus] = {}  # 客户端状态管理
+        self.client_status: Dict[str, ClientStatus] = {}  # Client status management
         self.order_queue: Queue[OrderInfo] = Queue(maxsize=200)
         self.is_running = False
         self.monitor_thread: Optional[threading.Thread] = None
-        self.config_check_thread: Optional[threading.Thread] = None  # 配置检查线程
-        self.check_interval = 10  # 检查间隔10秒
-        self.config_check_interval = 60  # 配置检查间隔60秒
-        self.timeout_minutes = 6  # 超时时间6分钟
+        self.config_check_thread: Optional[threading.Thread] = None  # Configuration check thread
+        self.check_interval = 10  # Check interval: 10s
+        self.config_check_interval = 60  # Config check interval: 60s
+        self.timeout_minutes = 6  # Timeout: 6 minutes
         self._initialized = True
-        
-        logger.info("OrderMonitorTask 通用订单监控服务单例实例已创建")
+        logger.info("OrderMonitorTask singleton instance created")
     
     @classmethod
     def get_instance(cls) -> 'OrderMonitorTask':
-        """获取单例实例"""
+        """Get singleton instance"""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
     
     def _load_payment_channels(self) -> List[PaymentChannelConfig]:
-        """加载支付渠道配置"""
+        """Load payment channel configuration"""
         db = SessionLocal()
         try:
             payment_channel_service = PaymentChannelService(db)
             channels = []
             
-            # 加载支付宝配置
+            # Load Alipay config
             alipay_config = payment_channel_service.get_config("alipay")
             if alipay_config:
                 channels.append(PaymentChannelConfig(
@@ -209,7 +208,7 @@ class OrderMonitorTask:
                     config=alipay_config
                 ))
             
-            # 加载微信支付配置
+            # Load WeChat Pay config
             wechat_config = payment_channel_service.get_config("wechat")
             if wechat_config:
                 channels.append(PaymentChannelConfig(
@@ -223,24 +222,24 @@ class OrderMonitorTask:
             db.close()
     
     def _initialize_payment_clients(self, channels: List[PaymentChannelConfig]):
-        """初始化支付客户端"""
-        # 保存当前启用的客户端状态
+        """Initialize payment clients"""
+        # Save currently enabled client status
         current_enabled = {k: v.enabled for k, v in self.client_status.items()}
         
         for channel in channels:
             try:
-                # 检查客户端是否应该启用
+                # Check whether client should be enabled
                 should_enable = channel.enabled and current_enabled.get(channel.channel_id, True)
                 
                 if not should_enable:
-                    # 如果客户端被禁用，从payment_clients中移除但保留状态
+                    # If the client is disabled, remove from payment_clients but keep status
                     if channel.channel_id in self.payment_clients:
                         del self.payment_clients[channel.channel_id]
                     self.client_status[channel.channel_id] = ClientStatus(
                         enabled=False,
                         last_check_time=datetime.now()
                     )
-                    logger.info(f"{channel.channel_id} 支付客户端已禁用")
+                    logger.info(f"Payment client {channel.channel_id} is disabled")
                     continue
                 
                 if channel.channel_id == "alipay":
@@ -254,7 +253,7 @@ class OrderMonitorTask:
                         enabled=True,
                         last_check_time=datetime.now()
                     )
-                    logger.info("支付宝支付客户端初始化成功")
+                    logger.info("Alipay payment client initialized successfully")
                 
                 elif channel.channel_id == "wechat":
                     client = WxPayPaymentClient(
@@ -270,11 +269,11 @@ class OrderMonitorTask:
                         enabled=True,
                         last_check_time=datetime.now()
                     )
-                    logger.info("微信支付客户端初始化成功")
+                    logger.info("WeChat Pay client initialized successfully")
                     
             except Exception as e:
-                logger.error(f"初始化 {channel.channel_id} 支付客户端失败: {e}")
-                # 记录错误状态
+                logger.error(f"Failed to initialize {channel.channel_id} payment client: {e}")
+                # Record error status
                 if channel.channel_id in self.client_status:
                     self.client_status[channel.channel_id].error_count += 1
                     self.client_status[channel.channel_id].last_error = str(e)
@@ -288,21 +287,21 @@ class OrderMonitorTask:
     
     def add_order_to_monitor(self, order_info: Optional[OrderInfo] = None, payment_id: Optional[str] = None) -> bool:
         """
-        添加订单到监控队列
+        Add order to monitor queue
         Args:
-            order_info: 订单信息(可选)
-            payment_id: 支付订单ID(可选)
+            order_info: Order information (optional)
+            payment_id: Payment order ID (optional)
         Returns:
-            bool: 是否添加成功
+            bool: Whether added successfully
         """
         if payment_id is not None:
-            # 创建新的数据库会话来查询订单
+            # Create new DB session to query order
             db = SessionLocal()
             try:
                 user_wallet_history_service = UserWalletHistoryService(db)
                 order = user_wallet_history_service.get_order_by_id(payment_id)
                 if order is None:
-                    logger.error(f"订单 {payment_id} 不存在，无法添加到监控队列")
+                    logger.error(f"Order {payment_id} does not exist; cannot add to monitor queue")
                     return False
                 order_info = OrderInfo(
                     created_time=order.created_at,
@@ -315,78 +314,78 @@ class OrderMonitorTask:
                 db.close()
         
         if order_info is None:
-            logger.error("订单信息为空，无法添加到监控队列")
+            logger.error("Order info is empty; cannot add to monitor queue")
             return False
         
-        # 检查支付渠道是否支持且启用
+        # Check whether payment channel is supported and enabled
         if order_info.payment_channel_id is None:
-            logger.warning("支付渠道ID为空，无法添加到监控队列")
+            logger.warning("Payment channel ID is empty; cannot add to monitor queue")
             return False
             
         if (order_info.payment_channel_id not in self.client_status or 
             not self.client_status[order_info.payment_channel_id].enabled):
-            logger.warning(f"支付渠道 {order_info.payment_channel_id} 未启用，无法添加到监控队列")
+            logger.warning(f"Payment channel {order_info.payment_channel_id} not enabled; cannot add to monitor queue")
             return False
             
         try:
             self.order_queue.put_nowait(order_info)
-            logger.info(f"订单 {order_info.payment_id} ({order_info.payment_channel_id}) 已添加到监控队列")
+            logger.info(f"Order {order_info.payment_id} ({order_info.payment_channel_id}) added to monitor queue")
             return True
         except Exception as e:
-            logger.error(f"添加订单到监控队列失败: {e}")
+            logger.error(f"Failed to add order to monitor queue: {e}")
             return False
     
     def start_monitor(self) -> bool:
         """
-        启动订单状态监控
+        Start order status monitoring
         
         Returns:
-            bool: 是否启动成功
+            bool: Whether started successfully
         """
         if self.is_running:
-            logger.warning("订单监控服务已在运行中")
+            logger.warning("Order monitoring service is already running")
             return False
         
         try:
-            # 加载支付渠道配置
+            # Load payment channel configuration
             channels = self._load_payment_channels()
             if not channels:
-                logger.error("未找到可用的支付渠道配置")
+                logger.error("No available payment channel configuration found")
                 return False
             
-            # 初始化支付客户端
+            # Initialize payment clients
             self._initialize_payment_clients(channels)
             
-            # 加载待监控的订单
+            # Load pending orders
             self._load_pending_orders()
             
-            # 启动监控线程
+            # Start monitoring thread
             self.is_running = True
             self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
             self.monitor_thread.start()
             
-            # 启动配置检查线程
+            # Start configuration check thread
             self.config_check_thread = threading.Thread(target=self._config_check_loop, daemon=True)
             self.config_check_thread.start()
             
             enabled_clients = [k for k, v in self.client_status.items() if v.enabled]
-            logger.info(f"通用订单监控服务已启动，启用的支付渠道: {enabled_clients}")
+            logger.info(f"Order monitoring service started; enabled payment channels: {enabled_clients}")
             return True
             
         except Exception as e:
-            logger.error(f"启动订单监控服务失败: {e}")
+            logger.error(f"Failed to start order monitoring service: {e}")
             self.is_running = False
             return False
     
     def _load_pending_orders(self):
-        """加载待监控的订单"""
+        """Load pending orders to monitor"""
         db = SessionLocal()
         try:
             user_wallet_history_service = UserWalletHistoryService(db)
-            # 获取5分钟前的时间
+            # Get timestamp for 5 minutes ago
             start_time = datetime.now() - timedelta(minutes=5)
             
-            # 加载各个支付渠道的待处理订单
+            # Load pending orders for each payment channel
             for channel_id in self.payment_clients.keys():
                 order_list = user_wallet_history_service.order_list(channel_id, 0, start_time)
                 for order in order_list:
@@ -399,100 +398,100 @@ class OrderMonitorTask:
                     )
                     self.add_order_to_monitor(order_info=order_info)
                     
-            logger.info(f"已加载待监控订单，当前队列大小: {self.order_queue.qsize()}")
+            logger.info(f"Loaded pending orders; current queue size: {self.order_queue.qsize()}")
         finally:
             db.close()
     
     def stop_monitor(self) -> bool:
         """
-        停止订单状态监控
+        Stop order status monitoring
         
         Returns:
-            bool: 是否停止成功
+            bool: Whether stopped successfully
         """
         if not self.is_running:
-            logger.warning("订单监控服务未在运行")
+            logger.warning("Order monitoring service is not running")
             return False
             
         try:
             self.is_running = False
             
-            # 停止监控线程
+            # Stop monitoring thread
             if self.monitor_thread and self.monitor_thread.is_alive():
                 self.monitor_thread.join(timeout=10)
                 
-            # 停止配置检查线程
+            # Stop configuration check thread
             if self.config_check_thread and self.config_check_thread.is_alive():
                 self.config_check_thread.join(timeout=5)
                 
-            logger.info("通用订单监控服务已停止")
+            logger.info("Order monitoring service stopped")
             return True
         except Exception as e:
-            logger.error(f"停止订单监控服务失败: {e}")
+            logger.error(f"Failed to stop order monitoring service: {e}")
             return False
     
     def _monitor_loop(self):
-        """监控循环主逻辑"""
-        logger.info("订单监控循环开始")
+        """Main monitoring loop logic"""
+        logger.info("Order monitoring loop started")
         
         while self.is_running:
             try:
-                # 获取当前队列中的所有订单
+                # Get all orders in the current queue
                 current_orders = self._get_all_orders_from_queue()
                 if not current_orders:
                     time.sleep(self.check_interval)
                     continue
                 
-                logger.info(f"开始检查 {len(current_orders)} 个订单状态")
+                logger.info(f"Starting to check status of {len(current_orders)} orders")
                 
-                # 按支付渠道分组检查订单
+                # Group orders by payment channel for checking
                 orders_by_channel = {}
                 for order in current_orders:
                     channel_id = order.payment_channel_id
                     if channel_id is None:
-                        logger.warning(f"订单 {order.payment_id} 的支付渠道ID为空，跳过监控")
+                        logger.warning(f"Order {order.payment_id} payment channel ID is empty; skipping monitoring")
                         continue
                     if channel_id not in orders_by_channel:
                         orders_by_channel[channel_id] = []
                     orders_by_channel[channel_id].append(order)
                 
-                # 检查每个渠道的订单
+                # Check orders for each channel
                 remaining_orders = []
                 for channel_id, orders in orders_by_channel.items():
-                    # 检查客户端是否启用
+                    # Check whether client is enabled
                     if channel_id not in self.client_status or not self.client_status[channel_id].enabled:
-                        logger.warning(f"支付渠道 {channel_id} 未启用，跳过 {len(orders)} 个订单的检查")
-                        # 将订单重新放回队列等待客户端启用
+                        logger.warning(f"Payment channel {channel_id} not enabled; skipping checks for {len(orders)} orders")
+                        # Put orders back into queue while waiting for client to be enabled
                         remaining_orders.extend(orders)
                         continue
                     
-                    logger.info(f"检查 {channel_id} 渠道的 {len(orders)} 个订单")
+                    logger.info(f"Checking {len(orders)} orders for channel {channel_id}")
                     for order in orders:
                         try:
                             should_keep = self._check_single_order(order)
                             if should_keep:
                                 remaining_orders.append(order)
                         except Exception as e:
-                            logger.error(f"检查订单 {order.payment_id} 状态失败: {e}")
-                            # 出错的订单重新放回队列
+                            logger.error(f"Check status for order {order.payment_id}: {e}")
+                            # Put failed-checked orders back into the queue
                             remaining_orders.append(order)
                 
-                # 将剩余订单重新放回队列
+                # Put remaining orders back into the queue
                 for order in remaining_orders:
                     self.order_queue.put_nowait(order)
                 
-                logger.info(f"本轮检查完成，剩余 {len(remaining_orders)} 个订单继续监控")
+                logger.info(f"Round complete; {len(remaining_orders)} orders remain for monitoring")
                 
             except Exception as e:
-                logger.error(f"监控循环出现异常: {e}")
+                logger.error(f"Monitoring loop encountered an exception: {e}")
             
-            # 等待下次检查
+            # Wait for next check
             time.sleep(self.check_interval)
         
-        logger.info("订单监控循环结束")
+        logger.info("Order monitoring loop ended")
     
     def _get_all_orders_from_queue(self) -> List[OrderInfo]:
-        """从队列中获取所有订单"""
+        """Get all orders from queue"""
         orders = []
         while True:
             try:
@@ -504,42 +503,42 @@ class OrderMonitorTask:
     
     def _check_single_order(self, order: OrderInfo) -> bool:
         """
-        检查单个订单状态
+        Check single order status
         Args:
-            order: 订单信息
+            order: Order information
         Returns:
-            bool: 是否需要继续监控（True=继续，False=移除）
+            bool: Whether to continue monitoring (True=continue, False=remove)
         """
-        # 检查是否超时
+        # Check timeout
         if self._is_order_timeout(order):
-            logger.info(f"订单 {order.payment_id} 已超时，从监控队列移除")
+            logger.info(f"Order {order.payment_id} timed out; removing from monitor queue")
             self._handle_payment_failed(order)
             return False
         
-        # 获取对应的支付客户端
+        # Get the corresponding payment client
         if order.payment_channel_id is None:
-            logger.error("支付渠道ID为空，无法查询状态")
+            logger.error("Payment channel ID is empty; cannot query status")
             return False
             
         client = self.payment_clients.get(order.payment_channel_id)
         if client is None:
-            logger.error(f"未找到 {order.payment_channel_id} 支付客户端")
+            logger.error(f"Payment client for {order.payment_channel_id} not found")
             return False
         
         if order.payment_id is None:
-            logger.error("订单ID为空，无法查询状态")
+            logger.error("Order ID is empty; cannot query status")
             return False
         
         try:
-            # 查询订单状态
+            # Query order status
             response = client.query_order_status(order.payment_id)
             if response is None:
-                logger.warning(f"订单 {order.payment_id} 查询响应为空，继续监控")
+                logger.warning(f"Order {order.payment_id} query response is empty; continue monitoring")
                 return True
             
-            # 解析订单状态
+            # Parse order status
             status, should_remove = client.parse_order_status(response)
-            logger.info(f"订单 {order.payment_id} ({order.payment_channel_id}) 状态: {status}")
+            logger.info(f"Order {order.payment_id} ({order.payment_channel_id}) status: {status}")
             
             if should_remove:
                 if status == "SUCCESS":
@@ -548,26 +547,26 @@ class OrderMonitorTask:
                     self._handle_payment_failed(order)
                 return False
             else:
-                # 订单仍在等待支付，继续监控
+                # Order is still awaiting payment; continue monitoring
                 return True
                 
         except Exception as e:
-            logger.error(f"查询订单 {order.payment_id} 状态失败: {e}")
-            # 查询失败，继续监控
+            logger.error(f"Failed to query status for order {order.payment_id}: {e}")
+            # Query failed; continue monitoring
             return True
     
     def _is_order_timeout(self, order: OrderInfo) -> bool:
-        """检查订单是否超时"""
+        """Check if order timed out"""
         timeout_time = order.created_time + timedelta(minutes=self.timeout_minutes)
         return datetime.utcnow() > timeout_time
     
     def _handle_payment_success(self, order: OrderInfo):
-        """处理支付成功"""
+        """Handle payment success"""
         try:
-            logger.info(f"订单 {order.payment_id} ({order.payment_channel_id}) 支付成功")
+            logger.info(f"Order {order.payment_id} ({order.payment_channel_id}) payment succeeded")
             
             if order.payment_id is not None and order.payment_channel_id is not None:
-                # 创建新的数据库会话来处理支付回调
+                # Create new DB session to handle payment callback
                 db = SessionLocal()
                 try:
                     payment_service = PaymentService(db)
@@ -576,23 +575,23 @@ class OrderMonitorTask:
                         payment_channel_id=order.payment_channel_id,
                     )
                     if result:
-                        logger.info(f"订单 {order.payment_id} 支付成功处理完成")
+                        logger.info(f"Order {order.payment_id} payment success handling completed")
                     else:
-                        logger.error(f"订单 {order.payment_id} 支付成功处理失败")
+                        logger.error(f"Order {order.payment_id} payment success handling failed")
                 finally:
                     db.close()
             else:
-                logger.error("订单ID或支付渠道ID为空，无法处理支付成功")
+                logger.error("Order ID or payment channel ID is empty; cannot handle payment success")
         except Exception as e:
-            logger.error(f"处理订单 {order.payment_id} 支付成功时发生错误: {e}")
+            logger.error(f"Error while handling payment success for order {order.payment_id}: {e}")
 
     def _handle_payment_failed(self, order: OrderInfo):
-        """处理支付失败"""
+        """Handle payment failure"""
         try:
-            logger.info(f"订单 {order.payment_id} ({order.payment_channel_id}) 支付失败")
+            logger.info(f"Order {order.payment_id} ({order.payment_channel_id}) payment failed")
             
             if order.payment_id is not None and order.payment_channel_id is not None:
-                # 创建新的数据库会话来处理支付回调
+                # Create new DB session to handle payment callback
                 db = SessionLocal()
                 try:
                     payment_service = PaymentService(db)
@@ -602,18 +601,18 @@ class OrderMonitorTask:
                         status=2
                     )
                     if result:
-                        logger.info(f"订单 {order.payment_id} 支付失败处理完成")
+                        logger.info(f"Order {order.payment_id} payment failure handling completed")
                     else:
-                        logger.error(f"订单 {order.payment_id} 支付失败处理失败")
+                        logger.error(f"Order {order.payment_id} payment failure handling failed")
                 finally:
                     db.close()
             else:
-                logger.error("订单ID或支付渠道ID为空，无法处理支付失败")
+                logger.error("Order ID or payment channel ID is empty; cannot handle payment failure")
         except Exception as e:
-            logger.error(f"处理订单 {order.payment_id} 支付失败时发生错误: {e}")
-    
+            logger.error(f"Error while handling payment failure for order {order.payment_id}: {e}")
+
     def get_monitor_status(self) -> Dict[str, Any]:
-        """获取监控服务状态"""
+        """Get monitoring service status"""
         client_status_info = {}
         for channel_id, status in self.client_status.items():
             client_status_info[channel_id] = {
@@ -636,22 +635,22 @@ class OrderMonitorTask:
     
     def enable_client(self, channel_id: str) -> bool:
         """
-        启用指定的支付客户端
+        Enable specified payment client
         Args:
-            channel_id: 支付渠道ID
+            channel_id: Payment channel ID
         Returns:
-            bool: 是否启用成功
+            bool: Whether enabled successfully
         """
         if channel_id not in self.client_status:
-            logger.error(f"未知的支付渠道: {channel_id}")
+            logger.error(f"Unknown payment channel: {channel_id}")
             return False
         
         if self.client_status[channel_id].enabled:
-            logger.warning(f"支付客户端 {channel_id} 已经启用")
+            logger.warning(f"Payment client {channel_id} is already enabled")
             return True
         
         try:
-            # 重新加载配置并初始化客户端
+            # Reload configuration and initialize client
             channels = self._load_payment_channels()
             target_channel = None
             for channel in channels:
@@ -660,82 +659,82 @@ class OrderMonitorTask:
                     break
             
             if target_channel is None:
-                logger.error(f"未找到 {channel_id} 的配置")
+                logger.error(f"Configuration for {channel_id} not found")
                 return False
             
-            # 启用客户端状态
+            # Enable client status
             self.client_status[channel_id].enabled = True
             
-            # 重新初始化该客户端
+            # Re-initialize the client
             self._initialize_payment_clients([target_channel])
             
-            logger.info(f"支付客户端 {channel_id} 已启用")
+            logger.info(f"Payment client {channel_id} enabled")
             return True
             
         except Exception as e:
-            logger.error(f"启用支付客户端 {channel_id} 失败: {e}")
+            logger.error(f"Failed to enable payment client {channel_id}: {e}")
             self.client_status[channel_id].enabled = False
             return False
     
     def disable_client(self, channel_id: str) -> bool:
         """
-        禁用指定的支付客户端
+        Disable specified payment client
         Args:
-            channel_id: 支付渠道ID
+            channel_id: Payment channel ID
         Returns:
-            bool: 是否禁用成功
+            bool: Whether disabled successfully
         """
         if channel_id not in self.client_status:
-            logger.error(f"未知的支付渠道: {channel_id}")
+            logger.error(f"Unknown payment channel: {channel_id}")
             return False
         
         if not self.client_status[channel_id].enabled:
-            logger.warning(f"支付客户端 {channel_id} 已经禁用")
+            logger.warning(f"Payment client {channel_id} is already disabled")
             return True
         
         try:
-            # 禁用客户端状态
+            # Disable client status
             self.client_status[channel_id].enabled = False
             
-            # 从payment_clients中移除
+            # Remove from payment_clients
             if channel_id in self.payment_clients:
                 del self.payment_clients[channel_id]
             
-            logger.info(f"支付客户端 {channel_id} 已禁用")
+            logger.info(f"Payment client {channel_id} disabled")
             return True
             
         except Exception as e:
-            logger.error(f"禁用支付客户端 {channel_id} 失败: {e}")
+            logger.error(f"Failed to disable payment client {channel_id}: {e}")
             return False
     
     def _config_check_loop(self):
-        """配置检查循环 - 定时检查配置变化并重新加载客户端"""
-        logger.info("配置检查循环开始")
+        """Configuration check loop - periodically checks for config changes and reloads clients"""
+        logger.info("Configuration check loop started")
         
         while self.is_running:
             try:
-                # 等待检查间隔
+                # Wait for check interval
                 time.sleep(self.config_check_interval)
                 
                 if not self.is_running:
                     break
                 
-                logger.debug("开始检查支付渠道配置变化")
+                logger.debug("Starting to check payment channel configuration changes")
                 
-                # 重新加载配置
+                # Reload configuration
                 channels = self._load_payment_channels()
                 if not channels:
-                    logger.warning("未找到任何支付渠道配置")
+                    logger.warning("No payment channel configuration found")
                     continue
                 
-                # 检查配置是否有变化
+                # Check whether configuration changed
                 config_changed = False
                 for channel in channels:
                     if channel.channel_id not in self.client_status:
                         config_changed = True
                         break
                     
-                    # 检查启用状态是否变化
+                    # Check whether enabled state changed
                     current_enabled = self.client_status[channel.channel_id].enabled
                     if channel.enabled != current_enabled:
                         config_changed = True
@@ -743,22 +742,22 @@ class OrderMonitorTask:
                 
                 if config_changed:
                     logger.info(self.client_status)
-                    logger.info("检测到支付渠道配置变化，重新初始化客户端")
+                    logger.info("Detected payment channel configuration changes; reinitializing clients")
                     self._initialize_payment_clients(channels)
                     
-                    # 更新检查时间
+                    # Update check time
                     for channel_id in self.client_status:
                         self.client_status[channel_id].last_check_time = datetime.now()
                 else:
-                    logger.debug("支付渠道配置无变化")
+                    logger.debug("No changes in payment channel configuration")
                 
             except Exception as e:
-                logger.error(f"配置检查循环出现异常: {e}")
+                logger.error(f"Configuration check loop encountered an exception: {e}")
         
-        logger.info("配置检查循环结束")
+        logger.info("Configuration check loop ended")
     
     def get_client_list(self) -> List[Dict[str, Any]]:
-        """获取所有客户端列表及状态"""
+        """Get list of all clients and their status"""
         clients = []
         for channel_id, status in self.client_status.items():
             clients.append({

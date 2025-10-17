@@ -40,7 +40,7 @@ from services.admin_service.task import *
 setup_logging("admin_service")
 logger = get_logger(__name__)
 
-# 全局消费者实例
+# Global consumer instance
 consumer_instance = None
 consumer_thread = None
 
@@ -172,12 +172,12 @@ app.include_router(user_task.router, prefix="/api/onboarding")
 
 
 # Logging is already configured by setup_logging("admin_service")
-# 创建uploads目录（如果不存在）
+# Create uploads directory if it does not exist
 uploads_dir = "uploads"
 if not os.path.exists(uploads_dir):
     os.makedirs(uploads_dir)
 
-# 挂载静态文件目录
+# Mount static file directory
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 @app.get("/")

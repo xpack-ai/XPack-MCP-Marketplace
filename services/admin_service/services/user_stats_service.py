@@ -80,7 +80,7 @@ class UserStatsService:
             if len(columns) == 0:
                 result.append({"stats_day": date_str, "call_tool_count": 0, "amount": "0.0"})
             else:
-                #columns[1]不用科学记数法，保留六位小数
+                # columns[1] use fixed-point with six decimals, not scientific notation
                 result.append({"stats_day": date_str, "call_tool_count": columns[0], "amount": columns[1]})        
 
             # result.append({"stats_day": date_str, "call_tool_count": call_count, "amount": amount})

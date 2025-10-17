@@ -56,7 +56,7 @@ class BillingMessageHandler:
                 return False
             
             # Update stats_mcp_service_date record
-            # 统计按小时分桶（UTC 时区），对齐到整点
+            # Bucket stats by hour (UTC), aligned to full hours
             start_dt = billing_message.call_start_time
             start_utc = start_dt.replace(tzinfo=timezone.utc) if start_dt.tzinfo is None else start_dt.astimezone(timezone.utc)
             # Store as naive UTC datetime to match MySQL DATETIME behavior

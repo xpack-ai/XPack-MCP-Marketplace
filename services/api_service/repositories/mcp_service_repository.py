@@ -1,3 +1,4 @@
+"""Repository for MCP services in API service: cached reads by ID/slug."""
 from sqlalchemy.orm import Session
 from services.common.models.mcp_service import McpService
 from services.common.utils.cache_utils import CacheUtils
@@ -8,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class McpServiceRepository:
-    """MCP service repository layer for API service"""
+    """Repository for MCP services in API service: cached reads by ID/slug."""
 
     def __init__(self, db: Session):
         self.db = db
@@ -37,7 +38,7 @@ class McpServiceRepository:
         """
         Get single MCP service by slug name
         """
-        cache_key = f"mcp_service:slug:{slug_name}"
+        cache_key = f"xpakc:mcp_service:slug:{slug_name}"
 
         # Try to get from cache using SQLAlchemy-specific method
         cached_model = CacheUtils.get_sqlalchemy_cache(cache_key, McpService)

@@ -33,15 +33,15 @@ def get_config(
         try:
             faq = json.loads(faq)
         except json.JSONDecodeError:
-            return ResponseUtils.error("FAQ配置格式错误")
+            return ResponseUtils.error("Invalid FAQ configuration format")
         try:
             embeded_html = json.loads(embeded_html)
         except json.JSONDecodeError:
-            return ResponseUtils.error("Embeded HTML配置格式错误")
+            return ResponseUtils.error("Invalid embedded HTML configuration format")
         try:
             top_navigation = json.loads(top_navigation)
         except json.JSONDecodeError:
-            return ResponseUtils.error("Top Navigation配置格式错误")
+            return ResponseUtils.error("Invalid top navigation configuration format")
         # Build response data
         config_data = {
             "login": {
@@ -93,15 +93,15 @@ def get_homepage_config(db: Session = Depends(get_db)):
         try:
             faq = json.loads(faq)
         except json.JSONDecodeError:
-            return ResponseUtils.error("FAQ配置格式错误")
+            return ResponseUtils.error("Invalid FAQ configuration format")
         try:
             embeded_html = json.loads(embeded_html)
         except json.JSONDecodeError:
-            return ResponseUtils.error("Embeded HTML配置格式错误")
+            return ResponseUtils.error("Invalid embedded HTML configuration format")
         try:
             top_navigation = json.loads(top_navigation)
         except json.JSONDecodeError:
-            return ResponseUtils.error("Top Navigation配置格式错误")
+            return ResponseUtils.error("Invalid top navigation configuration format")
         config_data = {
             "faq": faq,
             "embeded_html": embeded_html,

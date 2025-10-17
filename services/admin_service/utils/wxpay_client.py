@@ -20,7 +20,7 @@ class WxPayClient:
     def __init__(self, app_id: str, apiv3_key: str, mch_id: str, private_key: str, cert_serial_no: str, notify_url: str):
         """Initialize WeChat Pay client with required parameters."""
         
-        # 验证输入参数
+        # Validate input parameters
         if not all([app_id, apiv3_key, mch_id, private_key, cert_serial_no, notify_url]):
             missing_params = []
             if not app_id: missing_params.append("app_id")
@@ -34,7 +34,7 @@ class WxPayClient:
             logger.error(error_msg)
             raise ValueError(error_msg)
         
-        # 存储配置参数
+        # Store configuration parameters
         self.app_id = app_id
         self.apiv3_key = apiv3_key
         self.mch_id = mch_id
@@ -42,21 +42,21 @@ class WxPayClient:
         self.cert_serial_no = cert_serial_no
         self.notify_url = notify_url
         
-        # 修正证书目录路径计算 - 从 services/admin_service/utils/ 向上4级到项目根目录
+        # Fix certificate directory path: go up 4 levels from services/admin_service/utils to project root
         current_dir = os.path.dirname(__file__)  # utils/
         admin_service_dir = os.path.dirname(current_dir)  # admin_service/
         services_dir = os.path.dirname(admin_service_dir)  # services/
-        project_root = os.path.dirname(services_dir)  # 项目根目录
+        project_root = os.path.dirname(services_dir)  # Project root directory
         self.cert_dir = os.path.join(project_root, 'wx_cer')
         
-        # 检查证书目录是否存在
+        # Check if certificate directory exists
         if not os.path.exists(self.cert_dir):
             logger.error(f"Certificate directory not found: {self.cert_dir}")
             logger.error(f"Please ensure wx_cer directory exists in project root")
             raise FileNotFoundError(f"Certificate directory not found: {self.cert_dir}")
         else:
             logger.info(f"Certificate directory found: {self.cert_dir}")
-            # 列出证书目录中的文件
+            # List files in certificate directory
             cert_files = os.listdir(self.cert_dir)
             logger.info(f"Certificate files: {cert_files}")
         
@@ -68,13 +68,13 @@ class WxPayClient:
             logger.info(f"Creating WeChat Pay order: {order_id}, amount: {amount}, description: {description}")
             logger.info(f"Using certificate directory: {self.cert_dir}")
             
-            # 验证金额格式 (微信支付要求金额为分，整数)
+            # Validate amount format (WeChat requires amount in cents, integer)
             amount_fen = int(amount * 100)
             if amount_fen <= 0:
                 logger.error(f"Invalid amount: {amount} (must be positive)")
                 return None
             
-            # 使用异步上下文管理器
+            # Use asynchronous context manager
             async with AsyncWeChatPay(
                 wechatpay_type=WeChatPayType.NATIVE,
                 mchid=self.mch_id,
@@ -83,17 +83,17 @@ class WxPayClient:
                 apiv3_key=self.apiv3_key,
                 appid=self.app_id,
                 notify_url=self.notify_url,
-                cert_dir=self.cert_dir,  # 使用正确的证书目录路径
+                cert_dir=self.cert_dir,  # Use correct certificate directory path
                 partner_mode=False
             ) as wxpay:
                 
-                # 调用微信支付API
+                # Call WeChat Pay API
                 code, message = await wxpay.pay(
                     out_trade_no=order_id,
                     amount={
                         "total": amount_fen,
                         "currency": "CNY"
-                    },  # 微信支付金额单位为分
+                    },  # WeChat Pay amount unit is cents
                     # amount= amount_fen,
                     description=description,
                 )
@@ -126,7 +126,7 @@ class WxPayClient:
         try:
             logger.info(f"Querying WeChat Pay order: {order_id}")
             
-            # 使用异步上下文管理器
+            # Use asynchronous context manager
             async with AsyncWeChatPay(
                 wechatpay_type=WeChatPayType.NATIVE,
                 mchid=self.mch_id,
@@ -135,7 +135,7 @@ class WxPayClient:
                 apiv3_key=self.apiv3_key,
                 appid=self.app_id,
                 notify_url=self.notify_url,
-                cert_dir=self.cert_dir,  # 使用正确的证书目录路径
+                cert_dir=self.cert_dir,  # Use correct certificate directory path
                 partner_mode=False
             ) as wxpay:
                 

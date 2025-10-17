@@ -2,10 +2,7 @@ import os
 import ssl
 import urllib3
 
-# 禁用SSL证书验证警告
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# 禁用SSL证书验证
+# Disable SSL certificate verification warnings
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:

@@ -66,7 +66,7 @@ class BillingService:
                         charge_type=charge_type.value
                     )
                 case ChargeType.PER_TOKEN:
-                    # 计算预估费用（按每百万Token计费）
+                    # Calculate estimated cost (charged per million tokens)
                     estimated_input_cost = (Decimal(100) / Decimal("1000000")) * input_token_price
                     estimated_output_cost = (Decimal(500) / Decimal("1000000")) * output_token_price
                     service_price = estimated_input_cost + estimated_output_cost

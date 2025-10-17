@@ -24,7 +24,7 @@ class StatsService:
         Returns:
             dict: Registered stats
         """
-        # 当天0点
+        # Start of day (00:00)
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         pass30 = today_start - timedelta(days=30)
         
@@ -40,7 +40,7 @@ class StatsService:
         Returns:
             dict: Deposit stats
         """
-        # 当天0点
+        # Start of day (00:00)
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         pass30 = today_start - timedelta(days=30)
         
@@ -56,7 +56,7 @@ class StatsService:
         Returns:
             dict: Call stats
         """
-        # 当天0点
+        # Start of day (00:00)
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         pass30 = today_start - timedelta(days=30)
         
@@ -75,11 +75,11 @@ class StatsService:
         """
         now = datetime.now()
         pass30 = now - timedelta(days=30)
-        # 获取统计数据（仅包含有调用的服务）
+        # Get stats (include only services with calls)
         stats = self.stats_mcp_service_date_repository.stats_call_count_group_by_service(pass30)
         stats_map = {item["service_id"]: int(item.get("count", 0)) for item in stats}
 
-        # 遍历所有服务，填充缺失调用数为 0，并按调用数降序
+        # Iterate all services, fill missing call count as 0, sort by calls desc
         services = self.mcp_service_repository.get_all()
         result = [
             {
@@ -90,6 +90,6 @@ class StatsService:
             }
             for service in services
         ]
-        # 先按调用数降序，再按名称升序
+        # Sort by calls desc, then by name asc
         result.sort(key=lambda x: (-x["call_count"], x["name"]))
         return result

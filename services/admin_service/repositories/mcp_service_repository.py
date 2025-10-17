@@ -4,11 +4,14 @@ from services.common.models.mcp_service import McpService
 from typing import Optional, Tuple, List
 
 
+"""Repository for MCP services: CRUD, pagination, and public listing."""
 class McpServiceRepository:
+    """Data access layer for McpService model."""
     def __init__(self, db: Session):
         self.db = db
 
     def update_enabled(self, id: str, enabled: int) -> McpService:
+        """Enable or disable a service by ID; raises if not found."""
         service = self.db.query(McpService).filter(McpService.id == id).first()
         if not service:
             raise ValueError("Service not found")
@@ -18,6 +21,7 @@ class McpServiceRepository:
         return service
 
     def delete(self, id: str) -> Optional[McpService]:
+        """Delete a service by ID; returns deleted entity or None."""
         service = self.db.query(McpService).filter(McpService.id == id).first()
         if not service:
             return None
@@ -26,6 +30,7 @@ class McpServiceRepository:
         return service
 
     def update(self, mcp_service: McpService) -> McpService:
+        """Update mutable fields for an existing service; returns refreshed entity."""
         existing_service = self.db.query(McpService).filter(McpService.id == mcp_service.id).first()
         if not existing_service:
             raise ValueError("Service not found")
@@ -47,12 +52,15 @@ class McpServiceRepository:
         return existing_service
 
     def get_by_id(self, id: str) -> Optional[McpService]:
+        """Get a service by primary ID."""
         return self.db.query(McpService).filter(McpService.id == id).first()
 
     def get_by_slug_name(self, slug_name: str) -> Optional[McpService]:
+        """Get a service by unique slug name."""
         return self.db.query(McpService).filter(McpService.slug_name == slug_name).first()
 
     def get_all(self) -> List[McpService]:
+        """List all services ordered by creation time descending."""
         return self.db.query(McpService).order_by(McpService.created_at.desc()).all()
 
     def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[List[McpService], int]:
@@ -66,6 +74,7 @@ class McpServiceRepository:
         return services, total
 
     def create(self, mcp_service: McpService) -> McpService:
+        """Create a service; set timestamps if missing and persist."""
         # Set timestamps explicitly if not already set
         current_time = datetime.now(timezone.utc)
         if not hasattr(mcp_service, "created_at") or mcp_service.created_at is None:

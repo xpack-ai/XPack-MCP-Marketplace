@@ -1,3 +1,4 @@
+"""Repository for managing user API keys: create, update, delete, list."""
 import uuid
 import secrets
 from datetime import datetime, timezone
@@ -7,10 +8,12 @@ from typing import Optional, List
 
 
 class UserApiKeyRepository:
+    """Repository for generating and managing user API keys."""
     def __init__(self, db: Session):
         self.db = db
 
     def create(self, user_id: str, name: str, description: str) -> UserApiKey:
+        """Create a new API key for the user with generated token."""
         now = datetime.now(timezone.utc)
         apikey = secrets.token_urlsafe(32)
         user_apikey = UserApiKey(
@@ -29,6 +32,7 @@ class UserApiKeyRepository:
         return user_apikey
 
     def update(self, id: str, name: Optional[str] = None, description: Optional[str] = None, expire_at: Optional[datetime] = None) -> UserApiKey:
+        """Update metadata for an existing API key (name, description, expiration)."""
         user_apikey = self.db.query(UserApiKey).filter(UserApiKey.id == id).first()
         if not user_apikey:
             raise ValueError("API key not found or does not belong to the user")
@@ -46,6 +50,7 @@ class UserApiKeyRepository:
         return user_apikey
 
     def delete(self, id: str) -> None:
+        """Delete API key by primary ID."""
         user_apikey = self.db.query(UserApiKey).filter(UserApiKey.id == id).first()
         if not user_apikey:
             raise ValueError("API key not found or does not belong to the user")
@@ -54,7 +59,9 @@ class UserApiKeyRepository:
         self.db.commit()
 
     def get_by_user_id(self, user_id: str) -> List[UserApiKey]:
+        """List API keys belonging to the specified user."""
         return self.db.query(UserApiKey).filter(UserApiKey.user_id == user_id).all()
     
     def get_by_id(self, id: str) -> Optional[UserApiKey]:
+        """Get API key by primary ID."""
         return self.db.query(UserApiKey).filter(UserApiKey.id == id).first()

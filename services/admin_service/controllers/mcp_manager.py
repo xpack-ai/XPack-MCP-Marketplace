@@ -1,3 +1,8 @@
+"""Admin MCP service management controller.
+
+Includes endpoints to enable/disable services, update/delete services,
+import OpenAPI definitions, and query service info and lists.
+"""
 import uuid
 import logging
 from fastapi import APIRouter, Depends, Request, Body, UploadFile, File, HTTPException, Form
@@ -50,7 +55,7 @@ def update_mcp_service_info(request: Request, body: dict = Body(...), mcp_manage
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
 
-    # 验证必须传递 ID
+    # Validate ID is required
     if not body.get("id"):
         return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
 
@@ -94,7 +99,7 @@ async def openapi_parse(
         else:
             return ResponseUtils.error(error_msg=error_msg.MISSING_URL_OR_FILE)
 
-        # 创建MCP服务
+        # Create MCP service
         service_id = mcp_manager_service.create_service_from_openapi(openapi_for_ai)
 
         result = {"service_id": service_id}
@@ -106,10 +111,10 @@ async def openapi_parse(
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
 
 
-@router.post("/openapi_parse_update", summary="openapi解析（更新）", response_model=dict)
+@router.post("/openapi_parse_update", summary="OpenAPI parse (update)", response_model=dict)
 async def openapi_parse_update(
     request: Request,
-    id: str = Form(..., description="服务ID"),
+    id: str = Form(..., description="Service ID"),
     url: Optional[HttpUrl] = Form(None, description="OpenAPI document URL (optional)"),
     file: Optional[UploadFile] = File(None, description="OpenAPI document file (JSON/YAML, optional)"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
@@ -119,11 +124,11 @@ async def openapi_parse_update(
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
 
     try:
-        # 验证必须提供URL或文件
+        # Validate URL or file must be provided
         if not url and not file:
             return ResponseUtils.error(error_msg=error_msg.MISSING_URL_OR_FILE)
 
-        # 解析OpenAPI文档
+        # Parse OpenAPI document
         if url:
             url_str = str(url)
             is_valid = await openapi_manager.validate_openapi_url(url_str)
@@ -135,7 +140,7 @@ async def openapi_parse_update(
         else:
             return ResponseUtils.error(error_msg=error_msg.MISSING_URL_OR_FILE)
 
-        # 更新服务并保存到临时表
+        # Update service and save into temporary table
         result = mcp_manager_service.update_service_from_openapi(id, openapi_for_ai)
 
         return ResponseUtils.success(data=result)
@@ -148,7 +153,7 @@ async def openapi_parse_update(
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
 
 
-@router.get("/service/info", summary="获取MCP服务信息")
+@router.get("/service/info", summary="Get MCP service information")
 def get_mcp_service_info(request: Request, id: str, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
     """Get detailed information of a specific MCP service including API list."""
     if not UserUtils.is_admin(request):
@@ -168,7 +173,7 @@ def get_mcp_service_info(request: Request, id: str, mcp_manager_service: McpMana
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
 
 
-@router.get("/service/list", summary="获取mcp服务列表")
+@router.get("/service/list", summary="Get MCP service list")
 def get_mcp_service_list(
     request: Request, page: int = 1, page_size: int = 10, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)
 ):
@@ -177,11 +182,11 @@ def get_mcp_service_list(
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
 
     try:
-        # 获取分页数据
+        # Fetch paginated data
         try:
             services, total = mcp_manager_service.get_all_paginated(page=page, page_size=page_size)
         except AttributeError:
-            # 如果方法不存在，使用非分页方式
+            # Fallback to non-paginated method when missing
             all_services = mcp_manager_service.get_all()
             total = len(all_services)
             start = (page - 1) * page_size

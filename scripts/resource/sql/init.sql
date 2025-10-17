@@ -263,15 +263,15 @@ CREATE TABLE IF NOT EXISTS `mcp_call_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Stores API call logs';
 
 CREATE TABLE IF NOT EXISTS `sys_config_large` (
-  `id` char(36) NOT NULL COMMENT '主键，UUID',
-  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置键名',
-  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置值',
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置项描述',
-  `created_at` timestamp NULL DEFAULT NULL COMMENT '记录创建时间',
-  `updated_at` timestamp NULL DEFAULT NULL COMMENT '记录最后更新时间',
+  `id` char(36) NOT NULL COMMENT 'Primary key, UUID',
+  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Configuration key name',
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Configuration value',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Configuration item description',
+  `created_at` timestamp NULL DEFAULT NULL COMMENT 'Record creation time',
+  `updated_at` timestamp NULL DEFAULT NULL COMMENT 'Record last update time',
 PRIMARY KEY (`id`) USING BTREE,
-UNIQUE KEY `uk_key` (`key`) USING BTREE COMMENT '配置键名唯一索引'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='系统参数配置表，用于存储系统级配置信息';
+UNIQUE KEY `uk_key` (`key`) USING BTREE COMMENT 'Unique index for configuration key name'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='System configuration table for storing system-level configuration information';
 
 INSERT INTO `user` (`id`, `name`, `email`, `password`, `is_active`, `is_deleted`, `register_type`, `role_id`, `created_at`, `updated_at`)
 VALUES ('admin', 'admin', 'admin@xpack.com', '25f9e794323b453885f5181f1b624d0b', 1, 0, 'inner', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)

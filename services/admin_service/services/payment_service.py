@@ -166,7 +166,7 @@ class PaymentService:
         if not user:
             logger.error(f"User with ID {user_id} not found.")
             raise ValueError("User not found.")
-        # 生成32位uuid
+        # Generate 32-character UUID
         transaction_id = str(uuid4()).replace("-", "")
         # create a new user wallet history entry for the deposit
         user_wallet_history = self.user_wallet_history_repository.add_deposit(user_id=user_id, transaction_id=transaction_id, amount=amount, payment_method="wechat")
@@ -174,7 +174,7 @@ class PaymentService:
             logger.error("Failed to create user wallet history for deposit.")
             raise RuntimeError("Failed to create payment.")
 
-        # 获取配置参数
+        # Get configuration parameters
         app_id = config.get(WxPayConfig.APP_ID)        
         apiv3_key = config.get(WxPayConfig.APIV3_KEY)
         mch_id = config.get(WxPayConfig.MCH_ID)
@@ -182,7 +182,7 @@ class PaymentService:
         cert_serial_no = config.get(WxPayConfig.CERT_SERIAL_NO)
         notify_url = config.get(WxPayConfig.NOTIFY_URL)
         
-        # 详细的配置验证
+        # Detailed configuration validation
         missing_configs = []
         if not app_id: missing_configs.append("app_id")
         if not apiv3_key: missing_configs.append("apiv3_key")
@@ -196,7 +196,7 @@ class PaymentService:
             logger.error(f"Current config keys: {list(config.keys()) if config else 'None'}")
             return None
         
-        # 验证配置值的格式
+        # Validate configuration value formats
         if not str(mch_id).isdigit():
             logger.error(f"Invalid mch_id format: {mch_id} (should be numeric)")
             return None
