@@ -869,5 +869,10 @@
   "Remote": "Remote",
   "Platform Logo": "Platform Logo",
   "Support JPG, PNG, GIF. Max size 5MB": "Support JPG, PNG, GIF. Max size 5MB",
-  "(30 days)": "(30 days)"
+  "(30 days)": "(30 days)",
+  "Sign in": "Sign in",
+  "or create your account": "or create your account",
+  "No account? Just continue—we’ll set you up.": "No account? Just continue—we’ll set you up.",
+  "Password must be at least 6 characters": "Password must be at least 6 characters",
+  "Email is required": "Email is required"
 }

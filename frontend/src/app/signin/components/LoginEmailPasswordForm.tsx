@@ -9,13 +9,14 @@ import { Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { useLogin } from "@/shared/hooks/useLogin";
 import { md5Encrypt } from "@/shared/utils/crypto";
+import i18n from "@/shared/lib/i18n";
 
 const emailPasswordSchema = z.object({
   email: z
     .string()
-    .email({ message: "Invalid email address" })
-    .min(1, { message: "Email is required" }),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+    .email({ message: i18n.t("Invalid email address") })
+    .min(1, { message: i18n.t("Email is required") }),
+  password: z.string().min(6, i18n.t("Password must be at least 6 characters")),
 });
 
 type EmailPasswordFormData = z.infer<typeof emailPasswordSchema>;
