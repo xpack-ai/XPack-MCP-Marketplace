@@ -53,6 +53,8 @@ class McpController:
 
             # Get apikey for logging (extract first 10 characters for audit)
             apikey = request.query_params.get("apikey", "")
+            if not apikey:
+                apikey = request.query_params.get("authkey","")
             apikey_for_log = apikey[:10] if apikey else None
 
             # Create MCP server instance (pass user_id and apikey_id for billing and logging)
@@ -150,8 +152,10 @@ class McpController:
         # Get apikey from URL query parameters
         apikey = request.query_params.get("apikey")
         if not apikey:
-            logger.warning("Apikey not found in URL parameters")
-            return None
+            apikey = request.query_params.get("authkey")
+            if not apikey:
+                logger.warning("Apikey not found in URL parameters")
+                return None
 
         logger.debug(f"Validating apikey: {apikey[:10]}...")  # Only log first 10 characters for debugging
 
