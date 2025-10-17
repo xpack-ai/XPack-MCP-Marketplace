@@ -142,6 +142,8 @@ class BillingMessageHandler:
                 call_end_time=billing_message.call_end_time,
                 process_status=ProcessStatus.PENDING,
                 apikey_id=billing_message.apikey_id,
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
 
             created_log = self.call_log_repo.create(call_log)
