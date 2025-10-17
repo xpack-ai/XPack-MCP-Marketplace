@@ -3,6 +3,7 @@ import logging
 import asyncio
 from uuid import uuid4
 from typing import Optional
+from decimal import Decimal
 from sqlalchemy.orm import Session
 from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_wallet_repository import UserWalletRepository
@@ -14,6 +15,7 @@ from services.admin_service.utils.wxpay_client import WxPayClient,WxPayConfig
 from services.admin_service.constants.sys_config_key import (
     KEY_PLATFORM_NAME
 )
+from services.common.redis import redis_client
 logger = logging.getLogger(__name__)
 
 
@@ -25,6 +27,7 @@ class PaymentService:
         self.user_wallet_history_repository = UserWalletHistoryRepository(db)
         self.payment_channel_service = PaymentChannelService(db)
         self.sys_config_repository = SysConfigRepository(db)
+        self.redis = redis_client
 
     def _get_stripe_config(self) -> Optional[dict]:
         """Get Stripe configuration"""
@@ -257,6 +260,7 @@ class PaymentService:
             return False
         if status == 1:
             # Add wallet balance and complete the deposit
+            
             return self._add_wallet_balance(payment_id, payment_channel_id)
         self.user_wallet_history_repository.set_status(payment_id, payment_channel_id, status)
         return True
@@ -311,6 +315,7 @@ class PaymentService:
                 )
 
                 if success:
+                    self._delete_wallet_cache(user_id)
                     # Create wallet history record after successful balance update
                     return self.user_wallet_history_repository.deposit_complete(payment_id, payment_channel_id)
                 else:
@@ -326,6 +331,20 @@ class PaymentService:
 
         logger.error(f"Failed to update balance after {max_retries} attempts for user_id {user_id}")
         return False
+
+    def _delete_wallet_cache(self, user_id: str) -> None:
+        """
+        Update wallet balance cache in Redis
+
+        Args:
+            user_id: User ID
+            new_balance: New balance
+        """
+        try:
+            cache_key = f"xpack:wallet:balance:{user_id}"
+            self.redis.delete(cache_key)  # 5 minutes expiration
+        except Exception as e:
+            logger.warning(f"Failed to delete wallet cache - User ID: {user_id}: {str(e)}")
 
     def platform_payment(self, user_id: str, amount: float, transaction_id: str, typ: str = "incr", payment_method: str = "platform",  max_retries: int = 3) -> bool:
         """
@@ -389,7 +408,7 @@ class PaymentService:
                             self.user_wallet_history_repository.set_balance(
                                 user_id=user_id, amount=amount, payment_method=payment_method, transaction_id=transaction_id,status=1
                             )
-                        
+                        self._delete_wallet_cache(user_id)
                         logger.info(f"Successfully updated balance for user_id {user_id}: {current_wallet.balance} -> {new_balance}")
                         return True
                         

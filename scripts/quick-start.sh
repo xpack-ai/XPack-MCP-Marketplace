@@ -39,8 +39,7 @@ MYSQL_DATA_MOUNT="/var/lib/xpack/mysql"
 REDIS_PASSWORD="redis_6sJZDm"
 REDIS_MAP_PORT=6379
 
-XPACK_MCP_MARKET_WEB_MAP_PORT=3000
-XPACK_MCP_MARKET_MCP_MAP_PORT=8002
+XPACK_MCP_MARKET_MAP_PORT=3000
 
 RABBITMQ_USER="rabbitmq"
 RABBITMQ_PASSWORD="rabbitmq_Gs123dA"
@@ -881,14 +880,13 @@ upgrade_xpack_mcp_market() {
 run_xpack_mcp_market() {
   imageName=$(download_package_docker "program.xpack_mcp_market")
   dockerCmd="docker run -dt --name ${XPACK_MCP_MARKET_CONTAINER_NAME} --restart=always --privileged=true \
-  --network=${NETWORK_NAME} -p ${XPACK_MCP_MARKET_WEB_MAP_PORT}:3000 -p ${XPACK_MCP_MARKET_MCP_MAP_PORT}:8002 \
+  --network=${NETWORK_NAME} -p ${XPACK_MCP_MARKET_MAP_PORT}:80 \
   ${imageName}"
   echo -e `${dockerCmd}`
   
-  write_env_var ${ENV_XPACK_MCP_MARKET_WEB_PORT} ${XPACK_MCP_MARKET_WEB_MAP_PORT}
-  write_env_var ${ENV_XPACK_MCP_MARKET_MCP_PORT} ${XPACK_MCP_MARKET_MCP_MAP_PORT}
+  write_env_var ${ENV_XPACK_MCP_MARKET_WEB_PORT} ${XPACK_MCP_MARKET_MAP_PORT}
 
-  wait_for "XPACK MCP MARKET" "curl -s -o /dev/null http://127.0.0.1:${XPACK_MCP_MARKET_WEB_MAP_PORT}"
+  wait_for "XPACK MCP MARKET" "curl -s -o /dev/null http://127.0.0.1:${XPACK_MCP_MARKET_MAP_PORT}"
 }
 
 install_xpack_mcp_market() {
@@ -951,14 +949,12 @@ print_xpack_mcp_market_info() {
 
   
   webPort=$(read_env_var ${ENV_XPACK_MCP_MARKET_WEB_PORT})
-  mcpPort=$(read_env_var ${ENV_XPACK_MCP_MARKET_MCP_PORT})
   echo_pass "XPack MCP Market has run successfully. Version is ${XPACK_VERSION}."
   echo_info "The Web UI information is as follows:"
   echo_info "Homepage: http://$(read_env_var ${ENV_EXTERNAL_IP}):${webPort}"
   echo_info "Admin dashboard: http://$(read_env_var ${ENV_EXTERNAL_IP}):${webPort}/admin"
   echo_info "Admin Username: admin"
   echo_info "Admin Password: 123456789"
-  echo_info "MCP endpoint: http://$(read_env_var ${ENV_EXTERNAL_IP}):${mcpPort}"
 }
 
 valid_port() {

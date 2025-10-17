@@ -112,7 +112,6 @@ class McpServerFactory:
             List[types.Content]: Execution result
         """
         call_start_time = datetime.now(timezone.utc)
-        call_log_id = str(uuid.uuid4())
 
         logger.info(f"Received tool call request with billing - User ID: {user_id}, Service ID: {service_id}, Tool name: {name}")
         logger.debug(f"Tool arguments: {arguments}")
@@ -124,10 +123,29 @@ class McpServerFactory:
             error_msg = f"Billing check failed: {pre_deduct_result.message}"
 
             # Send failed billing message
+            # Lookup tool API id for logging
+            api_id_for_log = None
+            db_lookup = next(get_db())
+            try:
+                mcp_service = self._create_mcp_service(db_lookup)
+                tool_cfg = mcp_service.get_tool_by_name(service_id, name)
+                if tool_cfg:
+                    api_id_for_log = tool_cfg.id
+                else:
+                    logger.error(f"Unknown tool for billing log: {name}")
+            except Exception as lookup_err:
+                logger.error(f"Failed to lookup tool API id for billing log: {lookup_err}")
+            finally:
+                db_lookup.close()
+
+            # If tool API id not found, skip sending billing message to avoid FK errors
+            if not api_id_for_log:
+                return [types.TextContent(type="text", text=error_msg)]
+
             call_log = ApiCallLogInfo(
                 user_id=user_id,
                 service_id=service_id,
-                api_id=call_log_id,
+                api_id=api_id_for_log,
                 tool_name=name,
                 input_params=json.dumps(arguments),
                 unit_price=pre_deduct_result.service_price,
@@ -163,18 +181,18 @@ class McpServerFactory:
             # Calculate input token amount (prices are per million tokens)
             input_token_amount = (Decimal(str(estimated_input_tokens)) / Decimal("1000000")) * pre_deduct_result.input_token_price
             amount = input_token_amount
-        
+
+        # Create service instance and find tool configuration before try/except
+        mcp_service = self._create_mcp_service(db)
+        tool_config = mcp_service.get_tool_by_name(service_id, name)
+        if not tool_config:
+            error_msg = f"Unknown tool: {name}"
+            logger.error(error_msg)
+            # Close DB and return error without sending billing message to avoid FK violation
+            db.close()
+            return [types.TextContent(type="text", text=error_msg)]
+
         try:
-            # Create service instance
-            mcp_service = self._create_mcp_service(db)
-
-            # Find tool configuration
-            tool_config = mcp_service.get_tool_by_name(service_id, name)
-            if not tool_config:
-                error_msg = f"Unknown tool: {name}"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
-
             logger.info(f"Found tool configuration: {tool_config.name}")
 
             # Get service authentication info
@@ -210,22 +228,24 @@ class McpServerFactory:
 
         # 3. Send billing message
         call_end_time = datetime.now(timezone.utc)
-        call_log = ApiCallLogInfo(
-            user_id=user_id,
-            service_id=service_id,
-            api_id=call_log_id,
-            tool_name=name,
-            input_params=json.dumps(arguments),
-            unit_price=amount.quantize(Decimal('0.000001')),
-            input_token=Decimal(str(input_token)).quantize(Decimal('0')),
-            output_token=Decimal(str(output_token)).quantize(Decimal('0')),
-            charge_type=pre_deduct_result.charge_type,
-            call_start_time=call_start_time,
-            call_end_time=call_end_time,
-            apikey_id=apikey_id,
-        )
+        # Send billing message only when tool_config was found (api_id exists)
+        if tool_config:
+            call_log = ApiCallLogInfo(
+                user_id=user_id,
+                service_id=service_id,
+                api_id=tool_config.id,
+                tool_name=name,
+                input_params=json.dumps(arguments),
+                unit_price=amount.quantize(Decimal('0.000001')),
+                input_token=Decimal(str(input_token)).quantize(Decimal('0')),
+                output_token=Decimal(str(output_token)).quantize(Decimal('0')),
+                charge_type=pre_deduct_result.charge_type,
+                call_start_time=call_start_time,
+                call_end_time=call_end_time,
+                apikey_id=apikey_id,
+            )
 
-        await self.billing_service.send_billing_message(call_log, call_success, call_end_time)
+            await self.billing_service.send_billing_message(call_log, call_success, call_end_time)
         logger.info(f"Billing message sent - User ID: {user_id}, Tool: {name}, Success: {call_success}")
 
         # Ensure return type is correct

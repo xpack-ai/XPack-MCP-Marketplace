@@ -241,7 +241,7 @@ class BillingMessageHandler:
             new_balance: New balance
         """
         try:
-            cache_key = f"wallet:balance:{user_id}"
+            cache_key = f"xpack:wallet:balance:{user_id}"
             self.redis.set(cache_key, str(new_balance), ex=300)  # 5 minutes expiration
         except Exception as e:
             logger.warning(f"Failed to update wallet cache - User ID: {user_id}: {str(e)}")

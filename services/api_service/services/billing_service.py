@@ -179,7 +179,7 @@ class BillingService:
             Tuple[Decimal, ChargeType]: Price and charge type
         """
         # Try to get from Redis cache
-        cache_key = f"service:price:{service_id}"
+        cache_key = f"xpack:service:price:{service_id}"
         cached_data = self.redis.get(cache_key)
         if cached_data:
             try:
@@ -235,7 +235,7 @@ class BillingService:
             Decimal: User balance
         """
         # Try to get from Redis cache
-        cache_key = f"wallet:balance:{user_id}"
+        cache_key = f"xpack:wallet:balance:{user_id}"
         cached_balance = self.redis.get(cache_key)
 
         if cached_balance:
@@ -273,7 +273,7 @@ class BillingService:
             user_id: User ID
             new_balance: New balance
         """
-        cache_key = f"wallet:balance:{user_id}"
+        cache_key = f"xpack:wallet:balance:{user_id}"
         self.redis.set(cache_key, str(new_balance), ex=self.WALLET_CACHE_EXPIRE)
 
     @asynccontextmanager
