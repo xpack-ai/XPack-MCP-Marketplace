@@ -6,12 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { StepState } from "../page";
 import { useTranslation } from "@/shared/lib/useTranslation";
+import i18n from "@/shared/lib/i18n";
 
 const emailSchema = z.object({
   email: z
     .string()
-    .email({ message: "Invalid email address" })
-    .min(1, { message: "Email is required" }),
+    .email({ message: i18n.t("Invalid email address") })
+    .min(1, { message: i18n.t("Email is required") }),
 });
 
 type EmailFormData = z.infer<typeof emailSchema>;
