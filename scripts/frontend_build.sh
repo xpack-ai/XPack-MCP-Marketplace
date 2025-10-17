@@ -72,7 +72,6 @@ clean_build_cache() {
 frontend_build() {
     echo_info "Begin frontend build..."
     cd "${FRONTEND_DIR}" || exit 1
-    export NEXT_PUBLIC_API_URL=http://127.0.0.1:8001
     echo_debug "Running command: pnpm install --frozen-lockfile"
     pnpm install --frozen-lockfile || exit 1
     
