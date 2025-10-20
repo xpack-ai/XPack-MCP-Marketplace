@@ -44,6 +44,7 @@ export interface TopServiceItem {
   name: string; // server name
   short_description: string; // short description
   call_count: number; // call count
+  is_deleted: boolean; //It means the server was deleted.
 }
 
 // admin analytics data

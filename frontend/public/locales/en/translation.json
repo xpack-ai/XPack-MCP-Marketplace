@@ -874,5 +874,7 @@
   "or create your account": "or create your account",
   "No account? Just continue—we’ll set you up.": "No account? Just continue—we’ll set you up.",
   "Password must be at least 6 characters": "Password must be at least 6 characters",
-  "Email is required": "Email is required"
+  "Email is required": "Email is required",
+  "No servers available": "No servers available",
+  "(Deleted)": "(Deleted)"
 }

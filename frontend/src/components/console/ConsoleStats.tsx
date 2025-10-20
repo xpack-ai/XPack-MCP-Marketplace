@@ -282,10 +282,14 @@ const ConsoleStats: React.FC = () => {
                           {index + 1}
                         </div>
                         <div className="flex flex-col items-start flex-1 overflow-hidden">
-                          <span className="truncate w-full">
-                            {" "}
-                            {service.name}
-                          </span>
+                          <div className="flex gap-1 w-full">
+                            <span className="text-danger-500">
+                              {service.is_deleted ? t("(Deleted)") : ""}
+                            </span>
+                            <span className="truncate w-full flex-1">
+                              {service.name}
+                            </span>
+                          </div>
                           <span className="text-xs text-gray-500 truncate w-full">
                             {service.short_description}
                           </span>

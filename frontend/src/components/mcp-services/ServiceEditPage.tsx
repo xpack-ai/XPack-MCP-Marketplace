@@ -197,7 +197,8 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
     const hasBasicInfo =
       formData.name.trim() &&
       formData.short_description?.trim() &&
-      formData.slug_name?.trim();
+      formData.slug_name?.trim() &&
+      formData.base_url?.trim();
 
     // if free, no need to validate price
     if (formData.charge_type === ChargeType.Free) {
