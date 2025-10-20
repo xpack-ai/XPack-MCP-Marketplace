@@ -141,8 +141,7 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
       networks:
         - xpack
       ports:
-        - "3000:3000"
-        - "8002:8002"
+        - "8000:80"       # Map port 8000 of the container to port 80 of the host, if you want to access XPack-MCP-Market in your browser at port 8000
       depends_on:
         - xpack-mysql
         - xpack-redis
@@ -190,9 +189,9 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 
   <br>
 
-  4. Access `XPack-MCP-Market` in your browser at port 3000
+  4. Access `XPack-MCP-Market` in your browser at port 8000
 
-  * **Admin User Login Address**: http://{IP}:3000/admin
+  * **Admin User Login Address**: http://{IP}:8000/admin
   * **Admin User**: admin
   * **Admin Password**: 123456789
 </details>
