@@ -100,7 +100,7 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 
 支持系统包括：
 - CentOS 7.9 / 8.5
-- Ubuntu 20.04 / 22.04
+- Ubuntu 20.04 / 22.04 / 24.04
 - Debian 12.4
 - 阿里云 Linux 2.1903 / 3.2104
 
@@ -125,7 +125,7 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
   docker-compose up -d
   ```
 
-  4. 打开浏览器访问 `http://localhost:3000` 使用平台
+  4. 打开浏览器访问 `http://localhost:8000` 使用平台
 
 </details>
 

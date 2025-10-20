@@ -39,7 +39,7 @@ MYSQL_DATA_MOUNT="/var/lib/xpack/mysql"
 REDIS_PASSWORD="redis_6sJZDm"
 REDIS_MAP_PORT=6379
 
-XPACK_MCP_MARKET_MAP_PORT=3000
+XPACK_MCP_MARKET_MAP_PORT=8000
 
 RABBITMQ_USER="rabbitmq"
 RABBITMQ_PASSWORD="rabbitmq_Gs123dA"
@@ -1064,8 +1064,9 @@ operate() {
       Install_Deb_Pack
     fi
     write_ip_env
-    sleep 5s
+    #sleep 5s
     echo_info "start docker..."
+    systemctl reset-failed docker.service
     systemctl start docker
     echo_info "start network..."
     

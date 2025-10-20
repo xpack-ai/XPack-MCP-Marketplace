@@ -212,8 +212,16 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
   > Requirements:
   > - Node >= 22.x
   > - Pnpm >= 10.x
-  
-  1. Execute the frontend build script
+  1. Configure environment variable NEXT_PUBLIC_API_URL:
+  ```
+  vi frontend/.env
+  ```
+
+  File content:
+  ```
+  NEXT_PUBLIC_API_URL=http://127.0.0.1:8001
+  ```
+  2. Execute the frontend build script
   ```
   cd scripts && ./frontend_build.sh && cd ../
   ```
@@ -269,7 +277,7 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
   ```
   ### Docker Build
   ```
-  docker build -t xpack-mcp-market --build-arg APP=xpack-mcp-market --build-arg VERSION=1.0.0 -f ./scripts/Dockerfile ./
+  docker build -t xpack-mcp-market --build-arg APP=xpack-mcp-market --build-arg VERSION=1.1.0 -f ./scripts/Dockerfile ./
   ```
 </details>
 
