@@ -135,8 +135,7 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
       networks:
         - xpack
       ports:
-        - "3000:3000"
-        - "8002:8002"
+        - "8000:80"
       depends_on:
         - xpack-mysql
         - xpack-redis
@@ -183,8 +182,8 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
 
   <br>
 
-  4. ブラウザでポート 3000 にアクセス
-  * **管理画面ログイン**: http://{IP}:3000/admin-signin  
+  4. ブラウザでポート 8000 にアクセス
+  * **管理画面ログイン**: http://{IP}:8000/admin-signin  
   * **管理ユーザー**: admin  
   * **管理パスワード**: 123456789
 </details>

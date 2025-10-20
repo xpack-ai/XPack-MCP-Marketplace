@@ -136,8 +136,7 @@ curl -sSO https://xpack.ai/install/quick-start.sh; bash quick-start.sh
       networks:
         - xpack
       ports:
-        - "3000:3000"
-        - "8002:8002"
+        - "8000:80"
       depends_on:
         - xpack-mysql
         - xpack-redis
