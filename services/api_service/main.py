@@ -102,7 +102,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # MCP clients may come from different domains
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],  # Add OPTIONS for preflight requests
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],  # 添加 DELETE 支持 StreamableHTTP 终止
     allow_headers=["*"],
     expose_headers=["*"],  # Expose all response headers for SSE reconnection
 )
@@ -197,8 +197,9 @@ def mcp_connections_stats():
 # Create MCP Streamable HTTP routes
 # Use Starlette sub-app to handle MCP protocol's underlying SSE connections
 mcp_routes = [
-    Route("/{service_id}", endpoint=mcp.handle_sse_connection_asgi, methods=["GET"]),
-    Mount("/messages/", app=mcp.get_sse_mount_handler()),
+    Route("/{service_id}", endpoint=mcp.handle_sse_connection_asgi, methods=["GET"]),  # 保留原有 SSE GET
+    Mount("/messages/", app=mcp.get_sse_mount_handler()),  # 保留原有 SSE POST 挂载
+    Route("/{service_id}/streamable-http", endpoint=mcp.handle_streamable_http_asgi, methods=["GET", "POST", "DELETE"]),  # 新增 StreamableHTTP 路由
 ]
 
 mcp_app = Starlette(routes=mcp_routes)

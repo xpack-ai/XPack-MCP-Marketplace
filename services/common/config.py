@@ -73,3 +73,5 @@ class Config:
         "/uploads/",
         "/api/common/"
     ]
+    MCP_SESSION_IDLE_TTL_SECONDS = int(os.getenv("MCP_SESSION_IDLE_TTL_SECONDS", 900))
+    MCP_SESSION_CLEANUP_INTERVAL_SECONDS = int(os.getenv("MCP_SESSION_CLEANUP_INTERVAL_SECONDS", 60))
