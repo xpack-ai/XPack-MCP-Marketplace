@@ -27,12 +27,12 @@ class McpController:
 
     def __init__(self):
         self.sse = SseServerTransport("/messages/")
-        # StreamableHTTP 会话持久化：按 (service_id, user_id) 维度保存传输与服务器任务
+        # StreamableHTTP session persistence: store transport and server task keyed by (service_id, user_id)
         self._http_transports: dict[str, StreamableHTTPServerTransport] = {}
         self._http_server_tasks: dict[str, asyncio.Task] = {}
         self._http_servers: dict[str, Server] = {}
         self.server_factory = McpServerFactory()
-        # 会话回收：空闲时间记录与后台清理任务
+        # Session recycling: track idle time and run a background cleanup task
         self._session_last_activity: dict[str, float] = {}
         self._session_gc_task: Optional[asyncio.Task] = None
         self._session_gc_stop_event = asyncio.Event()
@@ -128,8 +128,8 @@ class McpController:
     async def handle_sse_connection_asgi(self, request: Request):
         """Return an ASGI app that handles MCP SSE connections.
 
-        Starlette 的 Route 会传入一个 Request，然后将返回的可调用对象视为 ASGI 应用。
-        我们在返回的 ASGI 可调用中完成 SSE 握手，并运行 MCP 服务器。
+        Starlette Route passes a Request and treats the returned callable as an ASGI app.
+        The returned ASGI callable performs the SSE handshake and runs the MCP server.
         """
 
         async def asgi(scope, receive, send):
@@ -234,8 +234,9 @@ class McpController:
     async def handle_streamable_http_asgi(self, request: Request):
         """Return an ASGI app that handles MCP Streamable HTTP (GET/POST/DELETE).
 
-        将请求交由StreamableHTTP的handle_request处理；同时使用持久化的transport与server，
-        让 GET/POST/DELETE 在同一会话中交互，保证工具/资源列表等请求能返回到相同的 SSE 流。
+        Delegate requests to StreamableHTTP's handle_request; use persistent transport and server
+        so GET/POST/DELETE interact within the same session, ensuring tools/resources queries
+        return to the same SSE stream.
         """
 
         async def asgi(scope, receive, send):
@@ -528,7 +529,7 @@ class McpController:
                     idle = (now - last) > self._session_idle_ttl
                     task = self._http_server_tasks.get(key)
                     active_task = task is not None and not task.done()
-                    # 仅在无活动任务时才按TTL清理，避免中断活跃的SSE会话
+                    # Only TTL-clean when there is no active task, to avoid killing active SSE sessions
                     if transport.is_terminated or (idle and not active_task):
                         stale_keys.append(key)
                 for key in stale_keys:
