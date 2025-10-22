@@ -876,5 +876,6 @@
   "Password must be at least 6 characters": "Password must be at least 6 characters",
   "Email is required": "Email is required",
   "No servers available": "No servers available",
-  "(Deleted)": "(Deleted)"
+  "(Deleted)": "(Deleted)",
+  "Transport Type": "Transport Type"
 }

@@ -12,6 +12,7 @@ import { Navigation } from "./Navigation";
 import { Footer } from "./Footer";
 import { usePlatformConfig } from "@/shared/contexts/PlatformConfigContext";
 import { NavigationItem } from "@/shared/components/Navigation";
+import { ServerConfig } from "@/shared/components/marketplace/ServerConfig";
 
 interface DetailProps {
   product: ServiceData;
@@ -174,40 +175,11 @@ export const Detail: React.FC<DetailProps> = ({
                       </h3>
                     </div>
                     {/* Code Snippet */}
-                    <Card className="w-full max-w-2xl bg-black text-white p-2 sm:p-4 rounded-lg relative z-10">
-                      <div className="text-left font-mono">
-                        <div className="flex items-center gap-2 mb-2 justify-between">
-                          <Chip className="text-white" size="sm" variant="flat">
-                            {platformConfig?.name} MCP
-                          </Chip>
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="flat"
-                            className="min-w-6 w-6 h-6 p-0 text-white"
-                            onPress={onCopy}
-                            aria-label={t("Copy code")}
-                          >
-                            <Copy size={14} />
-                          </Button>
-                        </div>
-                        <pre className="p-2 sm:p-4 rounded-md text-xs overflow-x-auto">
-                          <code className="text-gray-300 whitespace-pre-wrap">
-                            {`{
-  "mcpServers": {
-    "${mcpName}": {
-      "type": "sse",
-      "autoApprove":"all",
-      "url": "${url}?authkey=`}
-                            <span className="text-success">{`{Your-${platformConfig?.name}-Auth-Key}`}</span>
-                            {`"
-    }
-  }
-}`}
-                          </code>
-                        </pre>
-                      </div>
-                    </Card>
+                    <ServerConfig
+                      mcpName={mcpName}
+                      url={url}
+                      className="w-full max-w-2xl"
+                    />
                   </CardBody>
                 </Card>
               </div>

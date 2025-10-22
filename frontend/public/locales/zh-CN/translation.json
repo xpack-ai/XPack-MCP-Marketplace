@@ -878,5 +878,6 @@
   "Password must be at least 6 characters": "密码必须至少6个字符",
   "Email is required": "邮箱为必填项",
   "No servers available": "没有可用服务",
-  "(Deleted)": "(已删除)"
+  "(Deleted)": "(已删除)",
+  "Transport Type": "传输方式"
 }
