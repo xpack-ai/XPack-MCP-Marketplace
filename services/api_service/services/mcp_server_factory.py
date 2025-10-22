@@ -50,6 +50,11 @@ class McpServerFactory:
             """Return available tools list for this service"""
             return await self._handle_list_tools(service_id)
 
+        # Register resources list handler (optional, return empty when not configured)
+        @app.list_resources()
+        async def list_resources() -> List[types.Resource]:
+            return []
+
         # Register tool call handler
         @app.call_tool()
         async def call_tool(name: str, arguments: dict) -> List[types.Content]:
