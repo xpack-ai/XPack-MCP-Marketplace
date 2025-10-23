@@ -282,28 +282,36 @@ class McpController:
                 user_id, apikey_id = user_info
                 session_key = f"{service_id}:{user_id}"
 
-                # Register connection to manager（便于统计与审计）
-                connection_key = connection_manager.register_connection(service_id, user_id, client_ip)
+                # Build connection key for lifecycle management
+                connection_key = f"{service_id}:{user_id}:{client_ip}"
 
                 try:
-                    # 获取（或创建）持久化的 StreamableHTTP 传输与 MCP 服务器
+                    # Get or create a persistent StreamableHTTP transport and MCP server
                     transport = await self._ensure_http_session(session_key, service_id, user_id, apikey_id)
 
-                    # 记录会话活跃
+                    # Note session activity
                     self._note_session_activity(session_key)
 
-                    # 将请求交由 transport 处理；若是 GET，将建立 SSE；若是 POST，将发送 JSON-RPC；DELETE 将终止会话
+                    # Register only on GET (SSE handshake); POST just updates activity
+                    if req.method == "GET":
+                        connection_manager.register_connection(service_id, user_id, client_ip)
+                    elif req.method == "POST":
+                        connection_manager.update_activity(connection_key)
+
+                    # Delegate request to transport; GET establishes SSE; POST sends JSON-RPC; DELETE terminates the session
                     await transport.handle_request(scope, receive, send)
 
-                    # 处理完成后更新活跃时间（避免长处理后的误清理）
+                    # Update activity after handling (avoid cleaning long-running processing)
                     self._note_session_activity(session_key)
 
-                    # 如果会话已经终止，立即清理资源
+                    # If the session has terminated or DELETE called, clean up and unregister
                     if transport.is_terminated or req.method == "DELETE":
                         await self._cleanup_http_session(session_key)
+                        connection_manager.unregister_connection(connection_key)
                 finally:
-                    # Unregister connection（按请求粒度解除登记）
-                    connection_manager.unregister_connection(connection_key)
+                    # Unregister when SSE GET disconnects
+                    if req.method == "GET":
+                        connection_manager.unregister_connection(connection_key)
 
             except ConnectionError as e:
                 logger.warning(f"Connection error - Service ID: {service_id or 'unknown'}, Client: {client_ip}: {str(e)}")
@@ -335,20 +343,20 @@ class McpController:
     async def _ensure_http_session(self, session_key: str, service_id: str, user_id: str, apikey_id: str) -> StreamableHTTPServerTransport:
         """Ensure a persistent StreamableHTTP transport and MCP server exist for the session.
 
-        - 创建（或复用） transport
-        - 若尚未启动服务器，则在 transport.connect() 上启动 mcp_server.run()
+        - Create or reuse the transport
+        - If the server has not been started, start mcp_server.run() within transport.connect()
         """
         if session_key in self._http_transports:
             transport = self._http_transports[session_key]
-            # 启动回收任务（若未启动）
+            # Start GC task if not started
             self._ensure_session_gc_task()
-            # 记录活跃
+            # Note activity
             self._note_session_activity(session_key)
-            # 服务器任务存在且未结束，直接复用
+            # If the server task exists and is not finished, reuse it
             task = self._http_server_tasks.get(session_key)
             if task and not task.done():
                 return transport
-            # 没有任务或任务已结束，则重新启动
+            # If no task or the task is finished, restart
             mcp_server = self._http_servers.get(session_key)
             if mcp_server is None:
                 mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
@@ -369,7 +377,7 @@ class McpController:
             self._http_server_tasks[session_key] = task
             return transport
 
-        # 新建 transport 与 server
+        # Create transport and server
         transport = StreamableHTTPServerTransport(mcp_session_id=None, is_json_response_enabled=False)
         mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
         self._http_transports[session_key] = transport
@@ -379,7 +387,7 @@ class McpController:
         init_options.server_name = f"mcp-service-{service_id}"
         logger.info(f"StreamableHTTP session created - Service: {service_id}, User: {user_id}")
 
-        # 启动回收任务（若未启动）并记录活跃
+        # Start GC task if not started and note activity
         self._ensure_session_gc_task()
         self._note_session_activity(session_key)
 
@@ -404,7 +412,7 @@ class McpController:
 
         if task and not task.done():
             try:
-                # 终止 transport，促使服务器退出
+                # Terminate transport to prompt server exit
                 if transport and not transport.is_terminated:
                     await transport.terminate()
                 await task
@@ -501,8 +509,9 @@ class McpController:
         return self.sse.handle_post_message
 
     def get_streamable_http_handler(self):
-        # 不再返回持久化实例的 handler；如果确实需要，可改为在路由层调用 handle_streamable_http_asgi
-        # 这里保留占位以避免外部引用报错，但不使用。
+        # We no longer return a handler for a persistent instance; if needed, call
+        # handle_streamable_http_asgi at the routing layer. This placeholder is
+        # retained to avoid external references breaking, but it is not used.
         raise NotImplementedError("Use handle_streamable_http_asgi for StreamableHTTP routes")
 
 
