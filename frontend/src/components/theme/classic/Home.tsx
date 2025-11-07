@@ -162,7 +162,7 @@ export const Home: React.FC<HomeProps> = ({
                       <CardBody className="p-4">
                         {/* Header */}
                         <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2 w-full">
+                          <div className="flex items-center gap-2 w-full overflow-hidden">
                             <div className="w-8 h-8 bg-slate-600 rounded-sm flex items-center justify-center">
                               <Star className="w-4 h-4 text-white" />
                             </div>
