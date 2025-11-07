@@ -172,8 +172,8 @@ class McpManagerService:
                 new_api.response_examples = temp_api.response_examples
                 new_api.response_headers = temp_api.response_headers
                 new_api.operation_examples = temp_api.operation_examples
-                new_api.enabled = temp_api.enabled
-                new_api.is_deleted = temp_api.is_deleted
+                new_api.enabled = True
+                # new_api.is_deleted = temp_api.is_deleted
 
                 # Save new API record
                 self.mcp_tool_api_repository.create(new_api)
