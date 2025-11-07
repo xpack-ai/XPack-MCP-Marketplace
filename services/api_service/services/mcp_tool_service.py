@@ -17,7 +17,7 @@ class McpToolService:
     def __init__(self):
         self.http_builder = HttpRequestBuilder()
     
-    async def execute_tool(self, tool_config, arguments: dict, call_params: dict) -> List[types.Content]:
+    async def execute_tool(self, tool_config, arguments: dict, call_params: dict) -> tuple[List[types.Content],dict]:
         """
         Execute tool call
         
@@ -37,14 +37,17 @@ class McpToolService:
             
             # Send HTTP request
             response_text = await self._send_http_request(request_info)
-            
+            if response_text:
+                response_data = json.loads(response_text)
+            else:
+                response_data = {}
             logger.info("Tool execution completed successfully")
-            return [types.TextContent(type="text", text=response_text)]
+            return [types.TextContent(type="text", text=response_text)],response_data
             
         except Exception as e:
             error_msg = f"Tool execution failed: {str(e)}"
             logger.error(f"Tool execution failed: {error_msg}", exc_info=True)
-            return [types.TextContent(type="text", text=error_msg)]
+            return [types.TextContent(type="text", text=error_msg)],{}
     
     async def _send_http_request(self, request_info: Dict[str, Any]) -> str:
         """
@@ -81,6 +84,8 @@ class McpToolService:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             
             logger.info(f"HTTP response status code: {response.status_code}")
+            if response.text != "":
+                logger.debug(f"Response content: {response.text}")
             response.raise_for_status()
             
             response_text = response.text
