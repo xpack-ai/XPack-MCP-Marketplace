@@ -134,7 +134,8 @@ class McpService:
             return types.Tool(
                 name=tool_api.name,
                 description=tool_api.description,
-                inputSchema=input_schema
+                inputSchema=input_schema,
+                outputSchema=self._build_output_schema(tool_api),
             )
         except Exception as e:
             self.logger.error(f"Tool conversion failed for {tool_api.name}: {e}")
@@ -272,3 +273,64 @@ class McpService:
             "base_url": service.base_url or "",
             "headers": headers
         }
+
+    def _build_output_schema(self,tool_api:McpToolApi) -> dict:
+        """
+        Build output schema based on API configuration
+
+        Priority:
+        1) Use explicit JSON Schema from `response_schema` if present
+        2) Infer a reasonable JSON Schema from `response_examples`
+        3) Fallback to a generic text content schema
+        """
+        # 1) Try explicit response schema
+        try:
+            if tool_api.response_schema:
+                parsed = json.loads(tool_api.response_schema)
+                if isinstance(parsed, dict):
+                    return parsed
+        except Exception as e:
+            self.logger.warning(f"Failed to parse response_schema for {tool_api.name}: {e}")
+
+        # 2) Try to infer schema from examples
+        try:
+            if getattr(tool_api, "response_examples", None) and tool_api.response_examples.strip():
+                examples = json.loads(tool_api.response_examples)
+                # If multiple examples provided, use the first for inference
+                example_value = examples[0] if isinstance(examples, list) and examples else examples
+                inferred = self._infer_json_schema_from_example(example_value)
+                if inferred:
+                    return inferred
+        except Exception as e:
+            self.logger.warning(f"Failed to infer schema from response_examples for {tool_api.name}: {e}")
+
+        # 3) Fallback to a generic text MCP content schema
+        return {
+            "type": "string",
+            "description": "Raw response text when no schema or examples are available"
+        }
+
+    # Helper: Infer a simple JSON Schema from a Python value
+    def _infer_json_schema_from_example(self, value) -> dict:
+        try:
+            if isinstance(value, str):
+                return {"type": "string"}
+            if isinstance(value, bool):
+                return {"type": "boolean"}
+            if isinstance(value, int):
+                return {"type": "integer"}
+            if isinstance(value, float):
+                return {"type": "number"}
+            if isinstance(value, list):
+                if not value:
+                    return {"type": "array", "items": {}}
+                # Infer from first element; for heterogeneous arrays this is a best-effort
+                return {"type": "array", "items": self._infer_json_schema_from_example(value[0])}
+            if isinstance(value, dict):
+                props = {k: self._infer_json_schema_from_example(v) for k, v in value.items()}
+                required = list(value.keys())
+                return {"type": "object", "properties": props, "required": required}
+            # Fallback
+            return {"type": "string"}
+        except Exception:
+            return {"type": "string"}
