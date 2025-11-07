@@ -131,12 +131,15 @@ class McpService:
                     "required": []
                 }
             
-            return types.Tool(
+            t =  types.Tool(
                 name=tool_api.name,
                 description=tool_api.description,
                 inputSchema=input_schema,
-                outputSchema=self._build_output_schema(tool_api),
             )
+            output_schema = self._build_output_schema(tool_api)
+            if output_schema:
+                t.outputSchema = output_schema
+            return t
         except Exception as e:
             self.logger.error(f"Tool conversion failed for {tool_api.name}: {e}")
             return None
@@ -274,7 +277,7 @@ class McpService:
             "headers": headers
         }
 
-    def _build_output_schema(self,tool_api:McpToolApi) -> dict:
+    def _build_output_schema(self,tool_api:McpToolApi) -> Optional[dict]:
         """
         Build output schema based on API configuration
 
@@ -305,10 +308,7 @@ class McpService:
             self.logger.warning(f"Failed to infer schema from response_examples for {tool_api.name}: {e}")
 
         # 3) Fallback to a generic text MCP content schema
-        return {
-            "type": "string",
-            "description": "Raw response text when no schema or examples are available"
-        }
+        return None
 
     # Helper: Infer a simple JSON Schema from a Python value
     def _infer_json_schema_from_example(self, value) -> dict:

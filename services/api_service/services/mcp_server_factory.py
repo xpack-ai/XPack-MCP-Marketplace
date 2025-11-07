@@ -57,13 +57,13 @@ class McpServerFactory:
 
         # Register tool call handler
         @app.call_tool()
-        async def call_tool(name: str, arguments: dict) -> List[types.Content]:
+        async def call_tool(name: str, arguments: dict) -> tuple[List[types.Content], dict]:
             """Execute specified tool"""
             # user_id must exist, otherwise we shouldn't reach here
             if not user_id:
                 error_msg = "Missing user authentication"
                 logger.error(error_msg)
-                return [types.TextContent(type="text", text=error_msg)]
+                return [types.TextContent(type="text", text=error_msg)], {}
             
             return await self._handle_call_tool_with_billing(service_id, name, arguments, user_id, apikey_id)
 
@@ -102,7 +102,7 @@ class McpServerFactory:
         finally:
             db.close()
 
-    async def _handle_call_tool_with_billing(self, service_id: str, name: str, arguments: dict, user_id: str, apikey_id: Optional[str] = None) -> List[types.Content]:
+    async def _handle_call_tool_with_billing(self, service_id: str, name: str, arguments: dict, user_id: str, apikey_id: Optional[str] = None) -> tuple[List[types.Content], dict]:
         """
         Handle tool call with billing logic
 
@@ -145,7 +145,7 @@ class McpServerFactory:
 
             # If tool API id not found, skip sending billing message to avoid FK errors
             if not api_id_for_log:
-                return [types.TextContent(type="text", text=error_msg)]
+                return [types.TextContent(type="text", text=error_msg)], {}
 
             call_log = ApiCallLogInfo(
                 user_id=user_id,
@@ -163,7 +163,7 @@ class McpServerFactory:
             )
             await self.billing_service.send_billing_message(call_log, False, datetime.now(timezone.utc))
 
-            return [types.TextContent(type="text", text=error_msg)]
+            return [types.TextContent(type="text", text=error_msg)],{}
 
         logger.info(f"Pre-deduction successful - User ID: {user_id}, Deduction amount: {pre_deduct_result.service_price}")
         amount = pre_deduct_result.service_price
@@ -171,6 +171,7 @@ class McpServerFactory:
         db = next(get_db())
         call_success = False
         result: List[types.ContentBlock] = []
+        response_data: dict = {}
         # calculate input token amount
         input_token_amount = Decimal("0")
         output_token_amount = Decimal("0")
@@ -195,7 +196,7 @@ class McpServerFactory:
             logger.error(error_msg)
             # Close DB and return error without sending billing message to avoid FK violation
             db.close()
-            return [types.TextContent(type="text", text=error_msg)]
+            return [types.TextContent(type="text", text=error_msg)],{}
 
         try:
             logger.info(f"Found tool configuration: {tool_config.name}")
@@ -205,7 +206,7 @@ class McpServerFactory:
             logger.debug(f"Call params: {call_params}")
 
             # Execute tool
-            result = await self.tool_service.execute_tool(tool_config, arguments, call_params)
+            result,response_data = await self.tool_service.execute_tool(tool_config, arguments, call_params)
             call_success = True
             logger.info(f"Tool call successful - User ID: {user_id}, Tool: {name}")
             
@@ -254,7 +255,7 @@ class McpServerFactory:
         logger.info(f"Billing message sent - User ID: {user_id}, Tool: {name}, Success: {call_success}")
 
         # Ensure return type is correct
-        return result
+        return result,response_data
 
     def _create_mcp_service(self, db) -> McpService:
         """
