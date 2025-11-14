@@ -1,4 +1,5 @@
 import redis
+from redis import Redis
 from typing import Optional, Any
 from .config import Config
 
@@ -9,7 +10,7 @@ class RedisClient:
     def __init__(self):
         """Initialize Redis connection"""
         try:
-            self.client = redis.Redis(
+            self.client: Redis = redis.Redis(
                 host=Config.REDIS_HOST,
                 port=Config.REDIS_PORT,
                 password=Config.REDIS_PASSWORD,

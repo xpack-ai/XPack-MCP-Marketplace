@@ -1,4 +1,6 @@
 import json
+import asyncio
+from typing import List, cast
 
 from mcp.server.streamable_http import (
     EventStore,
@@ -16,9 +18,9 @@ class RedisEventStore(EventStore):
         self.namespace = namespace
         self.ttl_seconds = ttl_seconds
 
-    # Typed helpers to normalize Redis sync results
+    # Synchronous helpers; wrap at call sites to avoid blocking
     def _rpush(self, key: str, value: str) -> int:
-        return int(redis_client.client.rpush(key, value))
+        return cast(int, redis_client.client.rpush(key, value))
 
     def _expire(self, key: str, seconds: int) -> None:
         try:
@@ -28,12 +30,12 @@ class RedisEventStore(EventStore):
             pass
 
     def _llen(self, key: str) -> int:
-        return int(redis_client.client.llen(key) or 0)
+        return cast(int, redis_client.client.llen(key))
 
-    def _lrange(self, key: str, start: int, end: int) -> list[str]:
-        items = redis_client.client.lrange(key, int(start), int(end))
-        # decode_responses=True ensures str, but cast defensively
-        return [str(i) for i in (items or [])]
+    def _lrange(self, key: str, start: int, end: int) -> List[str]:
+        raw = redis_client.client.lrange(key, int(start), int(end))
+        items: List[str] = cast(List[str], raw or [])
+        return [str(i) for i in items]
 
     def _key(self, stream_id: StreamId) -> str:
         return f"xpack:mcp:event:{self.namespace}:{stream_id}"
@@ -44,10 +46,10 @@ class RedisEventStore(EventStore):
     async def store_event(self, stream_id: StreamId, message: JSONRPCMessage) -> EventId:
         key = self._key(stream_id)
         payload = json.dumps(message.model_dump(by_alias=True, exclude_none=True))
-        # Redis list append is synchronous
-        seq: int = self._rpush(key, payload)
+        # Append to Redis list via thread wrapper to avoid blocking
+        seq: int = await asyncio.to_thread(self._rpush, key, payload)
         # rpush returns new length; sequence index is length-1
-        self._expire(key, self.ttl_seconds)
+        await asyncio.to_thread(self._expire, key, self.ttl_seconds)
         return self._event_id(stream_id, seq - 1)
 
     async def replay_events_after(
@@ -65,7 +67,7 @@ class RedisEventStore(EventStore):
 
         key = self._key(stream_id)
         try:
-            length: int = self._llen(key)
+            length: int = await asyncio.to_thread(self._llen, key)
         except Exception:
             # Redis unavailable or key type mismatch; cannot replay
             return stream_id
@@ -74,7 +76,7 @@ class RedisEventStore(EventStore):
 
         # Fetch range [start_idx, length-1]
         try:
-            items: list[str] = self._lrange(key, start_idx, length - 1)
+            items: list[str] = await asyncio.to_thread(self._lrange, key, start_idx, length - 1)
         except Exception:
             return stream_id
         for item in items:
