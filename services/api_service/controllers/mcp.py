@@ -18,6 +18,7 @@ from services.api_service.repositories.user_apikey_repository import UserApiKeyR
 from services.api_service.utils.connection_manager import connection_manager
 from services.common.database import get_db
 from services.common.config import Config
+from services.api_service.utils.mcp_event_store import RedisEventStore
 
 logger = get_logger(__name__)
 
@@ -264,6 +265,69 @@ class McpController:
 
                 logger.info(f"Received StreamableHTTP request - Service ID: {service_id}, Client: {client_ip}, UA: {user_agent[:50]}...")
 
+                # Security: validate Origin to prevent DNS rebinding (MCP spec requirement)
+                origin = req.headers.get('origin')
+                if origin and not self._is_origin_allowed(origin, req):
+                    logger.warning(f"Rejected by Origin validation - Origin: {origin}, Host: {req.url.scheme}://{req.url.netloc}")
+                    response_body = b"Forbidden: invalid Origin"
+                    await send({
+                        'type': 'http.response.start',
+                        'status': 403,
+                        'headers': [
+                            [b'content-type', b'text/plain'],
+                            [b'content-length', str(len(response_body)).encode()],
+                        ],
+                    })
+                    await send({'type': 'http.response.body', 'body': response_body})
+                    return
+
+                # Validate Accept & Content-Type headers according to MCP Streamable HTTP rules
+                accept = (req.headers.get('accept') or '').lower()
+                content_type = (req.headers.get('content-type') or '').lower()
+                if req.method == 'GET':
+                    if 'text/event-stream' not in accept:
+                        logger.warning("Missing Accept: text/event-stream for GET SSE")
+                        response_body = b"Not Acceptable: require text/event-stream"
+                        await send({
+                            'type': 'http.response.start',
+                            'status': 406,
+                            'headers': [
+                                [b'content-type', b'text/plain'],
+                                [b'content-length', str(len(response_body)).encode()],
+                            ],
+                        })
+                        await send({'type': 'http.response.body', 'body': response_body})
+                        return
+                elif req.method == 'POST':
+                    # Client should list both application/json and text/event-stream
+                    if not ('application/json' in accept and 'text/event-stream' in accept):
+                        logger.warning("POST Accept must include application/json and text/event-stream")
+                        response_body = b"Not Acceptable: require application/json and text/event-stream"
+                        await send({
+                            'type': 'http.response.start',
+                            'status': 406,
+                            'headers': [
+                                [b'content-type', b'text/plain'],
+                                [b'content-length', str(len(response_body)).encode()],
+                            ],
+                        })
+                        await send({'type': 'http.response.body', 'body': response_body})
+                        return
+                    # Body must be JSON-RPC payload
+                    if 'application/json' not in content_type:
+                        logger.warning("Unsupported Media Type for POST; require application/json")
+                        response_body = b"Unsupported Media Type: require application/json"
+                        await send({
+                            'type': 'http.response.start',
+                            'status': 415,
+                            'headers': [
+                                [b'content-type', b'text/plain'],
+                                [b'content-length', str(len(response_body)).encode()],
+                            ],
+                        })
+                        await send({'type': 'http.response.body', 'body': response_body})
+                        return
+
                 # Extract user ID (for billing) - must provide valid apikey
                 user_info = self._extract_user_info(req)
                 if not user_info:
@@ -288,13 +352,31 @@ class McpController:
                 try:
                     # Get or create a persistent StreamableHTTP transport and MCP server
                     transport = await self._ensure_http_session(session_key, service_id, user_id, apikey_id)
-
+                    logger.debug(f'method: {req.method},request body: {req.body}')
                     # Note session activity
                     self._note_session_activity(session_key)
+
+                    # Ensure transport is connected before delegating (avoid race on first request)
+                    try:
+                        await self._wait_transport_ready(transport, timeout_seconds=2.0)
+                    except TimeoutError:
+                        logger.error("Transport not ready within timeout; refusing request")
+                        response_body = b"Service Unavailable: transport not ready"
+                        await send({
+                            'type': 'http.response.start',
+                            'status': 503,
+                            'headers': [
+                                [b'content-type', b'text/plain'],
+                                [b'content-length', str(len(response_body)).encode()],
+                            ],
+                        })
+                        await send({'type': 'http.response.body', 'body': response_body})
+                        return
 
                     # Register only on GET (SSE handshake); POST just updates activity
                     if req.method == "GET":
                         connection_manager.register_connection(service_id, user_id, client_ip)
+                        logger.debug(f'register connection successful.connection_key is {connection_key}')
                     elif req.method == "POST":
                         connection_manager.update_activity(connection_key)
 
@@ -304,8 +386,16 @@ class McpController:
                     # Update activity after handling (avoid cleaning long-running processing)
                     self._note_session_activity(session_key)
 
-                    # If the session has terminated or DELETE called, clean up and unregister
-                    if transport.is_terminated or req.method == "DELETE":
+                    # If the session has terminated, clean up and unregister
+                    if transport.is_terminated:
+                        await self._cleanup_http_session(session_key)
+                        connection_manager.unregister_connection(connection_key)
+                    # For explicit DELETE, ensure termination cleanup
+                    if req.method == "DELETE" and not transport.is_terminated:
+                        try:
+                            await transport.terminate()
+                        except Exception:
+                            logger.exception("Error terminating transport on DELETE")
                         await self._cleanup_http_session(session_key)
                         connection_manager.unregister_connection(connection_key)
                 finally:
@@ -339,6 +429,57 @@ class McpController:
                 await send({'type': 'http.response.body', 'body': response_body})
 
         return asgi
+
+    async def _wait_transport_ready(self, transport: StreamableHTTPServerTransport, timeout_seconds: float = 2.0) -> None:
+        """Wait until StreamableHTTP transport is connected and streams are initialized.
+
+        The underlying transport sets internal streams in connect(); POST/GET handling
+        requires these to exist. We poll briefly to avoid race on first request.
+        """
+        deadline = time.time() + timeout_seconds
+        # Access internal attributes defensively; break once read writer is present
+        while True:
+            # If terminated, break early
+            if transport.is_terminated:
+                raise TimeoutError("Transport terminated during wait")
+            # Heuristic: writer/reader set once connect() started
+            has_read_writer = getattr(transport, "_read_stream_writer", None) is not None
+            has_write_reader = getattr(transport, "_write_stream_reader", None) is not None
+            if has_read_writer and has_write_reader:
+                return
+            if time.time() > deadline:
+                raise TimeoutError("Transport not ready")
+            await asyncio.sleep(0.01)
+
+    def _is_origin_allowed(self, origin: str, req: Request) -> bool:
+        """Validate Origin header against request host to prevent DNS rebinding.
+
+        Policy:
+        - If Origin is present, it must match the scheme+host of the request URL.
+        - Allow common localhost variants (127.0.0.1, localhost) across http/https.
+        - If Origin is missing, treat as allowed (native clients may omit it).
+        """
+        try:
+            if not origin:
+                return True
+            origin = origin.strip()
+            request_host = f"{req.url.scheme}://{req.url.netloc}"
+            if origin == request_host:
+                return True
+            allowed_local_origins = {
+                "http://127.0.0.1",
+                f"http://127.0.0.1:{req.url.port}" if req.url.port else "http://127.0.0.1",
+                "http://localhost",
+                f"http://localhost:{req.url.port}" if req.url.port else "http://localhost",
+                "https://127.0.0.1",
+                f"https://127.0.0.1:{req.url.port}" if req.url.port else "https://127.0.0.1",
+                "https://localhost",
+                f"https://localhost:{req.url.port}" if req.url.port else "https://localhost",
+            }
+            return origin in allowed_local_origins
+        except Exception:
+            logger.exception("Origin validation error")
+            return False
 
     async def _ensure_http_session(self, session_key: str, service_id: str, user_id: str, apikey_id: str) -> StreamableHTTPServerTransport:
         """Ensure a persistent StreamableHTTP transport and MCP server exist for the session.
@@ -378,7 +519,12 @@ class McpController:
             return transport
 
         # Create transport and server
-        transport = StreamableHTTPServerTransport(mcp_session_id=None, is_json_response_enabled=False)
+        event_store = RedisEventStore(namespace=session_key, ttl_seconds=Config.MCP_SESSION_IDLE_TTL_SECONDS)
+        transport = StreamableHTTPServerTransport(
+            mcp_session_id=None,
+            is_json_response_enabled=False,
+            event_store=event_store,
+        )
         mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
         self._http_transports[session_key] = transport
         self._http_servers[session_key] = mcp_server
