@@ -16,3 +16,4 @@ google-auth-oauthlib>=1.0.0
 fastapi_mcp
 alipay-sdk-python>=3.0.0
 wechatpayv3[async]
+cryptography>=41.0.0

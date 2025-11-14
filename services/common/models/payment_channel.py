@@ -14,5 +14,6 @@ class PaymentChannel(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, autoincrement=False, comment="Primary key")
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Channel name")
     status: Mapped[int] = mapped_column(Integer, nullable=False, comment="Channel status, 0: disabled, 1: enabled")
-    config: Mapped[str] = mapped_column(Text, nullable=True, comment="Channel config")
+    # Store encrypted JSON envelope for channel configuration (AES-GCM). See secure_config.py
+    config: Mapped[str] = mapped_column(Text, nullable=True, comment="Channel config (encrypted envelope JSON)")
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, comment="Update time")

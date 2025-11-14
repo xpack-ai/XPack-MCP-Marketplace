@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, Query, Body
-from pydantic import config
 from sqlalchemy.orm import Session
 
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.payment_channel_service import PaymentChannelService
+from services.common.utils.secure_config import decrypt_config, encrypt_config
+from services.admin_service.tasks.order_monitor_task import OrderMonitorTask
 import json
 
 router = APIRouter()
@@ -27,10 +28,9 @@ async def payment_channel_list(
     result = []
     for item in list:
         enable = item.status == 1
-        try:
-            cfg = json.loads(item.config)
-        except:
-            cfg = {}
+        cfg = {}
+        if item.config:
+            cfg = decrypt_config(item.config) or {}
         result.append(
             {
                 "id": item.id,
@@ -56,14 +56,16 @@ async def payment_channel_enable(
 
     if data:
         if id == "alipay":
-            from services.admin_service.tasks.alipay_order_monitor_task import AlipayOrderMonitorTask
-            alipay_monitor_task = AlipayOrderMonitorTask.get_instance()
-            alipay_monitor_task.start_monitor()
+            monitor = OrderMonitorTask.get_instance()
+            # Ensure monitor is running and enable Alipay client
+            monitor.start_monitor()
+            monitor.enable_client("alipay")
+        cfg = decrypt_config(data.config) if data.config else {}
         return ResponseUtils.success(
             {
                 "id": id,
                 "name": data.name,
-                "config": data.config,
+                "config": cfg or {},
                 "is_enabled": data.status == 1,
                 "updated_time": data.updated_at,
             }
@@ -83,14 +85,15 @@ async def payment_channel_disable(
     data = payment_channel_service.update_status(id, 0)
     if data:
         if id == "alipay":
-            from services.admin_service.tasks.alipay_order_monitor_task import AlipayOrderMonitorTask
-            alipay_monitor_task = AlipayOrderMonitorTask.get_instance()
-            alipay_monitor_task.stop_monitor()
+            monitor = OrderMonitorTask.get_instance()
+            # Disable Alipay client without stopping global monitor
+            monitor.disable_client("alipay")
+        cfg = decrypt_config(data.config) if data.config else {}
         return ResponseUtils.success(
             {
                 "id": id,
                 "name": data.name,
-                "config": data.config,
+                "config": cfg or {},
                 "is_enabled": data.status == 1,
                 "updated_time": data.updated_at,
             }
@@ -109,8 +112,12 @@ async def payment_channel_config(
         return ResponseUtils.error("Payment channel id cannot be empty")
     config = body.get("config")
     if config:
-        configStr = json.dumps(config)
-        data = payment_channel_service.update_config(id=id, config=configStr)
+        # Encrypt config before persisting to DB
+        try:
+            encrypted = encrypt_config(config)
+        except Exception as e:
+            return ResponseUtils.error(f"Failed to encrypt config: {str(e)}")
+        data = payment_channel_service.update_config(id=id, config=encrypted)
         if data:
             # Convert str to object
             return ResponseUtils.success(

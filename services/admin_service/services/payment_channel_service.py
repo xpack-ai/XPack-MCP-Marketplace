@@ -6,6 +6,7 @@ from services.common.database import SessionLocal
 from datetime import datetime
 from services.admin_service.repositories.payment_channel_repository import PaymentChannelRepository
 from services.common.models.payment_channel import PaymentChannel
+from services.common.utils.secure_config import decrypt_config
 
 logger = logging.getLogger(__name__)
 
@@ -35,13 +36,14 @@ class PaymentChannelService:
         channel_config = self.payment_channel_repository.payment_channel_get(id)
         if channel_config is None:
             return None
+        # Support encrypted-at-rest config
         config = {}
-        if channel_config.config is not None:
-            try:
-                config = json.loads(channel_config.config)
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse payment channel config JSON: {str(e)}")
+        if channel_config.config:
+            cfg = decrypt_config(channel_config.config)
+            if cfg is None:
+                logger.error("Failed to decrypt or parse payment channel config")
                 return None
+            config = cfg
         config["enable"] = channel_config.status == 1
         config["id"] = channel_config.id
         return config
@@ -64,19 +66,17 @@ class PaymentChannelService:
                 logger.warning("Stripe payment channel config is empty")
                 return None
                 
-            # Parse config JSON
-            try:
-                config = json.loads(stripe_channel.config)
-                # Validate required fields
-                if not config.get("secret") or not config.get("webhook_secret"):
-                    logger.warning("Stripe config missing required fields: secret or webhook_secret")
-                    return None
-                    
-                logger.info("Successfully retrieved Stripe config")
-                return config
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse Stripe config JSON: {str(e)}")
+            # Decrypt/parse config JSON
+            config = decrypt_config(stripe_channel.config)
+            if config is None:
+                logger.error("Failed to decrypt Stripe config")
                 return None
+            # Validate required fields
+            if not config.get("secret") or not config.get("webhook_secret"):
+                logger.warning("Stripe config missing required fields: secret or webhook_secret")
+                return None
+            logger.info("Successfully retrieved Stripe config")
+            return config
                 
         except Exception as e:
             logger.error(f"Failed to get Stripe config: {str(e)}")
