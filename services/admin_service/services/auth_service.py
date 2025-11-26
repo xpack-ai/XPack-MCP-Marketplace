@@ -33,21 +33,36 @@ class AuthService:
 
     def send_email_login_captcha(self, email: str) -> bool:
         """
-        Sends a login captcha code to the specified email address.
-        The function generates a random 6-digit captcha code, stores it in Redis cache for 10 minutes,
-        and sends the code to the user's email using HTML template.
-        Args:
-            email (str): The recipient's email address.
-        Returns:
-            bool: True if email was sent successfully, otherwise False.
+        Sends a login captcha code to the specified email address with simple rate limiting.
+        Limit: 5 sends per 10 minutes per email.
         """
+        # Rate limit
+        try:
+            from services.common.redis import redis_client
+            rate_key = f"email_login_rate:{email}"
+            current = redis_client.get(rate_key)
+            if current is None:
+                redis_client.set(rate_key, "1", ex=600)
+                count = 1
+            else:
+                try:
+                    count = int(current) + 1
+                except Exception:
+                    count = 1
+                ttl = redis_client.ttl(rate_key)
+                ttl = int(ttl) if isinstance(ttl, (int, str)) else 600
+                if ttl < 1:
+                    ttl = 600
+                redis_client.set(rate_key, str(count), ex=ttl)
+            if count > 5:
+                logger.warning(f"Email send rate limited for: {email}")
+                return False
+        except Exception:
+            pass
+
         # Generate random 6-digit verification code
         captcha = str(random.randint(100000, 999999))
-
-        # Cache to redis
         CacheUtils.set_cache(RedisKeys.email_login_captcha(email), captcha, 10 * 60)
-
-        # Send verification code using HTML email template
         return EmailUtils.send_register_code_email(self.db, email, captcha)
 
     def email_login_by_captcha(self, email: str, captcha: str) -> Optional[str]:

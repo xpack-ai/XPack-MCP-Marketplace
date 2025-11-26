@@ -188,6 +188,15 @@ class HttpUtils:
             if headers:
                 request_headers.update(headers)
 
+            # Basic SSRF protections: only allow http/https and block localhost/private IPs
+            parsed = urlparse(url)
+            if parsed.scheme not in ("http", "https"):
+                raise ValidationException("URL scheme must be http or https")
+            host = (parsed.hostname or "").lower()
+            private_prefixes = ("127.", "10.", "192.168.")
+            if host in ("localhost", "127.0.0.1") or host.startswith(private_prefixes) or host.startswith("172."):
+                raise ValidationException("Access to local/private addresses is not allowed")
+
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=timeout),
                 headers=request_headers
