@@ -45,7 +45,8 @@ class McpController:
     async def handle_sse_connection(self, request: Request):
         """Handle MCP Streamable HTTP SSE connection with resume capability."""
         # Get connection identification info
-        client_ip = request.client.host if request.client else "unknown"
+        x_real_ip = request.headers.get("x-real-ip") or request.headers.get("x-forwarded-for")
+        client_ip = (x_real_ip.split(",")[0].strip() if x_real_ip else (request.client.host if request.client else "unknown"))
         user_agent = request.headers.get("user-agent", "unknown")
         service_id = None
         
@@ -137,7 +138,8 @@ class McpController:
 
         async def asgi(scope, receive, send):
             req = Request(scope)
-            client_ip = req.client.host if req.client else "unknown"
+            x_real_ip = req.headers.get("x-real-ip") or req.headers.get("x-forwarded-for")
+            client_ip = (x_real_ip.split(",")[0].strip() if x_real_ip else (req.client.host if req.client else "unknown"))
             user_agent = req.headers.get("user-agent", "unknown")
             service_id = None
 
@@ -244,7 +246,8 @@ class McpController:
 
         async def asgi(scope, receive, send):
             req = Request(scope)
-            client_ip = req.client.host if req.client else "unknown"
+            x_real_ip = req.headers.get("x-real-ip") or req.headers.get("x-forwarded-for")
+            client_ip = (x_real_ip.split(",")[0].strip() if x_real_ip else (req.client.host if req.client else "unknown"))
             user_agent = req.headers.get("user-agent", "unknown")
             service_id = None
             session_key = None
