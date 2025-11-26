@@ -114,16 +114,17 @@ class CacheUtils:
         try:
             cache_value = redis_client.get(cache_key)
             if cache_value:
-                # Check if cache_value is already deserialized (dict) or needs deserialization (str)
-                if isinstance(cache_value, dict):
+                if isinstance(cache_value, str):
+                    try:
+                        model_data = json.loads(cache_value)
+                    except Exception:
+                        logger.warning(f"Failed to parse JSON cache for key {cache_key}")
+                        return None
+                elif isinstance(cache_value, dict):
                     model_data = cache_value
-                elif isinstance(cache_value, str):
-                    # Deserialize from pickled string data
-                    model_data = pickle.loads(cache_value.encode('latin1'))
                 else:
                     logger.warning(f"Unexpected cache value type for key {cache_key}: {type(cache_value)}")
                     return None
-                    
                 return SqlalchemyUtils.dict_to_model(model_class, model_data)
             return None
         except Exception as e:
@@ -145,8 +146,7 @@ class CacheUtils:
         """
         try:
             model_dict = SqlalchemyUtils.model_to_dict(model)
-            # Serialize using pickle for better type preservation
-            serialized_data = pickle.dumps(model_dict).decode('latin1')
+            serialized_data = json.dumps(model_dict, ensure_ascii=False)
             redis_client.set(cache_key, serialized_data, ex=expire_time)
             return True
         except Exception as e:
@@ -168,16 +168,17 @@ class CacheUtils:
         try:
             cache_value = redis_client.get(cache_key)
             if cache_value:
-                # Check if cache_value is already deserialized (list) or needs deserialization (str)
-                if isinstance(cache_value, list):
+                if isinstance(cache_value, str):
+                    try:
+                        model_list_data = json.loads(cache_value)
+                    except Exception:
+                        logger.warning(f"Failed to parse JSON cache for key {cache_key}")
+                        return None
+                elif isinstance(cache_value, list):
                     model_list_data = cache_value
-                elif isinstance(cache_value, str):
-                    # Deserialize from pickled string data
-                    model_list_data = pickle.loads(cache_value.encode('latin1'))
                 else:
                     logger.warning(f"Unexpected cache value type for key {cache_key}: {type(cache_value)}")
                     return None
-                    
                 if isinstance(model_list_data, list):
                     return [SqlalchemyUtils.dict_to_model(model_class, item) for item in model_list_data]
             return None
@@ -204,8 +205,7 @@ class CacheUtils:
                 return False
                 
             model_dict_list = [SqlalchemyUtils.model_to_dict(model) for model in model_list]
-            # Serialize using pickle for better type preservation
-            serialized_data = pickle.dumps(model_dict_list).decode('latin1')
+            serialized_data = json.dumps(model_dict_list, ensure_ascii=False)
             redis_client.set(cache_key, serialized_data, ex=expire_time)
             return True
         except Exception as e:

@@ -357,7 +357,7 @@ class McpController:
                 try:
                     # Get or create a persistent StreamableHTTP transport and MCP server
                     transport = await self._ensure_http_session(session_key, service_id, user_id, apikey_id)
-                    logger.debug(f'method: {req.method},request body: {req.body}')
+                    logger.debug(f"method: {req.method}, content_type: {content_type}")
                     # Note session activity
                     self._note_session_activity(session_key)
 
