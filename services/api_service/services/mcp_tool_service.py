@@ -84,11 +84,7 @@ class McpToolService:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             
             logger.info(f"HTTP response status code: {response.status_code}")
-            if response.text != "":
-                logger.debug(f"Response content: {response.text}")
             response.raise_for_status()
-            
             response_text = response.text
-            logger.debug(f"Response content length: {len(response_text)} characters")
-            
+            logger.debug(f"Response length: {len(response_text)}")
             return response_text

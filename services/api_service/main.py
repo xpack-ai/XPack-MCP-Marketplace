@@ -100,11 +100,11 @@ app.add_middleware(ExceptionHandlingMiddleware)
 # Add CORS middleware for MCP client cross-origin and reconnection support
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # MCP clients may come from different domains
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],  # 添加 DELETE 支持 StreamableHTTP 终止
+    allow_origins=Config.ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
-    expose_headers=["*"],  # Expose all response headers for SSE reconnection
+    expose_headers=["*"]
 )
 
 # Create MCP controller instance
