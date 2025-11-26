@@ -31,27 +31,28 @@ async def upload(
     filename = img.filename
     if not filename:
         return ResponseUtils.error(message="No filename provided", code=400)
+    # sanitize filename to prevent path traversal
+    filename = os.path.basename(filename)
     
-    # 2. Calculate SHA256 of uploaded content
+    # enforce content type and size limits
+    allowed_types = {"image/jpeg", "image/png", "image/webp"}
+    if img.content_type not in allowed_types:
+        return ResponseUtils.error(message="Unsupported file type", code=400)
+    
     contents = await img.read()
+    max_size = 5 * 1024 * 1024
+    if len(contents) > max_size:
+        return ResponseUtils.error(message="File too large (max 5MB)", code=413)
     file_hash = hashlib.sha256(contents).hexdigest()
-    
-    # Reset file pointer for subsequent save
     await img.seek(0)
     
-    # Verify provided SHA256 matches computed hash
     if sha256 and file_hash != sha256:
         return ResponseUtils.error(message="File SHA256 checksum mismatch", code=400)
     
-    # 3. Create directory based on current date
     today = datetime.now()
     date_dir = today.strftime("%Y%m%d")
-    
-    # Create upload directory
-    upload_dir = os.path.join("uploads","images")
-    upload_dir = os.path.join(upload_dir, date_dir)
+    upload_dir = os.path.join("uploads","images", date_dir)
     os.makedirs(upload_dir, exist_ok=True)
-    # Save file
     file_path = os.path.join(upload_dir, filename)
     
     with open(file_path, "wb") as f:

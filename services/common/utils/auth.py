@@ -35,10 +35,15 @@ def verify_token(token: str, db: Session) -> Optional[User]:
         logging.info(f"query token info")
 
         # Check if token is expired
-        expire_datetime = datetime.strptime(str(user_access_token.expire_at), "%Y-%m-%d %H:%M:%S")
+        expire_at = user_access_token.expire_at
+        try:
+            expire_datetime = expire_at if isinstance(expire_at, datetime) else datetime.strptime(str(expire_at), "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            logger.warning(f"Invalid token expiry format: {expire_at}")
+            delete_cache(token_cache_key)
+            return None
         if expire_datetime <= datetime.now():
             logger.warning(f"Token expired: {token}, expire_at: {user_access_token.expire_at}")
-            # Delete expired cache
             delete_cache(token_cache_key)
             return None
 
@@ -47,7 +52,7 @@ def verify_token(token: str, db: Session) -> Optional[User]:
         user = get_model_cache(user_cache_key, User)
         if not user:
             user = (
-                db.query(User).filter(User.id == user_access_token.user_id and User.is_deleted == False and User.is_active == True).first()
+                db.query(User).filter(User.id == user_access_token.user_id, User.is_deleted == False, User.is_active == True).first()
             )
             if not user:
                 logger.warning(f"User not found for token: {token}, user_id: {user_access_token.user_id}")

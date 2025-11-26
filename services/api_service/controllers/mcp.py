@@ -9,6 +9,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 import asyncio
 import time
+import hashlib
 from mcp.server.sse import SseServerTransport
 from mcp.server.streamable_http import StreamableHTTPServerTransport
 from mcp.server.lowlevel import Server
@@ -344,7 +345,11 @@ class McpController:
                     return
 
                 user_id, apikey_id = user_info
-                session_key = f"{service_id}:{user_id}"
+                client_instance_id = req.headers.get('x-client-instance-id') or req.headers.get('x-client-id')
+                ua = user_agent or ""
+                ua_hash = hashlib.sha1(ua.encode('utf-8')).hexdigest()[:8]
+                client_fingerprint = client_instance_id or f"{client_ip}:{ua_hash}"
+                session_key = f"{service_id}:{user_id}:{client_fingerprint}"
 
                 # Build connection key for lifecycle management
                 connection_key = f"{service_id}:{user_id}:{client_ip}"
@@ -352,7 +357,7 @@ class McpController:
                 try:
                     # Get or create a persistent StreamableHTTP transport and MCP server
                     transport = await self._ensure_http_session(session_key, service_id, user_id, apikey_id)
-                    logger.debug(f'method: {req.method},request body: {req.body}')
+                    logger.debug(f"method: {req.method}, content_type: {content_type}")
                     # Note session activity
                     self._note_session_activity(session_key)
 
