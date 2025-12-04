@@ -14,12 +14,12 @@ const formSchema = z.object({
     .string()
     .min(1, "Password is required")
     .max(100, "Password is too long")
-    .min(8, "Password must be at least 8 characters"),
+    .min(6, "Password must be at least 6 characters"),
   confirmPassword: z
     .string()
     .min(1, "Confirm password is required")
     .max(100, "Confirm password is too long")
-    .min(8, "Confirm password must be at least 8 characters"),
+    .min(6, "Confirm password must be at least 6 characters"),
 });
 type FormData = z.infer<typeof formSchema>;
 
@@ -61,7 +61,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = ({ onSave }) => {
             {...field}
             label={t("Administrator Password")}
             placeholder={t("Enter administrator password")}
-            description={t("Password must be at least 8 characters long")}
+            description={t("Password must be at least 6 characters long")}
             isInvalid={!!errors.password}
             errorMessage={errors.password?.message}
             type={showPassword ? "text" : "password"}

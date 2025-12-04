@@ -48,8 +48,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       return;
     }
 
-    if (newPassword.length < 8) {
-      toast.error(t("Password must be at least 8 characters long"));
+    if (newPassword.length < 6) {
+      toast.error(t("Password must be at least 6 characters long"));
       return;
     }
 
@@ -73,7 +73,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     newPassword.trim() !== "" &&
     confirmPassword.trim() !== "" &&
     newPassword === confirmPassword &&
-    newPassword.length >= 8;
+    newPassword.length >= 6;
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="md">
@@ -90,7 +90,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               type={showNewPassword ? "text" : "password"}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              description={t("Password must be at least 8 characters long")}
+              description={t("Password must be at least 6 characters long")}
               endContent={
                 <button
                   type="button"
