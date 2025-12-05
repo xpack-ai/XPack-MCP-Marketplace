@@ -38,7 +38,7 @@ class SqlalchemyUtils:
 
         for key, value in data_dict.items():
             column = columns_by_name.get(key)
-            if not column:
+            if column is None:
                 continue
 
             # Restore Enum from string using annotations if available
