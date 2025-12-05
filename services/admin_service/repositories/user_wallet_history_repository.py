@@ -202,7 +202,7 @@ class UserWalletHistoryRepository:
                 return False
 
             # Update wallet balance and order status
-            wallet.balance = float(wallet.balance) + float(obj.amount)
+            # wallet.balance = float(wallet.balance) + float(obj.amount)
             obj.status = 1  # 1=completed
             obj.balance_after = float(wallet.balance)
             obj.transaction_id = transaction_id
