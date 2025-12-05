@@ -106,7 +106,8 @@ async def openapi_parse(
 
         return ResponseUtils.success(data=result)
     except HTTPException as e:
-        return ResponseUtils.error(message=f"Request failed: {e.detail}", code=e.status_code)
+        logger.error(f"Request failed: {e.detail}")
+        return ResponseUtils.error(message=f"Request failed, please contact the administrator.", code=e.status_code)
     except Exception as e:
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
 
@@ -147,7 +148,8 @@ async def openapi_parse_update(
     except ValueError as e:
         return ResponseUtils.error(message=str(e))
     except HTTPException as e:
-        return ResponseUtils.error(message=f"Request failed: {e.detail}", code=e.status_code)
+        logger.error(f"Request failed: {e.detail}")
+        return ResponseUtils.error(message=f"Request failed, please contact the administrator.", code=e.status_code)
     except Exception as e:
         logger.error(f"Failed to update service from OpenAPI: {str(e)}")
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
