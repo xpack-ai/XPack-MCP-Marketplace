@@ -45,7 +45,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = ({
     formData.username.trim() !== "" &&
     formData.password?.trim() !== "" &&
     formData.password === confirmPassword &&
-    formData.password?.length >= 8;
+    formData.password?.length >= 6;
 
   const passwordsMatch = formData.password === confirmPassword;
 
@@ -86,7 +86,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = ({
           <Input
             label={t("Administrator Password")}
             placeholder={t("Enter administrator password")}
-            description={t("Password must be at least 8 characters long")}
+            description={t("Password must be at least 6 characters long")}
             value={formData.password}
             onChange={(e) => handleInputChange("password", e.target.value)}
             type={showPassword ? "text" : "password"}
@@ -106,13 +106,13 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = ({
             isRequired
             autoComplete="new-password"
             color={
-              formData.password?.length > 0 && formData.password?.length < 8
+              formData.password?.length > 0 && formData.password?.length < 6
                 ? "danger"
                 : "default"
             }
             errorMessage={
-              formData.password?.length > 0 && formData.password?.length < 8
-                ? t("Password must be at least 8 characters")
+              formData.password?.length > 0 && formData.password?.length < 6
+                ? t("Password must be at least 6 characters")
                 : ""
             }
           />

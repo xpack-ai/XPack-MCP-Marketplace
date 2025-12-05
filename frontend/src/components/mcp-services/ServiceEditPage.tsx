@@ -193,6 +193,15 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
     }
   };
 
+  // Helper function to validate price string
+  const isValidPrice = (priceStr: string | undefined): boolean => {
+    if (!priceStr || priceStr.trim() === "") {
+      return false;
+    }
+    const numValue = parseFloat(priceStr);
+    return !isNaN(numValue) && numValue >= 0;
+  };
+
   const isFormValid = () => {
     const hasBasicInfo =
       formData.name.trim() &&
@@ -203,6 +212,19 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
     // if free, no need to validate price
     if (formData.charge_type === ChargeType.Free) {
       return hasBasicInfo;
+    }
+    // if PerCall, validate price
+    if (formData.charge_type === ChargeType.PerCall) {
+      return hasBasicInfo && isValidPrice(formData.price);
+    }
+
+    // if PerToken, validate both input and output token prices
+    if (formData.charge_type === ChargeType.PerToken) {
+      return (
+        hasBasicInfo &&
+        isValidPrice(formData.input_token_price) &&
+        isValidPrice(formData.output_token_price)
+      );
     }
 
     // if paid, need to validate price

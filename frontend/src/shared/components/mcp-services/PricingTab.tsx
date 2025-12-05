@@ -85,6 +85,7 @@ export const PricingTab: React.FC<PricingTabProps> = ({
                   </span>
                 }
                 labelPlacement="outside"
+                required
               />
               <Input
                 type="number"
@@ -102,6 +103,7 @@ export const PricingTab: React.FC<PricingTabProps> = ({
                   </span>
                 }
                 labelPlacement="outside"
+                required
               />
             </div>
           ) : (
@@ -118,6 +120,7 @@ export const PricingTab: React.FC<PricingTabProps> = ({
                 </span>
               }
               labelPlacement="outside"
+              required
             />
           )}
         </>
