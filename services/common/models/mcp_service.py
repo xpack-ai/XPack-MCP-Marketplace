@@ -1,21 +1,8 @@
 from sqlalchemy import String, Enum, Numeric, Integer, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
-from enum import Enum as PyEnum
 from datetime import datetime
-from services.common.models.base import Base
-
-
-class AuthMethod(PyEnum):
-    FREE = "free"
-    APIKEY = "apikey"
-    TOKEN = "token"
-
-
-class ChargeType(PyEnum):
-    FREE = "free"
-    PER_CALL = "per_call"
-    PER_TOKEN = "per_token"
+from services.common.models.base import Base,ChargeType
 
 
 class McpService(Base):
@@ -31,14 +18,7 @@ class McpService(Base):
     slug_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Unique slug name for the service")
     short_description: Mapped[str] = mapped_column(String, nullable=False, comment="Short description of the service")
     long_description: Mapped[str] = mapped_column(String, nullable=True, comment="Detailed description of the service (Markdown format)")
-    # auth_method: Mapped[AuthMethod] = mapped_column(
-    #     Enum(AuthMethod, values_callable=lambda obj: [e.value for e in obj]),
-    #     nullable=False,
-    #     comment="Authentication method: free, apikey, token",
-    # )
     base_url: Mapped[str] = mapped_column(String(512), nullable=True, comment="api url")
-    # auth_header: Mapped[str] = mapped_column(String(255), nullable=True, comment="Authentication header name")
-    # auth_token: Mapped[str] = mapped_column(String(255), nullable=True, comment="Authentication token value")
     headers: Mapped[str] = mapped_column(String, nullable=True, comment="Additional headers for requests (JSON Array format)")
     charge_type: Mapped[ChargeType] = mapped_column(
         Enum(ChargeType, values_callable=lambda obj: [e.value for e in obj]),
@@ -54,6 +34,7 @@ class McpService(Base):
     )
     enabled: Mapped[int] = mapped_column(Integer, nullable=True, comment="Service status: 0=disabled, 1=enabled")
     tags: Mapped[str] = mapped_column(String, nullable=True, comment="Tags")
+    service_type: Mapped[str] = mapped_column(String(255), nullable=True, comment="Service type",default="openapi")
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=True,

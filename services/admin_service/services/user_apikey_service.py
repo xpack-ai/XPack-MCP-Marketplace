@@ -5,6 +5,8 @@ from services.common.models.user_apikey import UserApiKey
 from services.common.database import SessionLocal
 from datetime import datetime
 from services.admin_service.repositories.user_apikey_repository import UserApiKeyRepository
+from services.common.utils.cache_utils import CacheUtils
+from services.common.redis_keys import RedisKeys
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,10 @@ class UserApiKeyService:
         if not user_apikey or user_apikey.user_id != user_id:
             return None
         self.user_apikey_repository.delete(id)
+        try:
+            CacheUtils.delete_cache(RedisKeys.user_apikey_key(user_apikey.apikey))
+        except Exception:
+            pass
         return user_apikey
 
     def get_by_user_id(self, user_id: str) -> List[UserApiKey]:

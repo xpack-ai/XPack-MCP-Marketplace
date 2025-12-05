@@ -1,11 +1,11 @@
 {
   "version": "v1.1",
-  "releaseDate": "2025-10-17",
+  "releaseDate": "2025-12-07",
   "description": "This is the latest release of the application.",
   "downloads": {
     "program": {
       "xpack_mcp_market": {
-        "version": "v1.1.1",
+        "version": "v1.1.5",
         "docker": "xpackai/xpack-mcp-market",
         "tar": "xpack-mcp-market.tar.gz",
         "url": "https://public.eolinker.com/xpack/images/xpack-mcp-market.${VERSION}.${ARCH}.tar.gz"

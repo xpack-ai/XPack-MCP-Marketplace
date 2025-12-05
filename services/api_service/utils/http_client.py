@@ -307,7 +307,7 @@ class HttpRequestBuilder:
                             request_body[param_name] = arguments[param_name]
                 
                 if request_body:
-                    logger.debug(f"Built request body from parameters: {request_body}")
+                    # logger.debug(f"Built request body from parameters: {request_body}")
                     return request_body
             else:
                 # If not a parameters list, try to parse as JSON schema object
@@ -322,7 +322,7 @@ class HttpRequestBuilder:
                                 request_body[prop_name] = arguments[prop_name]
                         
                         if request_body:
-                            logger.debug(f"Built request body from schema: {request_body}")
+                            # logger.debug(f"Built request body from schema: {request_body}")
                             return request_body
                 except json.JSONDecodeError:
                     logger.warning(f"Failed to parse request body schema as JSON")

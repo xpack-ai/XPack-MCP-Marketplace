@@ -67,7 +67,7 @@ class McpToolService:
         
         logger.info(f"Sending HTTP request: {method} {url}")
         logger.debug(f"Query parameters: {query_params}")
-        logger.debug(f"Request body: {request_body}")
+        # logger.debug(f"Request body: {request_body}")
         
         async with create_mcp_http_client(headers=headers) as client:
             if method == "GET":
