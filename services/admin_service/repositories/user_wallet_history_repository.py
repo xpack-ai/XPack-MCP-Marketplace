@@ -42,6 +42,7 @@ class UserWalletHistoryRepository:
             amount=amount,
             balance_after=0.00,
             type=TransactionType.DEPOSIT,
+            transaction_id=transaction_id,
             status=status,
             created_at=now,
             updated_at=now,

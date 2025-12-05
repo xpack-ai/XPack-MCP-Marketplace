@@ -313,6 +313,7 @@ class PaymentService:
                     new_balance=new_balance,
                     expected_balance=current_wallet.balance
                 )
+                logger.info(f"Attempt {attempt + 1}: Balance update successful for user_id {user_id}, new balance: {new_balance},success:{success}")
 
                 if success:
                     self._delete_wallet_cache(user_id)
