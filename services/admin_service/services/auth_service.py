@@ -134,10 +134,17 @@ class AuthService:
 
     def account_login(self, account: str, password: str) -> Optional[str]:
         user = self.user_repository.get_by_account(account)
-        if user and user.password == password:
-            token = self.create_user_token(user.id)
-            if token:
-                return token
+        if user is None:
+            logger.warning(f"not found user, account: {account}")
+            return None
+        if user.password != password:
+            logger.warning(f"password not match, account: {account}, password: {password}, user password: {user.password}")
+            return None
+
+        token = self.create_user_token(user.id)
+        if token:
+            return token
+        logger.warning(f"Failed to create user token for user_id: {user.id}")
         return None
 
     def logout(self, token: str) -> bool:

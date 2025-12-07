@@ -16,7 +16,7 @@ class McpServiceRepository:
 
     def get_by_id(self, service_id: str, force_update: bool = False) -> Optional[McpService]:
         """
-        Get single MCP service by service ID
+        Get single MCP service by service ID 
         """
         cache_key = f"xpack:mcp_service:id:{service_id}"
         if not force_update:

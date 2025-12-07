@@ -2,7 +2,6 @@ import logging
 import uuid
 import json
 import re
-from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from typing import Optional, Tuple, List
 from services.admin_service.repositories.mcp_service_repository import McpServiceRepository
@@ -143,10 +142,7 @@ class McpManagerService:
             existing_service.short_description = temp_service.short_description
             existing_service.long_description = temp_service.long_description
             existing_service.headers = temp_service.headers
-            # existing_service.auth_method = AuthMethod(temp_service.auth_method.value)
             existing_service.base_url = temp_service.base_url
-            # existing_service.auth_header = temp_service.auth_header
-            # existing_service.auth_token = temp_service.auth_token
             existing_service.charge_type = ChargeType(temp_service.charge_type.value)
             existing_service.price = temp_service.price
             existing_service.input_token_price = temp_service.input_token_price
@@ -239,7 +235,8 @@ class McpManagerService:
             else:
                 # If provided as string, store directly
                 existing_service.tags = body["tags"]
-
+        if not existing_service.service_type:
+            existing_service.service_type = "openapi"
         # Commit changes
         self.db.commit()
         self.db.refresh(existing_service)
@@ -369,6 +366,7 @@ class McpManagerService:
             mcp_service.charge_type = ChargeType.FREE  # Default to free
             mcp_service.price = 0.0
             mcp_service.enabled = 0  # Default disabled, requires manual activation by user
+            mcp_service.service_type = "openapi"
 
             # Save service
             self.mcp_service_repository.create(mcp_service)
@@ -433,15 +431,13 @@ class McpManagerService:
             temp_service.slug_name = existing_service.slug_name  # Keep original slug_name
             temp_service.short_description = openapi_data.description or existing_service.short_description
             temp_service.long_description = openapi_data.description or existing_service.long_description
-            # temp_service.auth_method = TempAuthMethod(existing_service.auth_method.value)  # Keep original auth method
             temp_service.base_url = existing_service.base_url  # Keep original base_url
-            # temp_service.auth_header = existing_service.auth_header
-            # temp_service.auth_token = existing_service.auth_token
             temp_service.headers = existing_service.headers  # Keep original headers
             temp_service.charge_type = TempChargeType(existing_service.charge_type.value)  # Keep original charge type
             temp_service.price = existing_service.price  # Keep original price
             temp_service.enabled = existing_service.enabled  # Keep original enabled status
             temp_service.tags = existing_service.tags  # Keep original tags
+            # temp_service.service_type = existing_service.service_type  # Keep original service type
 
             # Save temporary service record
             self.temp_mcp_service_repository.create(temp_service)
@@ -488,18 +484,17 @@ class McpManagerService:
                 "headers": json.loads(temp_service.headers) if temp_service.headers else [],
                 "charge_type": temp_service.charge_type.value if temp_service.charge_type else None,
                 "price": str(float(temp_service.price)) if temp_service.price and temp_service.charge_type == ChargeType.PER_CALL else "0.00",
-                "input_token_price": str(float(temp_service.input_token_price)) if temp_service.input_token_price and temp_service.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "input_token_price": str(float(temp_service.input_token_price)) if temp_service.input_token_price and temp_service.charge_type.value == ChargeType.PER_TOKEN else "0.00",
                 "output_token_price": str(float(temp_service.output_token_price)) if temp_service.output_token_price and temp_service.charge_type == ChargeType.PER_TOKEN else "0.00",
                 "enabled": temp_service.enabled,
                 "tags": parse_tags_to_array(temp_service.tags),
                 "apis": apis_list,
             }
-
             return result
 
         except Exception as e:
             logger.error(f"Failed to update service from OpenAPI: {str(e)}")
-            raise ValueError(f"Failed to update service from OpenAPI: {str(e)}")
+            raise ValueError(f"Failed to update service from OpenAPI.")
 
     def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[List[dict], int]:
         """Get public services list with pagination, returns formatted data with API info"""

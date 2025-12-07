@@ -61,6 +61,7 @@ class UserStatsService:
                     UserApiKey.id == apikey_id,
                     func.date(McpCallLog.call_start_time) >= start_date,
                     func.date(McpCallLog.call_start_time) <= end_date,
+                    McpCallLog.call_success == True,
                 )
             )
             .group_by(func.date(McpCallLog.call_start_time))

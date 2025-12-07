@@ -4,6 +4,9 @@
 # 4xx Client Errors
 INVALID_REQUEST = {"code": 400, "message": "Invalid request parameters"}
 MISSING_PARAMETER = {"code": 400, "message": "Required parameter is missing"}
+INVALID_PRICE = {"code": 400, "message": "Price must be a non-negative number"}
+INVALID_INPUT_TOKEN = {"code": 400, "message": "Input token must be a non-negative number"}
+INVALID_OUTPUT_TOKEN = {"code": 400, "message": "Output token must be a non-negative number"}
 INVALID_URL = {"code": 400, "message": "Invalid URL provided"}
 INVALID_FORMAT = {"code": 400, "message": "Invalid data format"}
 
