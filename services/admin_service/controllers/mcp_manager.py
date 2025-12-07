@@ -58,6 +58,19 @@ def update_mcp_service_info(request: Request, body: dict = Body(...), mcp_manage
     # Validate ID is required
     if not body.get("id"):
         return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
+    # Validate price is a positive number if charge_type is per_token
+    if body.get("charge_type") == ChargeType.PER_CALL:
+        price = body.get("price")
+        if price is None or price < 0:
+            return ResponseUtils.error(error_msg=error_msg.INVALID_PRICE)
+    if body.get("charge_type") == ChargeType.PER_TOKEN:
+        input_token = body.get("input_token")
+        output_token = body.get("output_token")
+        
+        if input_token is None or input_token < 0:
+            return ResponseUtils.error(error_msg=error_msg.INVALID_INPUT_TOKEN)
+        if output_token is None or output_token < 0:
+            return ResponseUtils.error(error_msg=error_msg.INVALID_OUTPUT_TOKEN)
 
     try:
         mcp_manager_service.update(body)
