@@ -5,12 +5,14 @@ import OpenAPI definitions, and query service info and lists.
 """
 import uuid
 import logging
+from annotated_types import Not
 from fastapi import APIRouter, Depends, Request, Body, UploadFile, File, HTTPException, Form
 from pydantic import BaseModel, HttpUrl
 from typing import Optional
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
+from services.common.utils.validation_utils import ValidationUtils
 from services.admin_service.services.openapi_manager import openapi_manager
 from services.admin_service.services.mcp_manager_service import McpManagerService, parse_tags_to_array
 from services.common.utils.cache_utils import CacheUtils
@@ -71,6 +73,13 @@ def update_mcp_service_info(request: Request, body: dict = Body(...), mcp_manage
             return ResponseUtils.error(error_msg=error_msg.INVALID_INPUT_TOKEN)
         if output_token is None or output_token < 0:
             return ResponseUtils.error(error_msg=error_msg.INVALID_OUTPUT_TOKEN)
+            
+    base_url = body.get("base_url")
+    if base_url is not None:
+        try:
+            ValidationUtils.validate_url(base_url, "url")
+        except Exception:
+            return ResponseUtils.error(error_msg=error_msg.INVALID_URL)
 
     try:
         mcp_manager_service.update(body)
