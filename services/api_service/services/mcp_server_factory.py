@@ -207,11 +207,17 @@ class McpServerFactory:
 
             # Execute tool
             result,response_data = await self.tool_service.execute_tool(tool_config, arguments, call_params)
-            call_success = True
+            validation_ok, validation_msg = self._validate_output_schema(tool_config, response_data)
+            if not validation_ok:
+                call_success = False
+                error_text = f"Response validation failed: {validation_msg}"
+                result = [types.TextContent(type="text", text=error_text)]
+                response_data = {}
+            else:
+                call_success = True
             logger.info(f"Tool call successful - User ID: {user_id}, Tool: {name}")
             
-            # Calculate output token amount after tool execution
-            if pre_deduct_result.charge_type == "per_token" and result:
+            if pre_deduct_result.charge_type == "per_token" and result and call_success:
                 output_text = ""
                 for content in result:
                     if isinstance(content, types.TextContent):
@@ -256,6 +262,57 @@ class McpServerFactory:
 
         # Ensure return type is correct
         return result,response_data
+
+    def _validate_output_schema(self, tool_config, response_data: dict) -> tuple[bool, str]:
+        try:
+            schema_str = getattr(tool_config, "response_schema", None)
+            if not schema_str:
+                return True, ""
+            try:
+                schema = json.loads(schema_str)
+            except Exception:
+                return False, "Invalid response_schema JSON"
+
+            def check(schema_obj, data_obj) -> tuple[bool, str]:
+                t = schema_obj.get("type")
+                if t == "object":
+                    if not isinstance(data_obj, dict):
+                        return False, "Expected object"
+                    req = schema_obj.get("required", [])
+                    for k in req:
+                        if k not in data_obj:
+                            return False, f"Missing required field: {k}"
+                    props = schema_obj.get("properties", {})
+                    for k, sub in props.items():
+                        if k in data_obj:
+                            ok, msg = check(sub, data_obj[k])
+                            if not ok:
+                                return False, f"Field {k}: {msg}"
+                    return True, ""
+                if t == "array":
+                    if not isinstance(data_obj, list):
+                        return False, "Expected array"
+                    items = schema_obj.get("items")
+                    if items:
+                        for i, it in enumerate(data_obj):
+                            ok, msg = check(items, it)
+                            if not ok:
+                                return False, f"Item {i}: {msg}"
+                    return True, ""
+                if t == "string":
+                    return (isinstance(data_obj, str), "Expected string")
+                if t == "integer":
+                    return (isinstance(data_obj, int), "Expected integer")
+                if t == "number":
+                    return ((isinstance(data_obj, (int, float))), "Expected number")
+                if t == "boolean":
+                    return (isinstance(data_obj, bool), "Expected boolean")
+                return True, ""
+
+            ok, msg = check(schema, response_data)
+            return ok, msg
+        except Exception as e:
+            return False, str(e)
 
     def _create_mcp_service(self, db) -> McpService:
         """

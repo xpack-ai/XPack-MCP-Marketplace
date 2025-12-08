@@ -35,7 +35,7 @@ async def upload(
     filename = os.path.basename(filename)
     
     # enforce content type and size limits
-    allowed_types = {"image/jpeg", "image/png", "image/webp"}
+    allowed_types = {"image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"}
     if img.content_type not in allowed_types:
         return ResponseUtils.error(message="Unsupported file type", code=400)
     
