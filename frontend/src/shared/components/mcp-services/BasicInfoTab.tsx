@@ -13,6 +13,7 @@ interface BasicInfoTabProps {
   onInputChange: (field: keyof MCPServiceFormData, value: any) => void;
   onAddTag: () => void;
   onRemoveTag: (tag: string) => void;
+  errors?: Record<string, string>;
 }
 
 export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
@@ -22,6 +23,7 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
   onInputChange,
   onAddTag,
   onRemoveTag,
+  errors,
 }) => {
   const { t } = useTranslation();
 
@@ -41,7 +43,9 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
         )}
         labelPlacement="outside"
         isRequired
-        errorMessage={t("Server ID is required")}
+        maxLength={256}
+        isInvalid={!!errors?.slug_name}
+        errorMessage={errors?.slug_name || t("Server ID is required")}
       />
       <Input
         label={t("Server Name")}
@@ -50,7 +54,9 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
         onChange={(e) => onInputChange("name", e.target.value)}
         isRequired
         labelPlacement="outside"
-        errorMessage={t("Server name is required")}
+        maxLength={256}
+        isInvalid={!!errors?.name}
+        errorMessage={errors?.name || t("Server name is required")}
       />
       <Input
         label={t("Short Description")}
@@ -59,7 +65,10 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
         onChange={(e) => onInputChange("short_description", e.target.value)}
         isRequired
         labelPlacement="outside"
-        errorMessage={t("Short description is required")}
+        isInvalid={!!errors?.short_description}
+        errorMessage={
+          errors?.short_description || t("Short description is required")
+        }
       />
 
       <Input
@@ -69,7 +78,8 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
         onChange={(e) => onInputChange("base_url", e.target.value)}
         isRequired
         labelPlacement="outside"
-        errorMessage={t("API Endpoint is required")}
+        isInvalid={!!errors?.base_url}
+        errorMessage={errors?.base_url || t("API Endpoint is required")}
       />
       {/* headers input fields */}
       <HeadersManagementSettings

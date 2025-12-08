@@ -34,6 +34,45 @@ const _DefaultFormData: MCPServiceFormData = {
   apis: [],
 };
 
+// Helper function to validate URL
+const isValidUrl = (url: string) => {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const validateServiceForm = (data: MCPServiceFormData, t: any) => {
+  const errors: Record<string, string> = {};
+
+  if (!data.slug_name?.trim()) {
+    errors.slug_name = t("Server ID is required");
+  } else if (data.slug_name.length > 256) {
+    errors.slug_name = t("Server ID must be less than 256 characters");
+  }
+
+  if (!data.name?.trim()) {
+    errors.name = t("Server name is required");
+  } else if (data.name.length > 256) {
+    errors.name = t("Server Name must be less than 256 characters");
+  }
+
+  if (!data.base_url?.trim()) {
+    errors.base_url = t("API Endpoint is required");
+  } else if (!isValidUrl(data.base_url)) {
+    errors.base_url = t("API Endpoint must be a valid HTTP/HTTPS URL");
+  }
+
+  if (!data.short_description?.trim()) {
+    errors.short_description = t("Short description is required");
+  }
+
+  return errors;
+};
+
 interface ServiceEditPageProps {
   serviceId?: string;
   onSave: (data: MCPServiceFormData, isDraft?: boolean) => void;
@@ -202,37 +241,32 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
     return !isNaN(numValue) && numValue >= 0;
   };
 
+  const validationErrors = validateServiceForm(formData, t);
+
   const isFormValid = () => {
-    const hasBasicInfo =
-      formData.name.trim() &&
-      formData.short_description?.trim() &&
-      formData.slug_name?.trim() &&
-      formData.base_url?.trim();
+    if (Object.keys(validationErrors).length > 0) {
+      return false;
+    }
 
     // if free, no need to validate price
     if (formData.charge_type === ChargeType.Free) {
-      return hasBasicInfo;
+      return true;
     }
     // if PerCall, validate price
     if (formData.charge_type === ChargeType.PerCall) {
-      return hasBasicInfo && isValidPrice(formData.price);
+      return isValidPrice(formData.price);
     }
 
     // if PerToken, validate both input and output token prices
     if (formData.charge_type === ChargeType.PerToken) {
       return (
-        hasBasicInfo &&
         isValidPrice(formData.input_token_price) &&
         isValidPrice(formData.output_token_price)
       );
     }
 
     // if paid, need to validate price
-    return (
-      hasBasicInfo &&
-      formData.price !== undefined &&
-      formData.price.trim() !== ""
-    );
+    return formData.price !== undefined && formData.price.trim() !== "";
   };
 
   return (
@@ -321,6 +355,7 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
                   onInputChange={handleInputChange}
                   onAddTag={handleAddTag}
                   onRemoveTag={handleRemoveTag}
+                  errors={validationErrors}
                 />
               </div>
               <div className="w-[400px] max-w-[1/2]">

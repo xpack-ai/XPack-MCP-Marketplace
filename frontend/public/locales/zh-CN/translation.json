@@ -878,5 +878,10 @@
   "Email is required": "邮箱为必填项",
   "No servers available": "没有可用服务",
   "(Deleted)": "(已删除)",
-  "Transport Type": "传输方式"
+  "Transport Type": "传输方式",
+  "Server ID must be less than 256 characters": "Server ID 必须少于256个字符",
+  "Server Name must be less than 256 characters": "Server Name 必须少于256个字符",
+  "API Endpoint must be a valid HTTP/HTTPS URL": "API Endpoint 必须是一个有效的HTTP/HTTPS URL",
+  "Server ID is required": "Server ID 为必填项",
+  "Short description is required": "简短描述为必填项"
 }
