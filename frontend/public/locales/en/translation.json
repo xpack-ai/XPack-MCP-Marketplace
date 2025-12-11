@@ -877,8 +877,8 @@
   "No servers available": "No servers available",
   "(Deleted)": "(Deleted)",
   "Transport Type": "Transport Type",
-  "Server ID must be less than 256 characters": "Server ID must be less than 256 characters",
-  "Server Name must be less than 256 characters": "Server Name must be less than 256 characters",
+  "Server ID must be less than 255 characters": "Server ID must be less than 255 characters",
+  "Server Name must be less than 255 characters": "Server Name must be less than 255 characters",
   "API Endpoint must be a valid HTTP/HTTPS URL": "API Endpoint must be a valid HTTP/HTTPS URL",
   "Server ID is required": "Server ID is required",
   "Short description is required": "Short description is required"
