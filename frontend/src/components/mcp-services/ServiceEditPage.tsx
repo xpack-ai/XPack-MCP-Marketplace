@@ -50,14 +50,14 @@ const validateServiceForm = (data: MCPServiceFormData, t: any) => {
 
   if (!data.slug_name?.trim()) {
     errors.slug_name = t("Server ID is required");
-  } else if (data.slug_name.length > 256) {
-    errors.slug_name = t("Server ID must be less than 256 characters");
+  } else if (data.slug_name.length > 255) {
+    errors.slug_name = t("Server ID must be less than 255 characters");
   }
 
   if (!data.name?.trim()) {
     errors.name = t("Server name is required");
-  } else if (data.name.length > 256) {
-    errors.name = t("Server Name must be less than 256 characters");
+  } else if (data.name.length > 255) {
+    errors.name = t("Server Name must be less than 255 characters");
   }
 
   if (!data.base_url?.trim()) {
