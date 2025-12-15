@@ -245,3 +245,33 @@ def get_mcp_service_list(
     except Exception as e:
         logger.error(f"Failed to get service list: {str(e)}")
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+@router.get("/service/list/simple", summary="Get MCP service simple list")
+def get_mcp_service_simple_list(
+    request: Request, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)
+):
+    """Get paginated list of all MCP services."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+
+    try:
+        # Fetch paginated data
+        services = mcp_manager_service.get_all()
+        service_list = [
+            {
+                "id": service.id,
+                "name": service.name,
+                "slug_name": service.slug_name,
+                "base_url": service.base_url,
+                "charge_type": service.charge_type.value if service.charge_type else None,
+                "price": str(float(service.price)) if service.price and service.charge_type == ChargeType.PER_CALL else "0.00",
+                "input_token_price": str(float(service.input_token_price)) if service.input_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "output_token_price": str(float(service.output_token_price)) if service.output_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "enabled": service.enabled,
+            }
+            for service in services
+        ]
+        return ResponseUtils.success(data=service_list)
+    except Exception as e:
+        logger.error(f"Failed to get service simple list: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
