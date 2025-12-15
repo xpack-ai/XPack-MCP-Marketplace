@@ -88,10 +88,27 @@ class ResourceGroupService:
             raise
 
     def get_info(self, gid: str) -> Optional[dict]:
+        default_group = self.sys_repo.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
+        if gid == "allow-all":
+            return {
+                "id":"allow-all",
+                "name":"Allow All",
+                "description":"Allow all services",
+                "enabled": 1,
+                "is_default": default_group == "allow-all" or default_group == "",
+            }
+        elif gid == "deny-all":
+            return {
+                "id":"deny-all",
+                "name":"Deny All",
+                "description":"Deny all services",
+                "enabled": 1,
+                "is_default": default_group == "deny-all",
+            }
         g = self.group_repo.get_by_id(gid)
         if not g:
             return None
-        default_group = self.sys_repo.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
+        
         return {
             "id": g.id,
             "name": g.name,
@@ -109,7 +126,7 @@ class ResourceGroupService:
                 "name":"Allow All",
                 "description":"Allow all services",
                 "enabled": 1,
-                "is_default": "allow-all" == default_group,
+                "is_default": "allow-all" == default_group or default_group == "",
             },
             {
                 "id":"deny-all",
