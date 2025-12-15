@@ -12,7 +12,7 @@ import UserManagement from "@/components/user-management/UserManagement";
 import RevenueManagement from "@/components/revenue-management/RevenueManagement";
 import ConsoleSidebar from "./Sidebar";
 import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
-import { DollarSign, Home, ServerIcon, Users } from "lucide-react";
+import { Boxes, DollarSign, Home, ServerIcon, Users } from "lucide-react";
 import OnboardingWelcome, { REQUIRED_TASK_KEYS } from "./OnboardingWelcome";
 import ConsoleStats from "./ConsoleStats";
 import SystemSettingsModal from "./SystemSettingsModal";
@@ -23,6 +23,7 @@ import {
   TaskStatusEnum,
   updateAdminOnboardingTasks,
 } from "@/api/onboard.api";
+import ResourceGroupManagement from "../resource-group/resourceGroup";
 
 const ConsoleContent: React.FC = () => {
   const { t } = useTranslation();
@@ -36,7 +37,7 @@ const ConsoleContent: React.FC = () => {
     const tabFromUrl = searchParams.get("tab") as TabKey;
     if (
       tabFromUrl &&
-      ["mcp-services", "user-management", "revenue-management"].includes(
+      ["mcp-services", "user-management", "revenue-management", "resource-group"].includes(
         tabFromUrl
       )
     ) {
@@ -73,6 +74,12 @@ const ConsoleContent: React.FC = () => {
       icon: <Users size={18} />,
       label: t("User"),
       description: t("Manage registered users"),
+    },
+    {
+      key: TabKey.RESOURCE_GROUP,
+      icon: <Boxes size={18} />,
+      label: t("Resource Group"),
+      description: t("Manage resource groups"),
     },
     {
       key: TabKey.REVENUE_MANAGEMENT,
@@ -216,6 +223,12 @@ const ConsoleContent: React.FC = () => {
         return (
           <div className="h-full overflow-auto">
             <RevenueManagement />
+          </div>
+        );
+      case TabKey.RESOURCE_GROUP:
+        return (
+          <div className="h-full overflow-auto">
+            <ResourceGroupManagement />
           </div>
         );
       default:

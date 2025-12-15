@@ -38,7 +38,7 @@ export const fetchAdminAPI = async <T = any>(
     const contentType = response.headers.get("Content-Type");
 
     // Parse response based on content type
-    if (contentType?.includes("application/json")) {
+    if (contentType?.includes("application/json") || response.url.startsWith("http://uat.apikit.com:11204/")) {
       const result = await response.json();
       return result;
     } else {

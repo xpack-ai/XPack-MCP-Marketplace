@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -12,14 +12,19 @@ import {
   Pagination,
   Tooltip,
   Spinner,
+  Select,
+  SelectItem,
 } from "@nextui-org/react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { User } from "@/types/user";
 import { Trash2, CreditCard } from "lucide-react";
 import { AdminRechargeModal } from "@/components/user-management/AdminRechargeModal";
+import { fetchSimpleResourceGroups, updateUserResourceGroup } from "@/api/resourceGroup.api";
+import toast from "react-hot-toast";
 
 interface UserTableProps {
   users: User[];
+  fetchUsers: () => void;
   loading?: boolean;
   onDelete: (user: User) => void;
   onRecharge: (id: string, amount: number) => Promise<boolean>;
@@ -33,6 +38,7 @@ interface UserTableProps {
 
 export const UserTable: React.FC<UserTableProps> = ({
   users,
+  fetchUsers,
   loading = false,
   onDelete,
   onRecharge,
@@ -51,6 +57,9 @@ export const UserTable: React.FC<UserTableProps> = ({
   const [isRechargeModalOpen, setIsRechargeModalOpen] = React.useState(false);
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
 
+  const [simpleResourceGroups, setSimpleResourceGroups] = useState<{ id: string, name: string }[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+
   const handleDelete = React.useCallback(
     (user: User) => {
       onDelete(user);
@@ -68,7 +77,34 @@ export const UserTable: React.FC<UserTableProps> = ({
     setSelectedUser(null);
   }, []);
 
-  if (loading && users.length === 0) {
+  // 加载简易资源组列表
+  const loadSimpleResourceGroups = useCallback(async () => {
+    setGroupsLoading(true);
+    try {
+      const data = await fetchSimpleResourceGroups();
+      setSimpleResourceGroups(data);
+    } catch (error) {
+      console.error("Failed to load simple resource groups:", error);
+    } finally {
+      setGroupsLoading(false);
+    }
+  }, []);
+
+  const changeResourceGroup = async (user: User, resourceGroupId: string) => {
+    const success = await updateUserResourceGroup(user.id, resourceGroupId);
+    if (success) {
+      toast.success(t("Resource group updated successfully"));
+      fetchUsers();
+    }
+  }
+  
+  // 初始加载简易资源组列表
+  useEffect(() => {
+    loadSimpleResourceGroups();
+  }, [loadSimpleResourceGroups]);
+  
+  // 等待用户数据或资源组数据加载
+  if ((loading && users.length === 0) || groupsLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner size="lg" />
@@ -87,6 +123,7 @@ export const UserTable: React.FC<UserTableProps> = ({
       >
         <TableHeader>
           <TableColumn>{t("Email")}</TableColumn>
+          <TableColumn>{t("Resource Group")}</TableColumn>
           <TableColumn>{t("Register Date")}</TableColumn>
           <TableColumn>{t("Balance")}</TableColumn>
           <TableColumn>{t("Actions")}</TableColumn>
@@ -101,6 +138,28 @@ export const UserTable: React.FC<UserTableProps> = ({
             <TableRow key={user.id}>
               <TableCell>
                 <span className="text-sm">{user.email}</span>
+              </TableCell>
+              <TableCell>
+                <Select
+                  items={simpleResourceGroups}
+                  placeholder={t("Select resource group")}
+                  selectedKeys={user.resource_group ? [user.resource_group] : []}
+                  onSelectionChange={(keys) => {
+                    const selectedKey = Array.from(keys)[0] as string;
+                    if (selectedKey) {
+                      changeResourceGroup(user, selectedKey);
+                    }
+                  }}
+                  size="sm"
+                  className="min-w-[200px]"
+                  aria-label={t("Select resource group")}
+                >
+                  {(group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
+                    </SelectItem>
+                  )}
+                </Select>
               </TableCell>
               <TableCell>{user.created_at || "-"}</TableCell>
               <TableCell>{user.balance.toFixed(2) || "-"}</TableCell>

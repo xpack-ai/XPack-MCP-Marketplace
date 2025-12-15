@@ -31,6 +31,7 @@ export interface BaseMCPService {
   output_token_price?: string;
   apis: MCPServiceAPIItem[];
   tags?: string[];
+  can_invoke?: boolean
 }
 export interface MCPService extends BaseMCPService {
   base_url: string;
@@ -134,4 +135,10 @@ export function convertFormToAPI(
     tags: formData.tags,
     update_type: formData.update_type,
   };
+}
+
+export interface MCPResourceGroupResponse {
+  id: string;
+  name: string;
+  join_at: string;
 }
