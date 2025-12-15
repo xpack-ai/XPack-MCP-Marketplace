@@ -14,6 +14,7 @@ const UserManagement: React.FC = () => {
   // use custom hook to manage user data
   const {
     users,
+    fetchUsers,
     loading,
     pagination,
     handleDeleteUser,
@@ -70,6 +71,7 @@ const UserManagement: React.FC = () => {
       <div className="space-y-6 w-full">
         <UserTable
           users={users}
+          fetchUsers={fetchUsers}
           loading={loading}
           onDelete={handleDeleteUserClick}
           onRecharge={handleRecharge}
@@ -79,6 +81,7 @@ const UserManagement: React.FC = () => {
       </div>
 
       <DeleteConfirmModal
+        user={deleteModal.user}
         isOpen={deleteModal.isOpen}
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDelete}

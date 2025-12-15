@@ -1,6 +1,7 @@
 import { ApiArrayResponse, ApiObjectResponse } from "@/shared/types";
 import { fetchAdminAPI } from "@/rpc/admin-api";
 import {
+  MCPResourceGroupResponse,
   MCPService,
   MCPServiceFormData,
   OpenAPIParseResponse,
@@ -26,6 +27,13 @@ export interface GetMCPServiceListParams {
   page_size: number;
   search?: string;
   status?: string;
+}
+
+export interface GetMCPResourceGroupsParams {
+  data: MCPResourceGroupResponse[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 // get MCP server detail params interface
@@ -217,3 +225,88 @@ export const parseOpenAPIDocumentForUpdate = async (
 
   return response as ApiObjectResponse<MCPService>;
 };
+
+/**
+ * 获取资源组列表
+ */
+export const fetchMCPResourceGroups = async (page: number, page_size: number, keyword: string): Promise<GetMCPResourceGroupsParams> => {
+  try {
+    // const response = await fetchAPI<ResourceGroup[]>(`/api/service/resource_group/list?page=${page}&page_size=${page_size}&keyword=${keyword}`);
+    const response = await fetchAdminAPI<MCPResourceGroupResponse[]>(`http://uat.apikit.com:11204/mockApi/CaAau8f9f09663d610e0d7d919412be238695b46d0a44b1/api/service/resource_group/list?page=${page}&page_size=${page_size}&keyword=${keyword}`);
+    if (!response.success) {
+      toast.error(response.error_message || i18n.t("Failed to load resource groups"));
+      return {
+        data: [],
+        total: 0,
+        page,
+        page_size,
+      };
+    }
+    return {
+      data: response.data || [],
+      total: response.page?.total || 0,
+      page: response.page?.page || page,
+      page_size: response.page?.page_size || page_size,
+    };
+  } catch (error) {
+    console.error("Error fetching auth keys:", error);
+    return {
+      data: [],
+      total: 0,
+      page,
+      page_size,
+    };
+  }
+};
+
+/**
+ * 删除资源组
+ */
+export const deleteResourceGroup = async (serviceById: string, resourceGroupId: string): Promise<boolean> => {
+  try {
+    const response = await fetchAdminAPI<ApiObjectResponse<boolean>>(`http://uat.apikit.com:11204/mockApi/CaAau8f9f09663d610e0d7d919412be238695b46d0a44b1/api/service/resource_group`, {
+      method: "DELETE",
+      body: { id: serviceById, resource_group: resourceGroupId } as unknown as BodyInit,
+    });
+    // const response = await fetchAPI<ApiObjectResponse<boolean>>(`/api/service/resource_group`, {
+    //   method: "DELETE"
+    //   body: { id: serviceById, resource_group: resourceGroupId } as unknown as BodyInit,
+    // });
+    if (!response.success) {
+      toast.error(response?.error_message || i18n.t("Failed to delete resource group"));
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error fetching auth keys:", error);
+    return false
+  }
+};
+
+/**
+ * 添加服务到资源组
+ */
+export const addServiceToGroup = async (
+  groupId: string,
+  services: string[]
+): Promise<boolean> => {
+  try {
+    const response = await fetchAdminAPI<ApiObjectResponse<boolean>>(`http://uat.apikit.com:11204/mockApi/CaAau8f9f09663d610e0d7d919412be238695b46d0a44b1/api/service/resource_group`, {
+      method: "PUT",
+      body: { id: groupId, resource_group: services } as unknown as BodyInit,
+    });
+    // const response = await fetchAPI<ApiObjectResponse<boolean>>(`/api/service/resource_group`, {
+    //   method: "PUT"
+    //   body: { id: groupId, resource_group: services } as unknown as BodyInit,
+    // });
+    if (!response.success) {
+      toast.error(response?.error_message || i18n.t("Failed to add service to group"));
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error fetching auth keys:", error);
+    return false
+  }
+};
+

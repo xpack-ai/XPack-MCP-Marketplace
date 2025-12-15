@@ -17,6 +17,7 @@ import { ToolsTab } from "@/shared/components/mcp-services/ToolsTab";
 import { OpenAPIGeneratorModal } from "@/shared/components/mcp-services/OpenAPIGeneratorModal";
 import { ChargeType } from "@/shared/types/marketplace";
 import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
+import ResourceGroup from "@/shared/components/mcp-services/ResourceGroup";
 
 const _DefaultFormData: MCPServiceFormData = {
   id: "",
@@ -98,6 +99,9 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
     getServiceDetail,
     clearServiceDetail,
     parseOpenAPIDocumentForUpdate,
+    fetchMCPResourceGroups,
+    deleteResourceGroup,
+    addServiceToGroup,
     updateLoading,
   } = useMCPServiceDetail();
   const [isSaving, setIsSaving] = useState(false);
@@ -378,6 +382,16 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
               <DescriptionTab
                 formData={formData}
                 onInputChange={handleInputChange}
+              />
+            </div>
+          </Tab>
+          <Tab key="ResourceGroups" title={t("Resource Groups")}>
+            <div className="pt-2 h-full">
+              <ResourceGroup
+                formData={formData}
+                deleteResourceGroup={deleteResourceGroup}
+                fetchMCPResourceGroups={fetchMCPResourceGroups}
+                addServiceToGroup={addServiceToGroup}
               />
             </div>
           </Tab>

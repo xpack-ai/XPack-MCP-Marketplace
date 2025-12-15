@@ -18,6 +18,7 @@ interface ProductDetailClientProps {
   }[];
   mcpName?: string;
   url?: string;
+  can_invoke?: boolean;
   innerHeaderNode?: React.ReactNode;
 }
 
@@ -26,6 +27,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   breadcrumbs,
   mcpName,
   url,
+  can_invoke,
   innerHeaderNode,
 }) => {
   const { t } = useTranslation();
@@ -69,7 +71,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
             </div>
 
             {/* Right side - Server Config */}
-            <ServerConfig mcpName={mcpName} url={url} />
+            <ServerConfig mcpName={mcpName} url={url} can_invoke={can_invoke} />
           </div>
 
           {/* SEO-friendly: Simple text content for search engines */}

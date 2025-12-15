@@ -36,6 +36,7 @@ const BasicProductDetailThemeSelector: React.FC<
     platformConfig.mcp_server_prefix || process.env.NEXT_PUBLIC_MCP_URL || "";
   const [url, setUrl] = useState<string>("");
   const [mcpName, setMcpName] = useState<string>("");
+  const [can_invoke, setCanInvoke] = useState<boolean>(false);
   const { t } = useTranslation();
   const configNavigation = useNavigationItems() || NavigationItems;
 
@@ -56,6 +57,9 @@ const BasicProductDetailThemeSelector: React.FC<
   useEffect(() => {
     setMcpName(sanitizeMCPServerName(product.name));
   }, [product.name]);
+  useEffect(() => {
+    setCanInvoke(product.can_invoke || false);
+  }, [product.can_invoke]);
   const getCodeContent = () => {
     return `{
   "mcpServers": {
@@ -82,6 +86,7 @@ const BasicProductDetailThemeSelector: React.FC<
     case Theme.MODERN:
       return (
         <ModernDetail
+          can_invoke={can_invoke}
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
@@ -93,6 +98,7 @@ const BasicProductDetailThemeSelector: React.FC<
     case Theme.CLASSIC:
       return (
         <ClassicDetail
+          can_invoke={can_invoke}
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
@@ -104,6 +110,7 @@ const BasicProductDetailThemeSelector: React.FC<
     case Theme.CREATIVE:
       return (
         <CreativeDetail
+          can_invoke={can_invoke}
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
@@ -115,6 +122,7 @@ const BasicProductDetailThemeSelector: React.FC<
     case Theme.TEMU:
       return (
         <TemuDetail
+          can_invoke={can_invoke}
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
@@ -131,6 +139,7 @@ const BasicProductDetailThemeSelector: React.FC<
           <main className="flex-1">
             <ProductDetailClient
               product={product}
+              can_invoke={can_invoke}
               mcpName={mcpName}
               url={url}
             />

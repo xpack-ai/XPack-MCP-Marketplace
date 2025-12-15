@@ -14,6 +14,7 @@ interface ServerConfigProps {
   mcpName?: string;
   url?: string;
   className?: string;
+  can_invoke?: boolean;
 }
 
 type McpType = "sse" | "streamable-http";
@@ -22,6 +23,7 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({
   mcpName,
   url = process.env.NEXT_PUBLIC_MCP_URL,
   className = "md:min-w-[40%] w-[40%] max-w-100 mt-12",
+  can_invoke,
 }) => {
   const { t } = useTranslation();
   const { handleLogin } = useAuth();
@@ -133,6 +135,15 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({
             </code>
           </pre>
         </div>
+
+        {/* Permission Overlay */}
+        {can_invoke === false && (
+          <div className="absolute inset-0 bg-gray-300/70 backdrop-blur-sm rounded-lg flex items-center justify-center z-20">
+            <p className="text-black text-center font-semibold text-lg px-8">
+              {t("You don't have permission to access this MCP server.")}
+            </p>
+          </div>
+        )}
       </Card>
     </div>
   );

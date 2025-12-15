@@ -3,8 +3,12 @@
 import { useState, useCallback } from "react";
 import { MCPService } from "@/shared/types/mcp-service";
 import {
+  GetMCPResourceGroupsParams,
   getMCPServiceDetail,
   parseOpenAPIDocumentForUpdate as parseOpenAPIDocumentForUpdateAPI,
+  fetchMCPResourceGroups as fetchMCPResourceGroupsAPI,
+  deleteResourceGroup as deleteResourceGroupAPI,
+  addServiceToGroup as addServiceToGroupAPI,
 } from "@/services/mcpService";
 
 export const useMCPServiceDetail = () => {
@@ -98,6 +102,40 @@ export const useMCPServiceDetail = () => {
     []
   );
 
+  /**
+   * 获取资源组列表
+   * @param page 页码
+   * @param page_size 每页条数
+   * @param keyword 关键词
+   * @returns 资源组列表
+   */
+  const fetchMCPResourceGroups = useCallback(async (page: number, page_size: number, keyword: string): Promise<GetMCPResourceGroupsParams> => {
+    const response = await fetchMCPResourceGroupsAPI(page, page_size, keyword);
+    return response;
+  }, []);
+
+  /**
+   * 删除资源组
+   * @param serviceById 服务ID
+   * @param resourceGroupId 资源组ID
+   * @returns 是否删除成功
+   */
+  const deleteResourceGroup = useCallback(async (serviceById: string, resourceGroupId: string): Promise<boolean> => {
+    const response = await deleteResourceGroupAPI(serviceById, resourceGroupId);
+    return response;
+  }, []);
+
+  /**
+   * 添加服务到资源组
+   * @param groupId 资源组ID
+   * @param serverIds 服务ID列表
+   * @returns 是否添加成功
+   */
+  const addServiceToGroup = useCallback(async (groupId: string, serverIds: string[]): Promise<boolean> => {
+    const response = await addServiceToGroupAPI(groupId, serverIds);
+    return response;
+  }, []);
+
   return {
     serviceDetail,
     detailLoading,
@@ -107,5 +145,8 @@ export const useMCPServiceDetail = () => {
     getServiceDetail,
     clearServiceDetail,
     parseOpenAPIDocumentForUpdate,
+    fetchMCPResourceGroups,
+    deleteResourceGroup,
+    addServiceToGroup
   };
 };
