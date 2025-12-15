@@ -90,7 +90,7 @@ def init_db():
     """Initialize database and create all tables"""
     try:
         # Import all models to ensure they are registered
-        from .models import user, user_wallet, user_wallet_history, user_access_token, sys_config, mcp_service, mcp_tool_api, user_apikey
+        from .models import user, user_wallet, user_wallet_history, user_access_token, sys_config, mcp_service, mcp_tool_api, user_apikey, resource_group
 
         # Create all tables
         Base.metadata.create_all(bind=engine)

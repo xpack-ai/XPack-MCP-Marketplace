@@ -5,10 +5,6 @@ and to test email settings. All responses and comments are standardized in Engli
 """
 from fastapi import APIRouter, Depends, Body
 import json
-import socket
-import urllib.request
-from typing import Optional
-from sqlalchemy import false, table
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils

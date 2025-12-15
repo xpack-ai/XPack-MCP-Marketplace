@@ -54,22 +54,34 @@ class McpServiceRepository:
     def get_by_id(self, id: str) -> Optional[McpService]:
         """Get a service by primary ID."""
         return self.db.query(McpService).filter(McpService.id == id).first()
+    def get_by_ids(self, ids: List[str]) -> List[McpService]:
+        """Get services by primary IDs."""
+        return self.db.query(McpService).filter(McpService.id.in_(ids)).all()
 
     def get_by_slug_name(self, slug_name: str) -> Optional[McpService]:
         """Get a service by unique slug name."""
         return self.db.query(McpService).filter(McpService.slug_name == slug_name).first()
 
-    def get_all(self) -> List[McpService]:
+    def get_all(self, keyword: Optional[str] = None) -> List[McpService]:
         """List all services ordered by creation time descending."""
-        return self.db.query(McpService).order_by(McpService.created_at.desc()).all()
+        query = self.db.query(McpService).order_by(McpService.created_at.desc())
+        if keyword:
+            keyword = f"%{keyword}%"
+            query = query.filter((McpService.name.like(keyword)) | (McpService.short_description.like(keyword)))
+        return query.all()
 
-    def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[List[McpService], int]:
+    def get_all_paginated(self, page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[McpService], int]:
         """Get service list with pagination"""
         offset = (page - 1) * page_size
 
         total = self.db.query(McpService).count()
 
-        services = self.db.query(McpService).order_by(McpService.created_at.desc()).offset(offset).limit(page_size).all()
+        query = self.db.query(McpService).order_by(McpService.created_at.desc()).offset(offset).limit(page_size)
+        if keyword:
+            keyword = f"%{keyword}%"
+            query = query.filter((McpService.name.like(keyword)) | (McpService.short_description.like(keyword)))
+
+        services = query.all()
 
         return services, total
 
