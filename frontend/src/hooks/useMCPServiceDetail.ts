@@ -109,8 +109,8 @@ export const useMCPServiceDetail = () => {
    * @param keyword 关键词
    * @returns 资源组列表
    */
-  const fetchMCPResourceGroups = useCallback(async (page: number, page_size: number, keyword: string): Promise<GetMCPResourceGroupsParams> => {
-    const response = await fetchMCPResourceGroupsAPI(page, page_size, keyword);
+  const fetchMCPResourceGroups = useCallback(async (id: string, page: number, page_size: number, keyword: string): Promise<GetMCPResourceGroupsParams> => {
+    const response = await fetchMCPResourceGroupsAPI(id, page, page_size, keyword);
     return response;
   }, []);
 
