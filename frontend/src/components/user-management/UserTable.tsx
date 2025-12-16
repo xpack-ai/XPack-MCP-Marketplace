@@ -123,7 +123,7 @@ export const UserTable: React.FC<UserTableProps> = ({
       >
         <TableHeader>
           <TableColumn>{t("Email")}</TableColumn>
-          <TableColumn>{t("Resource Group")}</TableColumn>
+          <TableColumn width={250}>{t("Resource Group")}</TableColumn>
           <TableColumn>{t("Register Date")}</TableColumn>
           <TableColumn>{t("Balance")}</TableColumn>
           <TableColumn>{t("Actions")}</TableColumn>
@@ -143,7 +143,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                 <Select
                   items={simpleResourceGroups}
                   placeholder={t("Select resource group")}
-                  selectedKeys={user.resource_group ? [user.resource_group] : []}
+                  selectedKeys={user.group_id ? [user.group_id] : []}
                   onSelectionChange={(keys) => {
                     const selectedKey = Array.from(keys)[0] as string;
                     if (selectedKey) {
@@ -151,7 +151,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                     }
                   }}
                   size="sm"
-                  className="min-w-[200px]"
+                  className="max-w-[250px]"
                   aria-label={t("Select resource group")}
                 >
                   {(group) => (

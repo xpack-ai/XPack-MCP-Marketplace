@@ -229,10 +229,9 @@ export const parseOpenAPIDocumentForUpdate = async (
 /**
  * 获取资源组列表
  */
-export const fetchMCPResourceGroups = async (page: number, page_size: number, keyword: string): Promise<GetMCPResourceGroupsParams> => {
+export const fetchMCPResourceGroups = async (id: string, page: number, page_size: number, keyword: string): Promise<GetMCPResourceGroupsParams> => {
   try {
-    // const response = await fetchAPI<ResourceGroup[]>(`/api/service/resource_group/list?page=${page}&page_size=${page_size}&keyword=${keyword}`);
-    const response = await fetchAdminAPI<MCPResourceGroupResponse[]>(`http://uat.apikit.com:11204/mockApi/CaAau8f9f09663d610e0d7d919412be238695b46d0a44b1/api/service/resource_group/list?page=${page}&page_size=${page_size}&keyword=${keyword}`);
+    const response = await fetchAdminAPI<MCPResourceGroupResponse[]>(`/api/resource_group/service/list?id=${id}&page=${page}&page_size=${page_size}&keyword=${keyword}`);
     if (!response.success) {
       toast.error(response.error_message || i18n.t("Failed to load resource groups"));
       return {
@@ -264,14 +263,10 @@ export const fetchMCPResourceGroups = async (page: number, page_size: number, ke
  */
 export const deleteResourceGroup = async (serviceById: string, resourceGroupId: string): Promise<boolean> => {
   try {
-    const response = await fetchAdminAPI<ApiObjectResponse<boolean>>(`http://uat.apikit.com:11204/mockApi/CaAau8f9f09663d610e0d7d919412be238695b46d0a44b1/api/service/resource_group`, {
+    const response = await fetchAdminAPI<boolean>(`/api/resource_group/service?id=${serviceById}`, {
       method: "DELETE",
-      body: { id: serviceById, resource_group: resourceGroupId } as unknown as BodyInit,
+      body: { services: resourceGroupId } as unknown as BodyInit,
     });
-    // const response = await fetchAPI<ApiObjectResponse<boolean>>(`/api/service/resource_group`, {
-    //   method: "DELETE"
-    //   body: { id: serviceById, resource_group: resourceGroupId } as unknown as BodyInit,
-    // });
     if (!response.success) {
       toast.error(response?.error_message || i18n.t("Failed to delete resource group"));
       return false;
@@ -291,14 +286,10 @@ export const addServiceToGroup = async (
   services: string[]
 ): Promise<boolean> => {
   try {
-    const response = await fetchAdminAPI<ApiObjectResponse<boolean>>(`http://uat.apikit.com:11204/mockApi/CaAau8f9f09663d610e0d7d919412be238695b46d0a44b1/api/service/resource_group`, {
+    const response = await fetchAdminAPI<boolean>(`/api/resource_group/service?id=${groupId}`, {
       method: "PUT",
-      body: { id: groupId, resource_group: services } as unknown as BodyInit,
+      body: { services: services } as unknown as BodyInit,
     });
-    // const response = await fetchAPI<ApiObjectResponse<boolean>>(`/api/service/resource_group`, {
-    //   method: "PUT"
-    //   body: { id: groupId, resource_group: services } as unknown as BodyInit,
-    // });
     if (!response.success) {
       toast.error(response?.error_message || i18n.t("Failed to add service to group"));
       return false;

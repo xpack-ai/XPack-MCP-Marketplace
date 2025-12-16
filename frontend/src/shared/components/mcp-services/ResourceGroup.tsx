@@ -30,7 +30,7 @@ export interface ResourceGroup {
 
 interface ResourceGroupProps {
   deleteResourceGroup: (serviceById: string, resourceGroupId: string) => Promise<boolean>;
-  fetchMCPResourceGroups: (page: number, page_size: number, keyword: string) => Promise<GetMCPResourceGroupsParams>;
+  fetchMCPResourceGroups: (id: string, page: number, page_size: number, keyword: string) => Promise<GetMCPResourceGroupsParams>;
   addServiceToGroup: (groupId: string, serverIds: string[]) => Promise<boolean>;
   formData: MCPServiceFormData;
 }
@@ -70,7 +70,7 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
   ) => {
     setLoading(true);
     try {
-      const response = await fetchMCPResourceGroups(page, pageSize, keyword);
+      const response = await fetchMCPResourceGroups(formData?.id || "", page, pageSize, keyword);
       setResourceGroups(response.data);
       setPagination({
         page: response.page,
