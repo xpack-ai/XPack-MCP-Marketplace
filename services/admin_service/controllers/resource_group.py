@@ -124,6 +124,14 @@ def list_bind_services(request: Request, id: str, page: int = 1, page_size: int 
 
     return ResponseUtils.success_page(data=services, page_num=page, page_size=page_size, total=total)
 
+@router.get("/service/list/unbind", summary="List services bound to group")
+def list_unbind_services(request: Request, id: str, svc: ResourceGroupService = Depends(get_resource_group_service)):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    services = svc.get_unbind_services(id)
+
+    return ResponseUtils.success(data=services)
+
 
 @router.delete("/service", summary="Unbind one service from group")
 def unbind_service(request: Request,id: str, body: dict = Body(...), svc: ResourceGroupService = Depends(get_resource_group_service)):
