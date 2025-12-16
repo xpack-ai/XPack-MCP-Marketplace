@@ -297,6 +297,27 @@ def get_mcp_service_resource_group_list(
         logger.error(f"Failed to get service simple list: {str(e)}")
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
 
+@router.get("/service/resource_group/list/unbind", summary="Get MCP service's unbind resource group list")
+def get_mcp_service_unbind_resource_group_list(
+    request: Request,
+    id: str,
+    resource_group_service: ResourceGroupService = Depends(get_resource_group_service),
+):
+    """Get paginated list of all MCP services' unbind resource groups."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    if not id:
+        return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
+    try:
+        # Fetch paginated data
+        list = resource_group_service.get_unbind_groups(id)
+        
+        return ResponseUtils.success(data=list)
+    except Exception as e:
+        logger.error(f"Failed to get unbind resource group list: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+        
+
 @router.put("/service/resource_group", summary="Bind resource groups to MCP service")
 def bind_group(
     request: Request,
