@@ -13,6 +13,7 @@ from services.admin_service.services.sys_config_service import SysConfigService
 from services.admin_service.constants.sys_config_key import (
     KEY_LOGIN_GOOGLE_CLIENT,
     KEY_LOGIN_GOOGLE_SECRET,
+    KEY_DEFAULT_RESOURCE_GROUP,
 )
 from services.common.utils.auth import delete_token
 
@@ -76,7 +77,8 @@ class AuthService:
 
             # User doesn't exist, register first
             if user is None:
-                user = self.user_repository.create(email=email, register_type="email", role_id=2)
+                group_id = self.sys_config_service.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
+                user = self.user_repository.create(email=email, register_type="email", role_id=2, group_id=group_id)
             if user is None:
                 logger.warning(f"Failed to register user with email: {email}")
                 return None
@@ -94,7 +96,8 @@ class AuthService:
         user = self.user_repository.get_by_email(email)
         # User doesn't exist, register first
         if user is None:
-            user = self.user_repository.create(email=email, register_type="email", role_id=2,password=password)
+            group_id = self.sys_config_service.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
+            user = self.user_repository.create(email=email, register_type="email", role_id=2, group_id=group_id, password=password)
 
         if user is None:
             logger.warning(f"Failed to register user with email: {email}")
