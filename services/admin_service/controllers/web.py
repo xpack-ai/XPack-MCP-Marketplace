@@ -68,20 +68,6 @@ def get_public_mcp_service_info(
     service_info = mcp_manager_service.get_public_service_info(id)
     if not service_info:
         return ResponseUtils.error(error_msg=error_msg.RESOURCE_NOT_FOUND)
-    service_info["can_invoke"] = False
-    # Check if user is admin
-    user = UserUtils.get_request_user(request)
-    if user:
-        if user.group_id:
-            # Check if user is in any of the service's groups
-            bind_services = resource_group_service.get_bind_services(id)
-            service_id = service_info["id"]
-            if service_id in bind_services:
-                service_info["can_invoke"] = True
-        else:
-            service_info["can_invoke"] = True
-
-        return ResponseUtils.success(data=service_info)
     
     # Validate that service exists
     ValidationUtils.require_resource_exists(service_info, "service")

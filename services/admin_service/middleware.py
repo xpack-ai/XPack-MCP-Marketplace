@@ -20,35 +20,6 @@ class AuthMiddleware:
         self.app = app
         logger.info(f"AuthMiddleware initialized, no-auth paths: {len(Config.NO_AUTH_PATHS)} paths configured")
     
-    def _add_auth_to_scope(self, scope):
-        # Get headers
-        headers = scope.get("headers", [])
-        auth_header = None
-
-        # Find Authorization header
-        for key, value in headers:
-            if key == b"authorization":
-                auth_header = value.decode("utf-8")
-                break
-        if not auth_header:
-            return
-        token = auth_header.replace("Bearer ", "")
-        # Validate token
-        db = next(get_db())
-        try:
-            user = verify_token(token, db)
-            if not user:
-                return 
-            # Add user information to request state
-            scope["user"] = user
-            scope["user_token"] = token
-        except Exception as e:
-            logger.error(f"Authentication error: {str(e)}")
-            return
-        finally:
-            if "db" in locals():
-                db.close()
-
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
             # Get request path
@@ -57,7 +28,6 @@ class AuthMiddleware:
             # Skip paths that don't require authentication
             if path in Config.NO_AUTH_PATHS:
                 logger.debug(f"Skipping authentication for path: {path}")
-                self._add_auth_to_scope(scope)
                 await self.app(scope, receive, send)
                 return
             for prefix_path in Config.NO_AUTH_PREFIX_PATH:
