@@ -24,6 +24,7 @@ interface AddMcpServerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaveMcpServer: (serverIds: string[]) => Promise<void>;
+  id: string;
 }
 
 export interface SimpleMcpService {
@@ -41,6 +42,7 @@ export const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({
   isOpen,
   onClose,
   onSaveMcpServer,
+  id,
 }) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
@@ -49,10 +51,10 @@ export const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 
   // 加载服务列表
-  const loadServices = useCallback(async () => {
+  const loadServices = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      const response = await fetchSimpleMcpServices();
+      const response = await fetchSimpleMcpServices(id);
       setServices(response);
     } catch (error) {
       console.error("Failed to load MCP services:", error);
@@ -65,7 +67,7 @@ export const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setSelectedKeys(new Set());
-      loadServices();
+      loadServices(id);
     }
   }, [isOpen, loadServices]);
 
