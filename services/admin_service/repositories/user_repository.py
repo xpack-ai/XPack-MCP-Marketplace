@@ -28,7 +28,7 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
-    def create(self, email: str, register_type: str, role_id: int = 2, password: Optional[str] = None) -> Optional[User]:
+    def create(self, email: str, register_type: str, role_id: int = 2, group_id: str = "", password: Optional[str] = None) -> Optional[User]:
         from uuid import uuid4
         from services.common.models.user import RegisterType
 
@@ -44,6 +44,7 @@ class UserRepository:
             is_deleted=0,
             register_type=RegisterType(register_type),
             role_id=role_id,
+            group_id=group_id,
             created_at=now,
             updated_at=now
         )
