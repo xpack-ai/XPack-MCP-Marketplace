@@ -242,7 +242,12 @@ class ResourceGroupService:
             total += 1
             
         return result,total
-    
+    def get_bind_service_ids(self, gid: str) -> List[str]:
+        if gid == "deny-all":
+            return []
+        elif gid == "allow-all":
+            return [s.id for s in self.mcp_repo.get_all()]
+        return self.map_repo.list_service_ids(gid)
 
     def get_bind_services(self, gid: str, page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[dict], int]:
         if gid == "deny-all":
@@ -335,7 +340,7 @@ class ResourceGroupService:
             }
             for s in services
         ]
-        
+
     def get_unbind_groups(self, sid: str) -> List[dict]:
         """Get all groups not bind to service"""
         gids = self.map_repo.list_group_ids(sid)
