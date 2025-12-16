@@ -20,7 +20,6 @@ class ResourceGroupService:
         self.sys_repo = SysConfigRepository(db)
 
     def create_group(self, gid: str, name: str, description: Optional[str], is_default: bool = False) -> str:
-        
         try:
             if gid != "deny-all" and gid != "allow-all":
                 group = ResourceGroup()
@@ -118,24 +117,26 @@ class ResourceGroupService:
         }
 
     def list_groups(self, page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[dict], int]:
-        groups,total =  self.group_repo.get_all_paginated(page=page, page_size=page_size, keyword=keyword)
         default_group = self.sys_repo.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
-        data = [
-            {
-                "id":"allow-all",
-                "name":"Allow All",
-                "description":"Allow all services",
-                "enabled": 1,
-                "is_default": "allow-all" == default_group or default_group == "",
-            },
-            {
-                "id":"deny-all",
-                "name":"Deny All",
-                "description":"Deny all services",
-                "enabled": 1,
-                "is_default": "deny-all" == default_group,
-            },
-        ]
+        groups,total =  self.group_repo.get_all_paginated(page=page, page_size=page_size, keyword=keyword)
+        if total == 0:
+            return [
+                    {
+                    "id":"allow-all",
+                    "name":"Allow All",
+                    "description":"Allow all services",
+                    "enabled": 1,
+                    "is_default": "allow-all" == default_group or default_group == "",
+                },
+                {
+                    "id":"deny-all",
+                    "name":"Deny All",
+                    "description":"Deny all services",
+                    "enabled": 1,
+                    "is_default": "deny-all" == default_group,
+                },
+            ],2
+        data = []
         # data拼接
         data.extend(
             {
@@ -149,10 +150,44 @@ class ResourceGroupService:
             }
             for g in groups
         )
-        return data,total
+        # 默认项（统一为 dict）
+        allow_all = {
+            "id": "allow-all",
+            "name": "Allow All",
+            "description": "Allow all services",
+            "enabled": True,  # 统一为 bool
+            "is_default": "allow-all" == default_group or default_group == "",
+        }
+
+        deny_all = {
+            "id": "deny-all",
+            "name": "Deny All",
+            "description": "Deny all services",
+            "enabled": True,  # 统一为 bool
+            "is_default": "deny-all" == default_group,
+        }
+        if len(data) < page_size:
+            data.append(allow_all)
+        if len(data) < page_size:
+            data.append(deny_all)
+
+        return data,total+2
 
     def simple_list_groups(self) -> List[ResourceGroup]:
-        return self.group_repo.get_all()
+        data = self.group_repo.get_all()
+        data.append(ResourceGroup(id="allow-all", name="Allow All", description="Allow all services", enabled=True))
+        data.append(ResourceGroup(id="deny-all", name="Deny All", description="Deny all services", enabled=True))
+        return data
+    
+    def bind_groups(self, service_id: str, group_ids: List[str]) -> int:
+        created = self.map_repo.bind_group(service_id, group_ids, commit=False)
+        self.db.commit()
+        return created
+    
+    def unbind_groups(self, service_id: str, group_ids: List[str]) -> int:
+        count = self.map_repo.unbind_group(service_id, group_ids, commit=False)
+        self.db.commit()
+        return count
 
 
     def bind_services(self, gid: str, service_ids: List[str]) -> int:
@@ -170,6 +205,44 @@ class ResourceGroupService:
         except Exception:
             self.db.rollback()
             raise
+
+    def get_bind_groups(self, sid: str, page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[dict], int]:
+        groups = self.group_repo.get_all(keyword=keyword)
+        if not groups:
+            if keyword and keyword.lower() not in "allow-all".lower():
+                return [],0
+            return [
+                {
+                    "id":"allow-all",
+                    "name":"Allow All",
+                    "join_at": "2025-12-16 00:00:00"
+                }
+            ],1
+        group_map = {g.id: g for g in groups}
+        group_ids = None
+        if keyword:
+            group_ids = [g.id for g in groups]
+            
+        groups,total = self.map_repo.list_group_ids_paginated(sid, page=page, page_size=page_size, group_ids=group_ids)
+        result = []
+        for group in groups:
+            result.append({
+                "id": group["id"],
+                "name": group_map[group["id"]].name if group["id"] in group_map else "",
+                "join_at": str(group["join_at"]) if group["join_at"] else None,
+            })
+        if len(result) > 0 and len(result) < page_size:
+            if keyword and keyword.lower() not in "allow-all".lower():
+                    return result,total
+            result.append({
+                "id":"allow-all",
+                "name":"Allow All",
+                "join_at": "2025-12-16 00:00:00"
+            })
+            total += 1
+            
+        return result,total
+    
 
     def get_bind_services(self, gid: str, page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[dict], int]:
         if gid == "deny-all":

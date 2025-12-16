@@ -48,6 +48,12 @@ class User(Base):
         default=False,
         comment="1: admin, 2: user",
     )
+    group_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=True,
+        default="",
+        comment="Group ID",
+    )
     last_login_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=True,
