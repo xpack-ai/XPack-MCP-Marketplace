@@ -91,9 +91,16 @@ class ResourceGroupServiceMapRepository:
         return [r.service_id for r in groups], total
 
     def migrate_services(self, from_group_id: str, to_group_id: str, commit: bool = True) -> int:
+        # 过滤已经在新分组的服务
+        existing_services = (
+            self.db.query(ResourceGroupServiceMap.service_id)
+            .filter(ResourceGroupServiceMap.group_id == to_group_id)
+            .all()
+        )
+        existing_service_ids = [item.service_id for item in existing_services]
         q = (
             self.db.query(ResourceGroupServiceMap)
-            .filter(ResourceGroupServiceMap.group_id == from_group_id)
+            .filter(ResourceGroupServiceMap.group_id == from_group_id, ~ResourceGroupServiceMap.service_id.in_(existing_service_ids))
         )
         count = q.count()
         # 获取当前时间
