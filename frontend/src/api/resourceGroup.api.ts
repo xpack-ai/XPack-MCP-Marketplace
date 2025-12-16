@@ -159,9 +159,9 @@ export const fetchGroupServices = async (id: string,page: number, page_size: num
 /**
  * 获取简易指定资源组下的服务列表
  */
-export const fetchSimpleMcpServices = async (): Promise<SimpleMcpService[]> => {
+export const fetchSimpleMcpServices = async (id: string): Promise<SimpleMcpService[]> => {
   try {
-    const response = await fetchAdminAPI<SimpleMcpService[]>(`/api/mcp/service/list/simple`);
+    const response = await fetchAdminAPI<SimpleMcpService[]>(`/api/resource_group/service/list/unbind?id=${id}`);
     if (!response.success) {
       toast.error(response.error_message || i18n.t("Failed to fetch simple mcp services"));
       return []

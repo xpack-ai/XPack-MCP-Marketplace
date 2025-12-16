@@ -335,6 +335,7 @@ const ResourceGroupManagement: React.FC = () => {
         type={editingGroup ? "edit" : "add"}
       />
       <AddMcpServerModal
+        id={selectedGroup?.id || ""}
         isOpen={isAddMcpServerModalOpen}
         onClose={() => {
           setIsAddMcpServerModalOpen(false);
