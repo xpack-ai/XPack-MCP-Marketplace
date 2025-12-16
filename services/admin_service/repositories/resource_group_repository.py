@@ -47,6 +47,10 @@ class ResourceGroupRepository:
     def get_by_id(self, id: str) -> Optional[ResourceGroup]:
         return self.db.query(ResourceGroup).filter(ResourceGroup.id == id).first()
 
+    def get_all_not_include(self, ids: List[str]) -> List[ResourceGroup]:
+        """Get all groups not include in ids"""
+        return self.db.query(ResourceGroup).filter(ResourceGroup.id.not_in(ids)).all()
+
     def get_all_paginated(self, page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[ResourceGroup], int]:
         offset = (page - 1) * page_size
         query = self.db.query(ResourceGroup)

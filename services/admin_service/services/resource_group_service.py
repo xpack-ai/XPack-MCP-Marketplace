@@ -335,6 +335,18 @@ class ResourceGroupService:
             }
             for s in services
         ]
+        
+    def get_unbind_groups(self, sid: str) -> List[dict]:
+        """Get all groups not bind to service"""
+        gids = self.map_repo.list_group_ids(sid)
+        groups = self.group_repo.get_all_not_include(ids=gids)
+        return [
+            {
+                "id": g.id,
+                "name": g.name,
+            }
+            for g in groups
+        ]
 
     def unbind_service(self, gid: str, sids: List[str]) -> int:
         try:

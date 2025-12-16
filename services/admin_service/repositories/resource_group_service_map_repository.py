@@ -93,6 +93,9 @@ class ResourceGroupServiceMapRepository:
     def list_service_ids(self, group_id: str) -> List[str]:
         return [r.service_id for r in self.db.query(ResourceGroupServiceMap.service_id).filter(ResourceGroupServiceMap.group_id == group_id).all()]
 
+    def list_group_ids(self, service_id: str) -> List[str]:
+        return [r.group_id for r in self.db.query(ResourceGroupServiceMap.group_id).filter(ResourceGroupServiceMap.service_id == service_id).all()]
+
     def migrate_services(self, from_group_id: str, to_group_id: str, commit: bool = True) -> int:
         # 过滤已经在新分组的服务
         existing_services = (
