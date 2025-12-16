@@ -89,6 +89,9 @@ class ResourceGroupServiceMapRepository:
             query.order_by(ResourceGroupServiceMap.created_at.desc()).offset(offset).limit(page_size).all()
         )
         return [r.service_id for r in groups], total
+    
+    def list_service_ids(self, group_id: str) -> List[str]:
+        return [r.service_id for r in self.db.query(ResourceGroupServiceMap.service_id).filter(ResourceGroupServiceMap.group_id == group_id).all()]
 
     def migrate_services(self, from_group_id: str, to_group_id: str, commit: bool = True) -> int:
         # 过滤已经在新分组的服务

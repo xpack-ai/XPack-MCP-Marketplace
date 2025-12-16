@@ -317,6 +317,24 @@ class ResourceGroupService:
                 }
                 for s in services
             ],total
+    def get_unbind_services(self, gid: str) -> List[dict]:
+        if gid == "deny-all" or gid == "allow-all":
+            return []
+        sids = self.map_repo.list_service_ids(gid)
+        services = self.mcp_repo.get_all_not_include(ids=sids)
+        return [
+            {
+                "id": s.id,
+                "name": s.name,
+                "base_url":s.base_url,
+                "charge_type": s.charge_type.value if s.charge_type else None,
+                "price": str(float(s.price)) if s.price and s.charge_type == ChargeType.PER_CALL else "0.00",
+                "input_token_price": str(float(s.input_token_price)) if s.input_token_price and s.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "output_token_price": str(float(s.output_token_price)) if s.output_token_price and s.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "enabled": s.enabled,
+            }
+            for s in services
+        ]
 
     def unbind_service(self, gid: str, sids: List[str]) -> int:
         try:

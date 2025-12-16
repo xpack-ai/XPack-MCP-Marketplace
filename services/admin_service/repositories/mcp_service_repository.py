@@ -85,6 +85,10 @@ class McpServiceRepository:
 
         return services, total
 
+    def get_all_not_include(self, ids: List[str]) -> List[McpService]:
+        """Get all services not include in ids"""
+        return self.db.query(McpService).filter(McpService.id.not_in(ids)).all()
+
     def create(self, mcp_service: McpService) -> McpService:
         """Create a service; set timestamps if missing and persist."""
         # Set timestamps explicitly if not already set
