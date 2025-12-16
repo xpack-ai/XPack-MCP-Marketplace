@@ -188,3 +188,12 @@ class UserRepository:
             current_day += timedelta(days=1)
         return result
         
+    def update_resource_group(self, user_id: str, group_id: str) -> Optional[User]:
+        """Update user resource group"""
+        user = self.db.query(User).filter(User.id == user_id, User.is_deleted == 0).first()
+        if not user:
+            return None
+        user.group_id = group_id
+        self.db.commit()
+        self.db.refresh(user)
+        return user

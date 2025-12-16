@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.utils.user_utils import UserUtils
-from services.admin_service.constants.sys_config_key import KEY_DEFAULT_RESOURCE_GROUP
 from services.common import error_msg
 from services.admin_service.services.resource_group_service import ResourceGroupService
 from services.admin_service.services.sys_config_service import SysConfigService

@@ -58,5 +58,8 @@ class ResourceGroupRepository:
         )
         return groups, total
     
-    def get_all(self) -> List[ResourceGroup]:
-        return self.db.query(ResourceGroup).order_by(ResourceGroup.created_at.desc()).all()
+    def get_all(self,keyword: Optional[str] = None) -> List[ResourceGroup]:
+        query = self.db.query(ResourceGroup)
+        if keyword:
+            query = query.filter(ResourceGroup.name.like(f"%{keyword}%"))
+        return query.order_by(ResourceGroup.created_at.desc()).all()

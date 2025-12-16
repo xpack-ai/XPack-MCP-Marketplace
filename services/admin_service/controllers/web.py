@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 from typing import Optional
 from services.common.database import get_db
@@ -6,6 +6,11 @@ from services.common.utils.response_utils import ResponseUtils
 from services.common.utils.validation_utils import ValidationUtils
 from services.admin_service.services.mcp_manager_service import McpManagerService
 from services.common.logging_config import get_logger
+from services.admin_service.utils.user_utils import UserUtils
+from services.admin_service.services.resource_group_service import ResourceGroupService
+from services.common import error_msg
+
+
 
 logger = get_logger(__name__)
 
@@ -14,6 +19,9 @@ router = APIRouter(tags=["front"])
 
 def get_mcp_manager(db: Session = Depends(get_db)) -> McpManagerService:
     return McpManagerService(db)
+
+def get_resource_group_service(db: Session = Depends(get_db)) -> ResourceGroupService:
+    return ResourceGroupService(db)
 
 
 @router.get("/mcp_services", summary="Get public MCP services list")
@@ -44,8 +52,10 @@ def get_public_mcp_services(
 
 @router.get("/mcp_service_info", summary="Get public MCP service information")
 def get_public_mcp_service_info(
+    request: Request,
     id: str = Query(..., description="Service ID"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
+    resource_group_service: ResourceGroupService = Depends(get_resource_group_service),
 ):
     """Get detailed information of a public MCP service by ID."""
 
@@ -56,7 +66,23 @@ def get_public_mcp_service_info(
 
     # Get service information - let any exception bubble up to middleware
     service_info = mcp_manager_service.get_public_service_info(id)
+    if not service_info:
+        return ResponseUtils.error(error_msg=error_msg.RESOURCE_NOT_FOUND)
+    service_info["can_invoke"] = False
+    # Check if user is admin
+    user = UserUtils.get_request_user(request)
+    if user:
+        if user.group_id:
+            # Check if user is in any of the service's groups
+            bind_services = resource_group_service.get_bind_services(id)
+            service_id = service_info["id"]
+            if service_id in bind_services:
+                service_info["can_invoke"] = True
+        else:
+            service_info["can_invoke"] = True
 
+        return ResponseUtils.success(data=service_info)
+    
     # Validate that service exists
     ValidationUtils.require_resource_exists(service_info, "service")
 
