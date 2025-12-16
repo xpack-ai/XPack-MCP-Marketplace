@@ -553,7 +553,7 @@ class McpManagerService:
 
         # Build return data (according to API specification format)
         service_info = {
-            "id": service.slug_name,
+            "id": service.id,
             "name": service.name,
             "short_description": service.short_description,
             "long_description": service.long_description,
