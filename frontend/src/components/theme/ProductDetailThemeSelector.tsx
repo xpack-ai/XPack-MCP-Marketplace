@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { sanitizeMCPServerName } from "@/shared/utils/mcp";
 import { useNavigationItems } from "@/shared/providers/ConfigProvider";
 import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
+import { useSharedStore } from "@/shared/store/share";
 
 interface ProductDetailThemeSelectorProps {
   product: ServiceData;
@@ -37,6 +38,7 @@ const BasicProductDetailThemeSelector: React.FC<
   const [url, setUrl] = useState<string>("");
   const [mcpName, setMcpName] = useState<string>("");
   const [can_invoke, setCanInvoke] = useState<boolean>(false);
+  const [visitor, setVisitor] = useState<boolean>(false);
   const { t } = useTranslation();
   const configNavigation = useNavigationItems() || NavigationItems;
 
@@ -58,8 +60,24 @@ const BasicProductDetailThemeSelector: React.FC<
     setMcpName(sanitizeMCPServerName(product.name));
   }, [product.name]);
   useEffect(() => {
-    setCanInvoke(product.can_invoke || false);
-  }, [product.can_invoke]);
+    const user = useSharedStore?.getState?.().user;
+    if (user) {
+      if (user?.allow_all) {
+        setCanInvoke(true)
+      } else {
+        const serviceId = product.id
+        const allowIds = user.service_ids
+        if (!allowIds?.includes(serviceId)) {
+          setCanInvoke(false)
+        } else {
+          setCanInvoke(true)
+        }
+      }
+    } else {
+      setCanInvoke(true);
+      setVisitor(true);
+    }
+  }, [useSharedStore?.getState?.().user]);
   const getCodeContent = () => {
     return `{
   "mcpServers": {
@@ -87,6 +105,7 @@ const BasicProductDetailThemeSelector: React.FC<
       return (
         <ModernDetail
           can_invoke={can_invoke}
+          visitor={visitor}
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
@@ -99,6 +118,7 @@ const BasicProductDetailThemeSelector: React.FC<
       return (
         <ClassicDetail
           can_invoke={can_invoke}
+          visitor={visitor}
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
@@ -111,6 +131,7 @@ const BasicProductDetailThemeSelector: React.FC<
       return (
         <CreativeDetail
           can_invoke={can_invoke}
+          visitor={visitor}
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
@@ -123,6 +144,7 @@ const BasicProductDetailThemeSelector: React.FC<
       return (
         <TemuDetail
           can_invoke={can_invoke}
+          visitor={visitor}
           product={product}
           breadcrumbs={breadcrumbs}
           url={url}
@@ -140,6 +162,7 @@ const BasicProductDetailThemeSelector: React.FC<
             <ProductDetailClient
               product={product}
               can_invoke={can_invoke}
+              visitor={visitor}
               mcpName={mcpName}
               url={url}
             />
