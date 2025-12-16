@@ -11,15 +11,15 @@ import i18n from "@/shared/lib/i18n";
 
 // MCP server list API response interface
 export interface MCPServiceListApiResponse
-  extends ApiArrayResponse<MCPService> {}
+  extends ApiArrayResponse<MCPService> { }
 
 // MCP server detail API response interface
 export interface MCPServiceDetailApiResponse
-  extends ApiObjectResponse<MCPService> {}
+  extends ApiObjectResponse<MCPService> { }
 
 // OpenAPI parse API response interface
 export interface OpenAPIParseApiResponse
-  extends ApiObjectResponse<OpenAPIParseResponse> {}
+  extends ApiObjectResponse<OpenAPIParseResponse> { }
 
 // get MCP server list params interface
 export interface GetMCPServiceListParams {
@@ -231,7 +231,7 @@ export const parseOpenAPIDocumentForUpdate = async (
  */
 export const fetchMCPResourceGroups = async (id: string, page: number, page_size: number, keyword: string): Promise<GetMCPResourceGroupsParams> => {
   try {
-    const response = await fetchAdminAPI<MCPResourceGroupResponse[]>(`/api/resource_group/service/list?id=${id}&page=${page}&page_size=${page_size}&keyword=${keyword}`);
+    const response = await fetchAdminAPI<MCPResourceGroupResponse[]>(`/api/mcp/service/resource_group/list?id=${id}&page=${page}&page_size=${page_size}&keyword=${keyword}`);
     if (!response.success) {
       toast.error(response.error_message || i18n.t("Failed to load resource groups"));
       return {
@@ -258,14 +258,32 @@ export const fetchMCPResourceGroups = async (id: string, page: number, page_size
   }
 };
 
+
+/**
+ * 获取未加入的资源组
+ */
+export const fetchUnboundResourceGroups = async (id: string): Promise<{ id: string, name: string }[]> => {
+  try {
+    const response = await fetchAdminAPI<{ id: string, name: string }[]>(`/api/mcp/service/resource_group/list/unbind?id=${id}`);
+    if (!response.success) {
+      toast.error(response.error_message || i18n.t("Failed to load resource groups"));
+      return [];
+    }
+    return response.data || []
+  } catch (error) {
+    console.error("Error fetching auth keys:", error);
+    return []
+  }
+};
+
 /**
  * 删除资源组
  */
-export const deleteResourceGroup = async (serviceById: string, resourceGroupId: string): Promise<boolean> => {
+export const deleteResourceGroup = async (serviceById: string, resourceGroupId: string[]): Promise<boolean> => {
   try {
-    const response = await fetchAdminAPI<boolean>(`/api/resource_group/service?id=${serviceById}`, {
+    const response = await fetchAdminAPI<boolean>(`/api/mcp/service/resource_group?id=${serviceById}`, {
       method: "DELETE",
-      body: { services: resourceGroupId } as unknown as BodyInit,
+      body: { resource_groups: resourceGroupId } as unknown as BodyInit,
     });
     if (!response.success) {
       toast.error(response?.error_message || i18n.t("Failed to delete resource group"));
@@ -286,9 +304,9 @@ export const addServiceToGroup = async (
   services: string[]
 ): Promise<boolean> => {
   try {
-    const response = await fetchAdminAPI<boolean>(`/api/resource_group/service?id=${groupId}`, {
+    const response = await fetchAdminAPI<boolean>(`/api/mcp/service/resource_group?id=${groupId}`, {
       method: "PUT",
-      body: { services: services } as unknown as BodyInit,
+      body: { resource_groups: services } as unknown as BodyInit,
     });
     if (!response.success) {
       toast.error(response?.error_message || i18n.t("Failed to add service to group"));

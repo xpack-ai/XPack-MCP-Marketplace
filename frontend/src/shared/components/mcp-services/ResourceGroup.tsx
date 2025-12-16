@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { GetMCPResourceGroupsParams } from "@/services/mcpService";
 import DeleteServerModal from "@/components/resource-group/DeleteServerModal";
 import { McpAddGroupModal } from "../modal/McpAddGroup";
+import ResourceGroupDetailModal from "../modal/ResourceGroupDetailModal";
 
 // 组内服务类型定义
 export interface ResourceGroup {
@@ -29,7 +30,7 @@ export interface ResourceGroup {
 }
 
 interface ResourceGroupProps {
-  deleteResourceGroup: (serviceById: string, resourceGroupId: string) => Promise<boolean>;
+  deleteResourceGroup: (serviceById: string, resourceGroupId: string[]) => Promise<boolean>;
   fetchMCPResourceGroups: (id: string, page: number, page_size: number, keyword: string) => Promise<GetMCPResourceGroupsParams>;
   addServiceToGroup: (groupId: string, serverIds: string[]) => Promise<boolean>;
   formData: MCPServiceFormData;
@@ -57,6 +58,9 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
   const [isDeleteResourceGroupModalOpen, setIsDeleteResourceGroupModalOpen] = useState(false);
   const [resourceGroupToDelete, setResourceGroupToDelete] = useState<ResourceGroup | null>(null);
 
+  // 资源组详情模态框
+  const [isResourceGroupDetailModalOpen, setIsResourceGroupDetailModalOpen] = useState(false);
+  const [resourceGroupDetailId, setResourceGroupDetailId] = useState<string | null>(null);
   // 添加 MCP 服务模态框
   const [isAddMcpGroupModalOpen, setIsAddMcpGroupModalOpen] = useState(false);
 
@@ -107,7 +111,7 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
    * 确认删除资源组
    */
   const handleConfirmDeleteResourceGroup = async () => {
-    const result = await deleteResourceGroup(formData?.id || "", resourceGroupToDelete?.id || "");
+    const result = await deleteResourceGroup(formData?.id || "", [resourceGroupToDelete?.id || ""]);
     if (result) {
       loadResourceGroups(1, 10, "");
       setIsDeleteResourceGroupModalOpen(false);
@@ -136,7 +140,8 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
   }
   
   const openResourceGroupPage = (group: ResourceGroup) => {
-    window.open(`/admin/console?tab=resource-group`, '_blank');
+    setResourceGroupDetailId(group.id);
+    setIsResourceGroupDetailModalOpen(true);
   }
 
   useEffect(() => {
@@ -264,11 +269,19 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
         alertDescription={t("Users associated with this resource group will not be able to call the removed MCP server")}
       />
       <McpAddGroupModal
+        id={formData.id || ""}
         isOpen={isAddMcpGroupModalOpen}
         onClose={() => {
           setIsAddMcpGroupModalOpen(false);
         }}
         onSaveMcpServer={handleSaveMcpServer}
+      />
+      <ResourceGroupDetailModal
+        groupId={resourceGroupDetailId || ""}
+        isOpen={isResourceGroupDetailModalOpen}
+        onClose={() => {
+          setIsResourceGroupDetailModalOpen(false);
+        }}
       />
     </>
   );

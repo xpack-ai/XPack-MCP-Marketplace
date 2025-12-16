@@ -9,6 +9,7 @@ import {
   fetchMCPResourceGroups as fetchMCPResourceGroupsAPI,
   deleteResourceGroup as deleteResourceGroupAPI,
   addServiceToGroup as addServiceToGroupAPI,
+  fetchUnboundResourceGroups as fetchUnboundResourceGroupsAPI,
 } from "@/services/mcpService";
 
 export const useMCPServiceDetail = () => {
@@ -85,7 +86,7 @@ export const useMCPServiceDetail = () => {
         } else {
           throw new Error(
             response.error_message ||
-              "Failed to parse OpenAPI document for update"
+            "Failed to parse OpenAPI document for update"
           );
         }
       } catch (err) {
@@ -120,7 +121,7 @@ export const useMCPServiceDetail = () => {
    * @param resourceGroupId 资源组ID
    * @returns 是否删除成功
    */
-  const deleteResourceGroup = useCallback(async (serviceById: string, resourceGroupId: string): Promise<boolean> => {
+  const deleteResourceGroup = useCallback(async (serviceById: string, resourceGroupId: string[]): Promise<boolean> => {
     const response = await deleteResourceGroupAPI(serviceById, resourceGroupId);
     return response;
   }, []);
