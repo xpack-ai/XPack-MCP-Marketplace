@@ -15,11 +15,12 @@ import {
   } from "@nextui-org/react";
   import { useState, useEffect, useCallback } from "react";
   import { useTranslation } from "@/shared/lib/useTranslation";
-  import { fetchSimpleResourceGroups } from "@/api/resourceGroup.api";
+import { fetchUnboundResourceGroups } from "@/services/mcpService";
   
   interface McpAddGroupModalProps {
     isOpen: boolean;
     onClose: () => void;
+    id: string;
     onSaveMcpServer: (serverIds: string[]) => Promise<void>;
   }
   
@@ -31,6 +32,7 @@ import {
   export const McpAddGroupModal: React.FC<McpAddGroupModalProps> = ({
     isOpen,
     onClose,
+    id,
     onSaveMcpServer,
   }) => {
     const { t } = useTranslation();
@@ -43,7 +45,7 @@ import {
     const loadServices = useCallback(async () => {
       setLoading(true);
       try {
-        const response = await fetchSimpleResourceGroups();
+        const response = await fetchUnboundResourceGroups(id);
         setResourceGroups(response);
       } catch (error) {
         console.error("Failed to load resource groups:", error);
@@ -62,7 +64,7 @@ import {
   
     // 处理保存
     const handleSave = async () => {
-      const serverIds = Array.from(selectedKeys);
+      const serverIds = typeof selectedKeys === 'string' && selectedKeys === 'all' ? resourceGroups.map((group) => group.id) : Array.from(selectedKeys);
       if (serverIds.length === 0) {
         return;
       }
