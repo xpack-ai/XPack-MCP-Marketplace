@@ -12,20 +12,24 @@ import { ServiceData } from "@/shared/types/marketplace";
 
 interface ProductDetailClientProps {
   product: ServiceData;
+  visitor?: boolean;
   breadcrumbs?: {
     link: string;
     name: string;
   }[];
   mcpName?: string;
   url?: string;
+  can_invoke?: boolean;
   innerHeaderNode?: React.ReactNode;
 }
 
 export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   product,
+  visitor,
   breadcrumbs,
   mcpName,
   url,
+  can_invoke,
   innerHeaderNode,
 }) => {
   const { t } = useTranslation();
@@ -69,7 +73,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
             </div>
 
             {/* Right side - Server Config */}
-            <ServerConfig mcpName={mcpName} url={url} />
+            <ServerConfig mcpName={mcpName} url={url} can_invoke={can_invoke} visitor={visitor} />
           </div>
 
           {/* SEO-friendly: Simple text content for search engines */}

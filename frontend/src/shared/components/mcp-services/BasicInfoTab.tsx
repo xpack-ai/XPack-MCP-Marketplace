@@ -43,7 +43,7 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
         )}
         labelPlacement="outside"
         isRequired
-        maxLength={256}
+        maxLength={255}
         isInvalid={!!errors?.slug_name}
         errorMessage={errors?.slug_name || t("Server ID is required")}
       />
@@ -54,7 +54,7 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
         onChange={(e) => onInputChange("name", e.target.value)}
         isRequired
         labelPlacement="outside"
-        maxLength={256}
+        maxLength={255}
         isInvalid={!!errors?.name}
         errorMessage={errors?.name || t("Server name is required")}
       />

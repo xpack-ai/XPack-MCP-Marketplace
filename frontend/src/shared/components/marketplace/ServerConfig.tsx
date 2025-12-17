@@ -14,6 +14,8 @@ interface ServerConfigProps {
   mcpName?: string;
   url?: string;
   className?: string;
+  can_invoke?: boolean;
+  visitor?: boolean;
 }
 
 type McpType = "sse" | "streamable-http";
@@ -22,6 +24,8 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({
   mcpName,
   url = process.env.NEXT_PUBLIC_MCP_URL,
   className = "md:min-w-[40%] w-[40%] max-w-100 mt-12",
+  can_invoke,
+  visitor,
 }) => {
   const { t } = useTranslation();
   const { handleLogin } = useAuth();
@@ -62,11 +66,22 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({
   return (
     <div className={`min-w-full ${className} flex-shrink-0`}>
       <div className="mb-2 mt-1">
-        <FlipButton
-          className="w-full rounded-md"
-          text={t("Sign up to get the auth key")}
-          onPress={handleLogin}
-        />
+        {
+          visitor || can_invoke ? <>
+            <FlipButton
+              className="w-full rounded-md"
+              text={t("Sign up to get the auth key")}
+              onPress={handleLogin}
+            />
+          </> : <>
+            <div className="w-full rounded-lg bg-[#F3126033] md:pr-2 h-[40px] md:h-[50px] shadow-lg flex items-center justify-center">
+              <p className="text-[#C20E4D] text-center font-bold text-lg leading-none">
+                {t("You don't have permission to access this MCP server.")}
+              </p>
+            </div>
+          </>
+        }
+
       </div>
 
       {/* MCP Type Selection */}

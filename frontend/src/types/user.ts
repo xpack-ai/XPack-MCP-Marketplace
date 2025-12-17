@@ -3,6 +3,7 @@ export interface User {
   id: string;
   email: string;
   balance: number;
+  group_id: string;
 }
 
 // user management related filter interface

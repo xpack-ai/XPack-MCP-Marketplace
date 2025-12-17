@@ -2,6 +2,7 @@ export enum TabKey {
   CONSOLE = "console",
   MCP_SERVICES = "mcp-services",
   USER_MANAGEMENT = "user-management",
+  RESOURCE_GROUP = "resource-group",
   REVENUE_MANAGEMENT = "revenue-management",
   PAYMENT_CHANNELS = "payment-channels",
   LOGIN_SETTINGS = "login-settings",

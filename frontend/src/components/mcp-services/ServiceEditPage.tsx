@@ -17,6 +17,7 @@ import { ToolsTab } from "@/shared/components/mcp-services/ToolsTab";
 import { OpenAPIGeneratorModal } from "@/shared/components/mcp-services/OpenAPIGeneratorModal";
 import { ChargeType } from "@/shared/types/marketplace";
 import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
+import ResourceGroup from "@/shared/components/mcp-services/ResourceGroup";
 
 const _DefaultFormData: MCPServiceFormData = {
   id: "",
@@ -50,14 +51,14 @@ const validateServiceForm = (data: MCPServiceFormData, t: any) => {
 
   if (!data.slug_name?.trim()) {
     errors.slug_name = t("Server ID is required");
-  } else if (data.slug_name.length > 256) {
-    errors.slug_name = t("Server ID must be less than 256 characters");
+  } else if (data.slug_name.length > 255) {
+    errors.slug_name = t("Server ID must be less than 255 characters");
   }
 
   if (!data.name?.trim()) {
     errors.name = t("Server name is required");
-  } else if (data.name.length > 256) {
-    errors.name = t("Server Name must be less than 256 characters");
+  } else if (data.name.length > 255) {
+    errors.name = t("Server Name must be less than 255 characters");
   }
 
   if (!data.base_url?.trim()) {
@@ -98,6 +99,9 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
     getServiceDetail,
     clearServiceDetail,
     parseOpenAPIDocumentForUpdate,
+    fetchMCPResourceGroups,
+    deleteResourceGroup,
+    addServiceToGroup,
     updateLoading,
   } = useMCPServiceDetail();
   const [isSaving, setIsSaving] = useState(false);
@@ -378,6 +382,16 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
               <DescriptionTab
                 formData={formData}
                 onInputChange={handleInputChange}
+              />
+            </div>
+          </Tab>
+          <Tab key="ResourceGroups" title={t("Resource Groups")}>
+            <div className="pt-2 h-full">
+              <ResourceGroup
+                formData={formData}
+                deleteResourceGroup={deleteResourceGroup}
+                fetchMCPResourceGroups={fetchMCPResourceGroups}
+                addServiceToGroup={addServiceToGroup}
               />
             </div>
           </Tab>
