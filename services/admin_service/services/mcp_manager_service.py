@@ -472,7 +472,7 @@ class McpManagerService:
             # 5. Build return data
             apis_list = []
             for temp_api in temp_apis:
-                api_dict = {"id": temp_api.id, "name": temp_api.name, "description": temp_api.description}
+                api_dict = {"id": temp_api.id, "name": temp_api.name,"url": temp_api.path, "description": temp_api.description}
                 apis_list.append(api_dict)
 
             result = {

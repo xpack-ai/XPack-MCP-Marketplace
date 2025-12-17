@@ -85,7 +85,7 @@ class UserRepository:
     def get_user_list(self, offset: int, limit: int) -> Tuple[int, List[User]]:
         total = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).count()
 
-        users = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).offset(offset).limit(limit).all()
+        users = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).order_by(User.created_at.desc()).offset(offset).limit(limit).all()
         return total, users
 
     def get_admin_user(self) -> Optional[User]:

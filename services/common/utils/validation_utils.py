@@ -120,6 +120,31 @@ class ValidationUtils:
             raise ValidationException(f"Parameter '{param_name}' must be a valid HTTP/HTTPS URL")
             
         return url
+    @staticmethod
+    def validate_domain(domain: str, param_name: str = "domain") -> str:
+        """
+        Validate domain format
+        
+        Args:
+            domain: The domain to validate
+            param_name: Name of the parameter for error message
+            
+        Returns:
+            The validated domain
+            
+        Raises:
+            ValidationException: If domain format is invalid
+        """
+        if not domain or not isinstance(domain, str):
+            raise ValidationException(f"Parameter '{param_name}' must be a valid domain name")
+            
+        domain = domain.strip().lower()
+        domain_pattern = r'^(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$'
+        
+        if not re.match(domain_pattern, domain):
+            raise ValidationException(f"Parameter '{param_name}' must be a valid domain name")
+            
+        return domain
 
     @staticmethod
     def validate_pagination(page: Any, page_size: Any) -> Tuple[int, int]:
