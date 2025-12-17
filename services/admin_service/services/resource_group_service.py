@@ -8,12 +8,13 @@ from services.admin_service.repositories.mcp_service_repository import McpServic
 from services.admin_service.repositories.sys_config_repository import SysConfigRepository
 from services.admin_service.constants.sys_config_key import KEY_DEFAULT_RESOURCE_GROUP
 from services.common.models.mcp_service import ChargeType
-
+from services.common.redis import redis_client 
 
 
 class ResourceGroupService:
     def __init__(self, db: Session):
         self.db = db
+        self.redis = redis_client
         self.group_repo = ResourceGroupRepository(db)
         self.map_repo = ResourceGroupServiceMapRepository(db)
         self.mcp_repo = McpServiceRepository(db)
@@ -80,6 +81,8 @@ class ResourceGroupService:
             deleted = self.group_repo.delete(gid, commit=False)
             if deleted is None:
                 raise ValueError("Resource group not found")
+            cache_key = f"xpack:resource_group:id:{gid}"
+            self.redis.delete(cache_key)
             self.db.commit()
             return True
         except Exception:
@@ -181,11 +184,17 @@ class ResourceGroupService:
     
     def bind_groups(self, service_id: str, group_ids: List[str]) -> int:
         created = self.map_repo.bind_group(service_id, group_ids, commit=False)
+        for gid in group_ids:
+            cache_key = f"xpack:resource_group:id:{gid}"
+            self.redis.delete(cache_key)
         self.db.commit()
         return created
     
     def unbind_groups(self, service_id: str, group_ids: List[str]) -> int:
         count = self.map_repo.unbind_group(service_id, group_ids, commit=False)
+        for gid in group_ids:
+            cache_key = f"xpack:resource_group:id:{gid}"
+            self.redis.delete(cache_key)
         self.db.commit()
         return count
 
@@ -200,11 +209,26 @@ class ResourceGroupService:
                 valid_ids.append(sid)
         try:
             created = self.map_repo.bind_services(gid, valid_ids, commit=False)
+            cache_key = f"xpack:resource_group:id:{gid}"
+            self.redis.delete(cache_key)
             self.db.commit()
             return created
         except Exception:
             self.db.rollback()
             raise
+
+    def unbind_service(self, gid: str, sids: List[str]) -> int:
+        try:
+            for sid in sids:
+                self.map_repo.unbind_service(gid, sid, commit=False)
+            cache_key = f"xpack:resource_group:id:{gid}"
+            self.redis.delete(cache_key)
+            self.db.commit()
+            return len(sids)
+        except Exception:
+            self.db.rollback()
+            raise
+
 
     def get_bind_groups(self, sid: str, page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[dict], int]:
         groups = self.group_repo.get_all(keyword=keyword)
@@ -274,7 +298,6 @@ class ResourceGroupService:
                 for s in services
             ],total
         if keyword:
-            
             services = self.mcp_repo.get_all(keyword=keyword)
             if not services:
                 return [],0
@@ -353,12 +376,3 @@ class ResourceGroupService:
             for g in groups
         ]
 
-    def unbind_service(self, gid: str, sids: List[str]) -> int:
-        try:
-            for sid in sids:
-                self.map_repo.unbind_service(gid, sid, commit=False)
-            self.db.commit()
-            return len(sids)
-        except Exception:
-            self.db.rollback()
-            raise
