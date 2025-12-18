@@ -237,7 +237,7 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
                 <TableCell>
                   <div className="relative flex items-center gap-2">
                     <Tooltip
-                      content={t("Open Resource Group Page")}
+                      content={t("View Resource Group Detail")}
                       color="primary"
                       closeDelay={0}
                       disableAnimation
