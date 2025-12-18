@@ -10,11 +10,12 @@ import {
   TableCell,
   Pagination,
   Chip,
-  Spinner
+  Spinner,
+  Tooltip
 } from '@nextui-org/react';
 import { useTranslation } from '@/shared/lib/useTranslation';
 import { PaymentState, RevenueRecord } from '@/types/revenue';
-import { Calendar, CreditCard } from 'lucide-react';
+import { Calendar, CreditCard, HelpCircle } from 'lucide-react';
 import { formatCurrency } from '@/shared/utils/currency';
 
 interface RevenueTableProps {
@@ -122,7 +123,19 @@ export const RevenueTable: React.FC<RevenueTableProps> = ({
         <TableHeader>
           <TableColumn>{t('Account (Email)')}</TableColumn>
           <TableColumn>{t('Recharge Amount')}</TableColumn>
-          <TableColumn>{t('Recharge Time')}</TableColumn>
+          <TableColumn>
+            <div className="flex items-center gap-1">
+              <span>{t('Recharge Time')}</span>
+              <Tooltip
+                content={t("Current display time is UTC time")}
+                color="default"
+                closeDelay={0}
+                disableAnimation
+              >
+                <HelpCircle className="w-4 h-4" />
+              </Tooltip>
+            </div>
+          </TableColumn>
           <TableColumn>{t('Payment Method')}</TableColumn>
           <TableColumn>{t('Transaction ID')}</TableColumn>
           <TableColumn>{t('Status')}</TableColumn>

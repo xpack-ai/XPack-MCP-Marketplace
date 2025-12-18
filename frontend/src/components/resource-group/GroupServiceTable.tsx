@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Button,
   Card,
@@ -78,6 +78,12 @@ const GroupServiceTable: React.FC<GroupServiceTableProps> = ({
   const urlGroupId = searchParams.get('groupId');
   const currentGroupId = propGroupId || urlGroupId || null;
 
+  // 使用 useMemo 计算 showOptions,确保响应式更新
+  const showOptions = useMemo(() => {
+    if (!resourceGroupDetail) return false;
+    return !['allow-all', 'deny-all'].includes(resourceGroupDetail.id);
+  }, [resourceGroupDetail]);
+
   const getResourceGroup = async (groupId: string) => {
     const response = await fetchResourceGroupDetail(groupId);
     if (response) {
@@ -100,7 +106,7 @@ const GroupServiceTable: React.FC<GroupServiceTableProps> = ({
               {resourceGroupDetail?.name}
             </h2>
             <div className="flex gap-2 h-[32px]">
-              {!['allow-all', 'deny-all'].includes(resourceGroupDetail?.id || '') && currentGroupId && <>
+              {showOptions && currentGroupId && <>
                 <Button
                   isIconOnly
                   size="sm"
@@ -126,22 +132,27 @@ const GroupServiceTable: React.FC<GroupServiceTableProps> = ({
         </CardHeader>
         <Divider />
         <CardBody className="px-6 py-6">
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <Button
-                color="primary"
-                onPress={onAddService}
-                startContent={<Plus size={16} />}
-                size="sm"
-              >
-                {t("Add Server")}
-              </Button>
-            </div>
+          {
+            showOptions && (<>
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <Button
+                    color="primary"
+                    onPress={onAddService}
+                    startContent={<Plus size={16} />}
+                    size="sm"
+                  >
+                    {t("Add Server")}
+                  </Button>
+                </div>
 
-            <div className="flex gap-2"></div>
-          </div>
+                <div className="flex gap-2"></div>
+              </div>
+            </>)
+          }
 
           <Table
+            key={`table-${showOptions}`}
             aria-label="Group services table"
             removeWrapper
             classNames={{
@@ -167,7 +178,7 @@ const GroupServiceTable: React.FC<GroupServiceTableProps> = ({
               <TableColumn>{t("API Endpoint")}</TableColumn>
               <TableColumn>{t("Status")}</TableColumn>
               <TableColumn>{t("Pricing")}</TableColumn>
-              <TableColumn className="w-20">{t("Actions")}</TableColumn>
+              <TableColumn className={showOptions ? "w-20" : "hidden"}>{t("Actions")}</TableColumn>
             </TableHeader>
             <TableBody
               items={services}
@@ -175,54 +186,58 @@ const GroupServiceTable: React.FC<GroupServiceTableProps> = ({
               loadingContent={<Spinner />}
               emptyContent={t("No services in this group")}
             >
-              {(service) => (
-                <TableRow key={service.id}>
-                  <TableCell>
-                    <span className="text-sm">{service.name}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">{service.base_url}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      className="capitalize"
-                      color={service.enabled ? "success" : "danger"}
-                      size="sm"
-                      variant="flat"
-                    >
-                      {t(service.enabled ? "Published" : "Unpublished")}
-                    </Chip>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <Price
-                        price={service.price}
-                        charge_type={service.charge_type}
-                        input_token_price={service.input_token_price}
-                        output_token_price={service.output_token_price}
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Tooltip
-                      content={t("Remove")}
-                      color="danger"
-                      closeDelay={0}
-                      disableAnimation
-                    >
-                      <Button
-                        isIconOnly
+              {(service) => {
+                // 在渲染函数内部使用 showOptions,确保使用最新值
+                const cellClassName = showOptions ? "" : "hidden";
+                return (
+                  <TableRow key={service.id}>
+                    <TableCell>
+                      <span className="text-sm">{service.name}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">{service.base_url}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        className="capitalize"
+                        color={service.enabled ? "success" : "danger"}
                         size="sm"
-                        variant="light"
-                        color="danger"
-                        onPress={() => onRemoveService(service.id)}
+                        variant="flat"
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              )}
+                        {t(service.enabled ? "Published" : "Unpublished")}
+                      </Chip>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <Price
+                          price={service.price}
+                          charge_type={service.charge_type}
+                          input_token_price={service.input_token_price}
+                          output_token_price={service.output_token_price}
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className={cellClassName}>
+                      <Tooltip
+                        content={t("Remove")}
+                        color="danger"
+                        closeDelay={0}
+                        disableAnimation
+                      >
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="light"
+                          color="danger"
+                          onPress={() => onRemoveService(service.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                );
+              }}
             </TableBody>
           </Table>
         </CardBody>

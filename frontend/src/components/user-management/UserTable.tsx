@@ -17,7 +17,7 @@ import {
 } from "@nextui-org/react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { User } from "@/types/user";
-import { Trash2, CreditCard } from "lucide-react";
+import { Trash2, CreditCard, Calendar, HelpCircle } from "lucide-react";
 import { AdminRechargeModal } from "@/components/user-management/AdminRechargeModal";
 import { fetchSimpleResourceGroups, updateUserResourceGroup } from "@/api/resourceGroup.api";
 import toast from "react-hot-toast";
@@ -97,12 +97,23 @@ export const UserTable: React.FC<UserTableProps> = ({
       fetchUsers();
     }
   }
-  
+
+  const formatDate = (dateString: string) => {
+    return (
+      <div className="flex items-center gap-1">
+        <Calendar className="w-3 h-3 text-gray-500" />
+        <span className="text-sm text-gray-600">
+          {new Date(dateString).toLocaleString()}
+        </span>
+      </div>
+    );
+  };
+
   // 初始加载简易资源组列表
   useEffect(() => {
     loadSimpleResourceGroups();
   }, [loadSimpleResourceGroups]);
-  
+
   // 等待用户数据或资源组数据加载
   if ((loading && users.length === 0) || groupsLoading) {
     return (
@@ -124,7 +135,19 @@ export const UserTable: React.FC<UserTableProps> = ({
         <TableHeader>
           <TableColumn>{t("Email")}</TableColumn>
           <TableColumn width={250}>{t("Resource Group")}</TableColumn>
-          <TableColumn>{t("Register Date")}</TableColumn>
+          <TableColumn>
+            <div className="flex items-center gap-1">
+              <span>{t("Register Date")}</span>
+              <Tooltip
+                content={t("Current display time is UTC time")}
+                color="default"
+                closeDelay={0}
+                disableAnimation
+              >
+                <HelpCircle className="w-4 h-4" />
+              </Tooltip>
+            </div>
+          </TableColumn>
           <TableColumn>{t("Balance")}</TableColumn>
           <TableColumn>{t("Actions")}</TableColumn>
         </TableHeader>
@@ -161,7 +184,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                   )}
                 </Select>
               </TableCell>
-              <TableCell>{user.created_at || "-"}</TableCell>
+              <TableCell>{formatDate(user.created_at)}</TableCell>
               <TableCell>{user.balance.toFixed(2) || "-"}</TableCell>
 
               <TableCell>

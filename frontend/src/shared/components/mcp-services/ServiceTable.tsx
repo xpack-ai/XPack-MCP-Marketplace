@@ -16,7 +16,7 @@ import {
 } from "@nextui-org/react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { EnabledEnum, MCPService } from "@/shared/types/mcp-service";
-import { Trash2, PencilIcon } from "lucide-react";
+import { Trash2, PencilIcon, Calendar } from "lucide-react";
 import { Price } from "@/shared/components/marketplace/Price";
 import { MdOutlineUnpublished, MdOutlineCheckCircle } from "react-icons/md";
 import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
@@ -78,7 +78,16 @@ const BaseServiceTable: React.FC<ServiceTableProps> = ({
     },
     [onToggleStatus]
   );
-
+  const formatDate = (dateString: string) => {
+    return (
+      <div className="flex items-center gap-1">
+        <Calendar className="w-3 h-3 text-gray-500" />
+        <span className="text-sm text-gray-600">
+          {new Date(dateString).toLocaleString()}
+        </span>
+      </div>
+    );
+  };
   if (loading && services.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -117,6 +126,7 @@ const BaseServiceTable: React.FC<ServiceTableProps> = ({
           <TableColumn hidden={!columns.includes("pricing")}>
             {t("Pricing")}
           </TableColumn>
+          <TableColumn>{t("Created_at")}</TableColumn>
           <TableColumn className="w-20">{t("Actions")}</TableColumn>
         </TableHeader>
         <TableBody
@@ -153,6 +163,7 @@ const BaseServiceTable: React.FC<ServiceTableProps> = ({
                   />
                 </div>
               </TableCell>
+              <TableCell>{formatDate(service.created_at)}</TableCell>
               <TableCell>
                 <div className="relative flex items-center gap-2">
                   <Tooltip content={t("Edit")} closeDelay={0} disableAnimation>
