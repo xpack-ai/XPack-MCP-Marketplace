@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { Tabs, Tab, Chip } from "@nextui-org/react";
 import { ProductHeader } from "./ProductHeader";
@@ -9,6 +9,8 @@ import { ProductTools } from "./ProductTools";
 import { ProductNotFound } from "./ProductNotFound";
 import { ServerConfig } from "./ServerConfig";
 import { ServiceData } from "@/shared/types/marketplace";
+import { useGlobalStore } from "@/shared/store/global";
+import { useSharedStore } from "@/shared/store/share";
 
 interface ProductDetailClientProps {
   product: ServiceData;
@@ -33,7 +35,14 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   innerHeaderNode,
 }) => {
   const { t } = useTranslation();
+  const [getUser] = useGlobalStore((state) => [state.getUser]);
 
+  useEffect(() => {
+    const userToken = useSharedStore?.getState?.().user_token
+    if (userToken) {
+      getUser();
+    }
+  }, []);
   const [activeTab, setActiveTab] = useState("overview");
 
   return (

@@ -41,6 +41,9 @@ const BasicProductDetailThemeSelector: React.FC<
   const [visitor, setVisitor] = useState<boolean>(false);
   const { t } = useTranslation();
   const configNavigation = useNavigationItems() || NavigationItems;
+  
+  // 使用 Zustand hook 正确订阅 user 状态
+  const user = useSharedStore((state) => state.user);
 
   const navigationItems = [
     ...configNavigation,
@@ -60,7 +63,6 @@ const BasicProductDetailThemeSelector: React.FC<
     setMcpName(sanitizeMCPServerName(product.name));
   }, [product.name]);
   useEffect(() => {
-    const user = useSharedStore?.getState?.().user;
     if (user) {
       if (user?.allow_all) {
         setCanInvoke(true)
@@ -77,7 +79,7 @@ const BasicProductDetailThemeSelector: React.FC<
       setCanInvoke(true);
       setVisitor(true);
     }
-  }, [useSharedStore?.getState?.().user]);
+  }, [user, product.id]);
   const getCodeContent = () => {
     return `{
   "mcpServers": {
