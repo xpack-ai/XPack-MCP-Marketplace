@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from services.common.models.resource_group import ResourceGroup
 from services.admin_service.repositories.resource_group_repository import ResourceGroupRepository
 from services.admin_service.repositories.resource_group_service_map_repository import ResourceGroupServiceMapRepository
+from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.mcp_service_repository import McpServiceRepository
 from services.admin_service.repositories.sys_config_repository import SysConfigRepository
 from services.admin_service.constants.sys_config_key import KEY_DEFAULT_RESOURCE_GROUP
@@ -16,6 +17,7 @@ class ResourceGroupService:
         self.db = db
         self.redis = redis_client
         self.group_repo = ResourceGroupRepository(db)
+        self.user_repo = UserRepository(db)
         self.map_repo = ResourceGroupServiceMapRepository(db)
         self.mcp_repo = McpServiceRepository(db)
         self.sys_repo = SysConfigRepository(db)
@@ -81,6 +83,12 @@ class ResourceGroupService:
             deleted = self.group_repo.delete(gid, commit=False)
             if deleted is None:
                 raise ValueError("Resource group not found")
+            users = self.user_repo.update_resource_group_by_group_id(gid, migrate_id or "deny-all", commit=False)
+            if not users:
+                raise ValueError("Failed to update user resource group")
+            for user in users:
+                cache_key = f"xpack:user:{user.id}"
+                self.redis.set(cache_key, user, 600)
             cache_key = f"xpack:resource_group:id:{gid}"
             self.redis.delete(cache_key)
             self.db.commit()
@@ -255,9 +263,9 @@ class ResourceGroupService:
                 "name": group_map[group["id"]].name if group["id"] in group_map else "",
                 "join_at": str(group["join_at"]) if group["join_at"] else None,
             })
-        if len(result) > 0 and len(result) < page_size:
+        if len(result) < page_size:
             if keyword and keyword.lower() not in "allow-all".lower():
-                    return result,total
+                return result,total
             result.append({
                 "id":"allow-all",
                 "name":"Allow All",
