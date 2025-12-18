@@ -185,14 +185,20 @@ class McpService:
             for param in query_params:
                 if isinstance(param, dict) and "name" in param:
                     # Handle both direct type and schema.type formats
+                    extend_properties = {}
                     param_type = "string"  # default
                     if "type" in param:
                         param_type = param["type"]
                     elif "schema" in param and isinstance(param["schema"], dict) and "type" in param["schema"]:
                         param_type = param["schema"]["type"]
+                        if param_type == "array":
+                            extend_properties["items"] = param["schema"]["items"]
+                        elif param_type == "object":
+                            extend_properties["properties"] = param["schema"]["properties"]
                     
                     schema["properties"][param["name"]] = {
                         "type": param_type,
+                        **extend_properties,
                         "description": param.get("description", f"Query parameter: {param['name']}")
                     }
                     if param.get("required", False):
@@ -202,34 +208,34 @@ class McpService:
         if tool_api.request_body_schema:
             # Try to parse as parameters list first, then as schema object
             try:
-                # First try to parse as parameters list (similar to query/path parameters)
-                body_params = self._safe_parse_params(tool_api.request_body_schema, tool_api.name, 'body')
-                if body_params:
-                    # If it's a list of parameters, process them like query parameters
-                    for param in body_params:
-                        if isinstance(param, dict) and "name" in param:
-                            param_type = "string"  # default
-                            if "type" in param:
-                                param_type = param["type"]
-                            elif "schema" in param and isinstance(param["schema"], dict) and "type" in param["schema"]:
-                                param_type = param["schema"]["type"]
+                # # First try to parse as parameters list (similar to query/path parameters)
+                # body_params = self._safe_parse_params(tool_api.request_body_schema, tool_api.name, 'body')
+                # if body_params:
+                #     # If it's a list of parameters, process them like query parameters
+                #     for param in body_params:
+                #         if isinstance(param, dict) and "name" in param:
+                #             param_type = "string"  # default
+                #             if "type" in param:
+                #                 param_type = param["type"]
+                #             elif "schema" in param and isinstance(param["schema"], dict) and "type" in param["schema"]:
+                #                 param_type = param["schema"]["type"]
                             
-                            schema["properties"][param["name"]] = {
-                                "type": param_type,
-                                "description": param.get("description", f"Body parameter: {param['name']}")
-                            }
-                            if param.get("required", False):
-                                schema["required"].append(param["name"])
-                else:
+                #             schema["properties"][param["name"]] = {
+                #                 "type": param_type,
+                #                 "description": param.get("description", f"Body parameter: {param['name']}")
+                #             }
+                #             if param.get("required", False):
+                #                 schema["required"].append(param["name"])
+                # else:
                     # If not a parameters list, try to parse as JSON schema object
-                    try:
-                        body_schema = json.loads(tool_api.request_body_schema)
-                        if isinstance(body_schema, dict) and "properties" in body_schema:
-                            schema["properties"].update(body_schema["properties"])
-                            if "required" in body_schema:
-                                schema["required"].extend(body_schema["required"])
-                    except json.JSONDecodeError:
-                        pass  # Already logged by _safe_parse_params
+                try:
+                    body_schema = json.loads(tool_api.request_body_schema)
+                    if isinstance(body_schema, dict) and "properties" in body_schema:
+                        schema["properties"].update(body_schema["properties"])
+                        if "required" in body_schema:
+                            schema["required"].extend(body_schema["required"])
+                except json.JSONDecodeError:
+                    pass  # Already logged by _safe_parse_params
             except Exception as e:
                 self.logger.warning(f"Failed to parse request body schema for {tool_api.name}: {e}")
         
@@ -291,7 +297,15 @@ class McpService:
             if tool_api.response_schema:
                 parsed = json.loads(tool_api.response_schema)
                 if isinstance(parsed, dict):
-                    return parsed
+                    if parsed["type"] != "object":
+                        return {
+                            "type":"object",
+                            "properties":{
+                                "data":parsed
+                            }
+                        }
+                    else:
+                        return parsed
         except Exception as e:
             self.logger.warning(f"Failed to parse response_schema for {tool_api.name}: {e}")
 
