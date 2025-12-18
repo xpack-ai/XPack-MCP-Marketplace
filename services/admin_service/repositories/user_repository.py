@@ -198,3 +198,13 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+    def update_resource_group_by_group_id(self, group_id: str, new_group_id: str, commit: bool = True) -> List[User]:
+        """Update user resource group"""
+        users = self.db.query(User).filter(User.group_id == group_id, User.is_deleted == 0).all()
+        if not users:
+            return []
+        for user in users:
+            user.group_id = new_group_id    
+        if commit:
+            self.db.commit()
+        return users
