@@ -82,21 +82,20 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             </ModalHeader>
             <ModalBody>
               <div className="space-y-4">
-              {user && (
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600">
-                    {t("User")}: {user.email}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {t("Current Balance")}: ${user.balance.toFixed(2)}
-                  </p>
-                </div>
-              )}
                 {/* Description */}
                 <div className="text-default-600">
                   {description || defaultDescription}
                 </div>
-
+                {user && (
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                      {t("User")}: {user.email}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {t("Current Balance")}: ${user.balance.toFixed(2)}
+                    </p>
+                  </div>
+                )}
                 {/* Warning message */}
                 <Alert title={t("This action cannot be undone.")} color="danger" />
 
