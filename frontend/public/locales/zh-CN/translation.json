@@ -935,5 +935,6 @@
   "Failed to update user resource group": "更新用户资源组失败",
   "Failed to load simple resource groups": "获取简易资源组失败",
   "Failed to load resource group detail": "获取资源组详情失败",
-  "Resource Group Detail": "资源组详情"
+  "Resource Group Detail": "资源组详情",
+  "Current display time is UTC time": "当前显示时间为UTC时间"
 }

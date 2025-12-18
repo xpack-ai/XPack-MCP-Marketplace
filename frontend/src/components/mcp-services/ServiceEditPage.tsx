@@ -46,6 +46,19 @@ const isValidUrl = (url: string) => {
   }
 };
 
+// Helper function to validate domain format
+const isValidDomain = (url: string) => {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname;
+    const domainRegex = /^(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$/;
+    return domainRegex.test(hostname);
+  } catch {
+    return false;
+  }
+};
+
 const validateServiceForm = (data: MCPServiceFormData, t: any) => {
   const errors: Record<string, string> = {};
 
@@ -65,6 +78,8 @@ const validateServiceForm = (data: MCPServiceFormData, t: any) => {
     errors.base_url = t("API Endpoint is required");
   } else if (!isValidUrl(data.base_url)) {
     errors.base_url = t("API Endpoint must be a valid HTTP/HTTPS URL");
+  } else if (!isValidDomain(data.base_url)) {
+    errors.base_url = t("API Endpoint must contain a valid domain name");
   }
 
   if (!data.short_description?.trim()) {

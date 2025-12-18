@@ -14,9 +14,10 @@ import {
   Pagination,
 } from "@nextui-org/react";
 import { useTranslation } from "@/shared/lib/useTranslation";
-import { Plus, SquareArrowOutUpRight, Trash2 } from "lucide-react";
+import { Calendar, Plus, Trash2, HelpCircle, Eye } from "lucide-react";
 import { MCPServiceFormData } from "@/shared/types/mcp-service";
 import toast from "react-hot-toast";
+
 import { GetMCPResourceGroupsParams } from "@/services/mcpService";
 import DeleteServerModal from "@/components/resource-group/DeleteServerModal";
 import { McpAddGroupModal } from "../modal/McpAddGroup";
@@ -97,6 +98,18 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
   const onAddService = () => {
     setIsAddMcpGroupModalOpen(true);
   }
+
+  const formatDate = (dateString: string) => {
+    return (
+      <div className="flex items-center gap-1">
+        <Calendar className="w-3 h-3 text-gray-500" />
+        <span className="text-sm text-gray-600">
+          {new Date(dateString).toLocaleString()}
+        </span>
+      </div>
+    );
+  };
+
   // 保存 MCP 服务
   const handleSaveMcpServer = async (serverIds: string[]) => {
     if (!formData?.id) return;
@@ -138,7 +151,7 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
     const { pageSize, keyword } = resourceGroupsParams.current;
     loadResourceGroups(page, pageSize, keyword);
   }
-  
+
   const openResourceGroupPage = (group: ResourceGroup) => {
     setResourceGroupDetailId(group.id);
     setIsResourceGroupDetailModalOpen(true);
@@ -192,7 +205,19 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
         >
           <TableHeader>
             <TableColumn>{t("Group Name")}</TableColumn>
-            <TableColumn>{t("Added Time")}</TableColumn>
+            <TableColumn>
+              <div className="flex items-center gap-1">
+                <span>{t("Added Time")}</span>
+                <Tooltip
+                  content={t("Current display time is UTC time")}
+                  color="default"
+                  closeDelay={0}
+                  disableAnimation
+                >
+                  <HelpCircle className="w-4 h-4" />
+                </Tooltip>
+              </div>
+            </TableColumn>
             <TableColumn className="w-20">{t("Actions")}</TableColumn>
           </TableHeader>
           <TableBody
@@ -207,7 +232,7 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
                   <span className="text-sm">{group.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm">{group.join_at}</span>
+                  {formatDate(group.join_at)}
                 </TableCell>
                 <TableCell>
                   <div className="relative flex items-center gap-2">
@@ -224,7 +249,7 @@ const ResourceGroup: React.FC<ResourceGroupProps> = ({
                         color="primary"
                         onPress={() => openResourceGroupPage(group)}
                       >
-                        <SquareArrowOutUpRight className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                       </Button>
                     </Tooltip>
                     <Tooltip
