@@ -7,11 +7,13 @@ import { useTranslation } from "@/shared/lib/useTranslation";
 interface CustomDomainPanelProps {
   domain: string;
   setDomain: (domain: string) => void;
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 const CustomDomainPanel: React.FC<CustomDomainPanelProps> = ({
   domain,
   setDomain,
+  onValidationChange,
 }) => {
   const { t } = useTranslation();
   const [validationError, setValidationError] = useState<string | undefined>();
@@ -24,7 +26,7 @@ const CustomDomainPanel: React.FC<CustomDomainPanelProps> = ({
 
     // Basic domain format validation ,like www.example.com
     const domainRegex =
-      /(?=.{1,255}$)(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,}/;
+      /^(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$/;
     if (!domainRegex.test(value)) {
       return t("Please enter a valid domain");
     }
@@ -34,6 +36,17 @@ const CustomDomainPanel: React.FC<CustomDomainPanelProps> = ({
   const handleBlur = () => {
     const error = validateDomain(domain);
     setValidationError(error);
+    // 通知父组件校验状态
+    onValidationChange?.(!error);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDomain(value);
+    // 实时校验
+    const error = validateDomain(value);
+    setValidationError(error);
+    onValidationChange?.(!error);
   };
 
   return (
@@ -48,7 +61,7 @@ const CustomDomainPanel: React.FC<CustomDomainPanelProps> = ({
           label={t("Domain")}
           placeholder={t("Enter your full domain name (e.g., www.example.com)")}
           value={domain}
-          onChange={(e) => setDomain(e.target.value)}
+          onChange={handleChange}
           onBlur={handleBlur}
           isInvalid={!!validationError}
           errorMessage={validationError}

@@ -17,6 +17,7 @@ import { ToolsTab } from "@/shared/components/mcp-services/ToolsTab";
 import { OpenAPIGeneratorModal } from "@/shared/components/mcp-services/OpenAPIGeneratorModal";
 import { ChargeType } from "@/shared/types/marketplace";
 import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
+import ResourceGroup from "@/shared/components/mcp-services/ResourceGroup";
 
 const _DefaultFormData: MCPServiceFormData = {
   id: "",
@@ -45,6 +46,19 @@ const isValidUrl = (url: string) => {
   }
 };
 
+// Helper function to validate domain format
+const isValidDomain = (url: string) => {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname;
+    const domainRegex = /^(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$/;
+    return domainRegex.test(hostname);
+  } catch {
+    return false;
+  }
+};
+
 const validateServiceForm = (data: MCPServiceFormData, t: any) => {
   const errors: Record<string, string> = {};
 
@@ -64,6 +78,8 @@ const validateServiceForm = (data: MCPServiceFormData, t: any) => {
     errors.base_url = t("API Endpoint is required");
   } else if (!isValidUrl(data.base_url)) {
     errors.base_url = t("API Endpoint must be a valid HTTP/HTTPS URL");
+  } else if (!isValidDomain(data.base_url)) {
+    errors.base_url = t("API Endpoint must contain a valid domain name");
   }
 
   if (!data.short_description?.trim()) {
@@ -98,6 +114,9 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
     getServiceDetail,
     clearServiceDetail,
     parseOpenAPIDocumentForUpdate,
+    fetchMCPResourceGroups,
+    deleteResourceGroup,
+    addServiceToGroup,
     updateLoading,
   } = useMCPServiceDetail();
   const [isSaving, setIsSaving] = useState(false);
@@ -378,6 +397,16 @@ const BaseServiceEditPage: React.FC<ServiceEditPageProps> = ({
               <DescriptionTab
                 formData={formData}
                 onInputChange={handleInputChange}
+              />
+            </div>
+          </Tab>
+          <Tab key="ResourceGroups" title={t("Resource Groups")}>
+            <div className="pt-2 h-full">
+              <ResourceGroup
+                formData={formData}
+                deleteResourceGroup={deleteResourceGroup}
+                fetchMCPResourceGroups={fetchMCPResourceGroups}
+                addServiceToGroup={addServiceToGroup}
               />
             </div>
           </Tab>

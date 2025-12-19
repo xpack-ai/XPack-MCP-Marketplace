@@ -12,6 +12,7 @@ import {
   Alert,
 } from "@nextui-org/react";
 import { useTranslation } from "@/shared/lib/useTranslation";
+import { User } from "@/types/user";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface DeleteConfirmModalProps {
   requireNameConfirmation?: boolean;
   confirmationName?: string;
   confirmationPlaceholder?: string;
+  user?: User | null;
 }
 
 export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
@@ -35,6 +37,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   requireNameConfirmation = false,
   confirmationName = "",
   confirmationPlaceholder,
+  user,
 }) => {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
@@ -83,7 +86,16 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
                 <div className="text-default-600">
                   {description || defaultDescription}
                 </div>
-
+                {user && (
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                      {t("User")}: {user.email}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {t("Current Balance")}: ${user.balance.toFixed(2)}
+                    </p>
+                  </div>
+                )}
                 {/* Warning message */}
                 <Alert title={t("This action cannot be undone.")} color="danger" />
 

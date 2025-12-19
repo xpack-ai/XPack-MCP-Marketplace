@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { Tabs, Tab, Chip } from "@nextui-org/react";
 import { ProductHeader } from "./ProductHeader";
@@ -9,27 +9,40 @@ import { ProductTools } from "./ProductTools";
 import { ProductNotFound } from "./ProductNotFound";
 import { ServerConfig } from "./ServerConfig";
 import { ServiceData } from "@/shared/types/marketplace";
+import { useGlobalStore } from "@/shared/store/global";
+import { useSharedStore } from "@/shared/store/share";
 
 interface ProductDetailClientProps {
   product: ServiceData;
+  visitor?: boolean;
   breadcrumbs?: {
     link: string;
     name: string;
   }[];
   mcpName?: string;
   url?: string;
+  can_invoke?: boolean;
   innerHeaderNode?: React.ReactNode;
 }
 
 export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   product,
+  visitor,
   breadcrumbs,
   mcpName,
   url,
+  can_invoke,
   innerHeaderNode,
 }) => {
   const { t } = useTranslation();
+  const [getUser] = useGlobalStore((state) => [state.getUser]);
 
+  useEffect(() => {
+    const userToken = useSharedStore?.getState?.().user_token
+    if (userToken) {
+      getUser();
+    }
+  }, []);
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
@@ -69,7 +82,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
             </div>
 
             {/* Right side - Server Config */}
-            <ServerConfig mcpName={mcpName} url={url} />
+            <ServerConfig mcpName={mcpName} url={url} can_invoke={can_invoke} visitor={visitor} />
           </div>
 
           {/* SEO-friendly: Simple text content for search engines */}

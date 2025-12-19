@@ -14,6 +14,8 @@ export interface User {
   user_email: string;
   user_name: string;
   avatar?: string;
+  allow_all?: boolean;
+  service_ids?: string[];
   nick_name?: string;
   language: NavigatorLanguage | "en" | "zh-CN";
   /**

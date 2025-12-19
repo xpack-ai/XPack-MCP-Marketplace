@@ -36,6 +36,8 @@ const DomainActivationPanel: React.FC<DomainActivationPanelProps> = ({
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [domain, setDomain] = useState(config.domain || "");
+  const [isValidDomain, setIsValidDomain] = useState(false);
+  
   const handleActivate = async () => {
     setIsLoading(true);
     try {
@@ -54,7 +56,11 @@ const DomainActivationPanel: React.FC<DomainActivationPanelProps> = ({
         <ModalContent>
           <ModalHeader>{t("Set Custom Domain")}</ModalHeader>
           <ModalBody className="flex flex-col gap-4">
-            <CustomDomainPanel domain={domain} setDomain={setDomain} />
+            <CustomDomainPanel 
+              domain={domain} 
+              setDomain={setDomain}
+              onValidationChange={setIsValidDomain}
+            />
             <DNSRecordsPanel
               cnameTarget={`${config.subdomain || ""}${process.env.NEXT_PUBLIC_DOMAIN_HOST || ""}`}
               apexATarget={config.cname_a_ip}
@@ -67,7 +73,7 @@ const DomainActivationPanel: React.FC<DomainActivationPanelProps> = ({
                 </h3>
                 <Button
                   color="primary"
-                  isDisabled={!domain}
+                  isDisabled={!domain || !isValidDomain}
                   isLoading={isLoading}
                   onPress={handleActivate}
                   size="sm"

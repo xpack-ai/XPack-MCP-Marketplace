@@ -15,6 +15,8 @@ import { NavigationItem } from "@/shared/components/Navigation";
 import { ServerConfig } from "@/shared/components/marketplace/ServerConfig";
 
 interface DetailProps {
+  can_invoke?: boolean;
+  visitor?: boolean;
   product: ServiceData;
   breadcrumbs?: {
     link: string;
@@ -29,6 +31,8 @@ interface DetailProps {
 }
 
 export const Detail: React.FC<DetailProps> = ({
+  can_invoke,
+  visitor,
   product,
   breadcrumbs,
   url,
@@ -176,6 +180,8 @@ export const Detail: React.FC<DetailProps> = ({
                     </div>
                     {/* Code Snippet */}
                     <ServerConfig
+                      can_invoke={can_invoke}
+                      visitor={visitor}
                       mcpName={mcpName}
                       url={url}
                       className="w-full max-w-2xl"
