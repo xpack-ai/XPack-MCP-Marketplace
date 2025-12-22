@@ -306,6 +306,7 @@ class ResourceGroupService:
                 for s in services
             ],total
         if keyword:
+            
             services = self.mcp_repo.get_all(keyword=keyword)
             if not services:
                 return [],0
@@ -334,6 +335,7 @@ class ResourceGroupService:
         else:
             sids,total = self.map_repo.list_service_ids_paginated(gid, page=page, page_size=page_size)  
             services = self.mcp_repo.get_by_ids(ids=sids)
+            service_map = {s.id: s for s in services}
             return [
                 {
                     "id": s.id,
@@ -351,7 +353,7 @@ class ResourceGroupService:
                     "created_at": str(s.created_at) if s.created_at else None,
                     "updated_at": str(s.updated_at) if s.updated_at else None,
                 }
-                for s in services
+                for s in (service_map[sid] for sid in sids)
             ],total
     def get_unbind_services(self, gid: str) -> List[dict]:
         if gid == "deny-all" or gid == "allow-all":

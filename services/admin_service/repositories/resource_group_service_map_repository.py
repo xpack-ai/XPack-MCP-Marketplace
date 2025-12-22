@@ -91,7 +91,7 @@ class ResourceGroupServiceMapRepository:
         return [r.service_id for r in groups], total
     
     def list_service_ids(self, group_id: str) -> List[str]:
-        return [r.service_id for r in self.db.query(ResourceGroupServiceMap.service_id).filter(ResourceGroupServiceMap.group_id == group_id).all()]
+        return [r.service_id for r in self.db.query(ResourceGroupServiceMap.service_id).order_by(ResourceGroupServiceMap.created_at.desc()).filter(ResourceGroupServiceMap.group_id == group_id).all()]
 
     def list_group_ids(self, service_id: str) -> List[str]:
         return [r.group_id for r in self.db.query(ResourceGroupServiceMap.group_id).filter(ResourceGroupServiceMap.service_id == service_id).all()]

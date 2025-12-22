@@ -46,7 +46,6 @@ def get_user(request: Request, user_wallet: UserWalletService = Depends(get_user
         elif user.group_id == "deny-all":
             user_response.allow_all = False
         else:
-            print("user group id is:",user.group_id)
             service_ids = resource_group_service.get_bind_service_ids(user.group_id)
             user_response.service_ids = service_ids
         user_response.user_id = user.id
