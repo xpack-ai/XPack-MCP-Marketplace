@@ -1,16 +1,16 @@
 SET FOREIGN_KEY_CHECKS=0;
 
-CREATE TABLE `resource_group` (
+CREATE TABLE IF NOT EXISTS `resource_group` (
   `id` char(36) NOT NULL COMMENT 'Primary key, group UUID',
   `name` varchar(255) NOT NULL COMMENT 'Group name',
   `description` text NULL COMMENT 'Group description',
   `enabled` tinyint NOT NULL DEFAULT 1 COMMENT 'Group status: 0=disabled, 1=enabled',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Resource group table';
 
-CREATE TABLE `resource_group_service_map` (
+CREATE TABLE IF NOT EXISTS `resource_group_service_map` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
   `group_id` char(36) NOT NULL COMMENT 'Resource group UUID',
   `service_id` char(36) NOT NULL COMMENT 'MCP service UUID',
