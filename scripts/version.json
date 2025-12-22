@@ -5,7 +5,7 @@
   "downloads": {
     "program": {
       "xpack_mcp_market": {
-        "version": "v1.2.0",
+        "version": "v1.2.1",
         "docker": "xpackai/xpack-mcp-market",
         "tar": "xpack-mcp-market.tar.gz",
         "url": "https://public.eolinker.com/xpack/images/xpack-mcp-market.${VERSION}.${ARCH}.tar.gz"

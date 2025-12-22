@@ -34,11 +34,11 @@ fi
 # 初始化数据库
 python ./init_db.py
 
-nohup uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --reload --timeout-graceful-shutdown 2 --timeout-keep-alive 1 > ${LOG_DIR}/admin_service.log 2>&1 &
+nohup uvicorn services.admin_service.main:app --host 0.0.0.0 --port 8001 --timeout-graceful-shutdown 2 --timeout-keep-alive 1 > ${LOG_DIR}/admin_service.log 2>&1 &
 
 sleep 5s
 
-nohup uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --reload --timeout-graceful-shutdown 2 --timeout-keep-alive 1 > ${LOG_DIR}/api_service.log 2>&1 &
+nohup uvicorn services.api_service.main:app --host 0.0.0.0 --port 8002 --timeout-graceful-shutdown 2 --timeout-keep-alive 1 > ${LOG_DIR}/api_service.log 2>&1 &
 HOSTNAME=""
 cd frontend/ && nohup node server.js> ${LOG_DIR}//frontend.log 2>&1 &
 

@@ -872,13 +872,16 @@ write_redis_env() {
 upgrade_xpack_mcp_market() {
   exist_container ${XPACK_MCP_MARKET_CONTAINER_NAME} "true"
   imageName=$(download_package_docker "program.xpack_mcp_market" "true")
-  run_xpack_mcp_market
+  run_xpack_mcp_market ${imageName}
   echo_pass "Upgrade XPACK MCP MARKET success"
 
 }
 
 run_xpack_mcp_market() {
-  imageName=$(download_package_docker "program.xpack_mcp_market")
+  imageName=$1
+  if [[ -z ${imageName} ]]; then
+    imageName=$(download_package_docker "program.xpack_mcp_market")
+  fi
   dockerCmd="docker run -dt --name ${XPACK_MCP_MARKET_CONTAINER_NAME} --restart=always --privileged=true \
   --network=${NETWORK_NAME} -p ${XPACK_MCP_MARKET_MAP_PORT}:80 \
   ${imageName}"
