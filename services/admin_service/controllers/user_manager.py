@@ -3,13 +3,18 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 from services.admin_service.services.user_service import UserService
 from services.admin_service.services.user_wallet_service import UserWalletService
+from services.admin_service.services.resource_group_service import ResourceGroupService
 from services.common.database import get_db
 from services.common.response.user_manager_response import UserManagerResponse
 from services.common.utils.response_utils import ResponseUtils
 from services.common.utils.validation_utils import ValidationUtils
 from services.common.logging_config import get_logger
 import json,hashlib
+from services.common import error_msg
 from services.admin_service.services.payment_service import PaymentService
+from services.admin_service.utils.user_utils import UserUtils
+
+
 
 logger = get_logger(__name__)
 
@@ -20,11 +25,40 @@ def get_user_wallet_service(db: Session = Depends(get_db)) -> UserWalletService:
     return UserWalletService(db)
 
 
+def get_resource_group_service(db: Session = Depends(get_db)) -> ResourceGroupService:
+    return ResourceGroupService(db)
+
+
 def get_user_service(db: Session = Depends(get_db)) -> UserService:
     return UserService(db)
 
 def get_payment_service(db: Session = Depends(get_db)) -> PaymentService:
     return PaymentService(db)
+
+
+@router.put("/resource_group", summary="update user resource group")
+async def update_user_resource_group(
+    request: Request,
+    body: dict = Body(...),
+    user_service: UserService = Depends(get_user_service),
+    resource_group_service: ResourceGroupService = Depends(get_resource_group_service),
+):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    """Update user resource group."""
+    user_id = body.get("user_id")
+    group_id = body.get("resource_group")
+    if not user_id or not group_id:
+        return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
+    group = resource_group_service.get_info(group_id)
+    if not group:
+        return ResponseUtils.error(error_msg=error_msg.RESOURCE_NOT_FOUND)
+    user = user_service.get_by_id(user_id)
+    if not user:
+        return ResponseUtils.error(error_msg=error_msg.USER_NOT_FOUND)
+    user_service.update_resource_group(user_id, group_id)
+    return ResponseUtils.success()
+
 
 
 @router.delete("/account", summary="Delete user account")
@@ -76,7 +110,13 @@ async def get_user_list(
     user_list = []
     for user in users:
         wallet = user_wallet_service.get_by_user_id(user.id)
-        user_list.append({"id": user.id, "email": user.email, "created_at": user.created_at, "balance": wallet.balance if wallet else 0})
+        user_list.append(
+            {"id": user.id, 
+            "email": user.email, 
+            "created_at": user.created_at, 
+            "balance": wallet.balance if wallet else 0,
+            "group_id": user.group_id if user.group_id else "allow-all",
+            })
 
     return ResponseUtils.success_page(data=user_list, total=total, page_num=page, page_size=page_size)
 
@@ -92,7 +132,6 @@ async def recharge_balance(
     # calculate md5 hash of the body and timestamp
     md5_hash = hashlib.md5(f"{timestamp}{body_str}".encode('utf-8')).hexdigest()
     calculated_sign = hashlib.sha256(md5_hash.encode('utf-8')).hexdigest()
-    print(f"sign: {sign}, calculated_sign: {calculated_sign},md5_hash: {md5_hash}")
     if sign != calculated_sign:
         return ResponseUtils.error(message="Invalid signature")
     try:
@@ -107,7 +146,6 @@ async def recharge_balance(
     transaction_id = hashlib.md5(f"{timestamp}{user_id}{balance}{typ}".encode('utf-8')).hexdigest()
     if payment_service.check_transaction_id_exists(transaction_id):
         return ResponseUtils.error(message="Transaction ID already exists")
-    print(f"user_id: {user_id}, amount: {balance}, typ: {typ}, transaction_id: {transaction_id}")
     success = payment_service.platform_payment(user_id=user_id, amount=balance, typ=typ, transaction_id=transaction_id)
     if not success:
         return ResponseUtils.error(message="Failed to recharge wallet balance")

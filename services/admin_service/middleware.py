@@ -19,7 +19,7 @@ class AuthMiddleware:
     def __init__(self, app):
         self.app = app
         logger.info(f"AuthMiddleware initialized, no-auth paths: {len(Config.NO_AUTH_PATHS)} paths configured")
-
+    
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
             # Get request path

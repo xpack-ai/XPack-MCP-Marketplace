@@ -24,14 +24,15 @@ class SysConfigRepository:
         if sys_config:
             return sys_config.value
         return None
-    def set_value_by_key(self, key: str, value: str,description:str) -> Optional[SysConfig]:
+    def set_value_by_key(self, key: str, value: str, description: str, commit: bool = True) -> Optional[SysConfig]:
         """Set or create value and description for a key; returns entity."""
         sys_config = self.get_by_key(key)
         if sys_config:
             sys_config.value = value
             sys_config.description = description
-            self.db.commit()
-            self.db.refresh(sys_config)
+            if commit:
+                self.db.commit()
+                self.db.refresh(sys_config)
             return sys_config
         sys_config = SysConfig(
             id=str(uuid.uuid4()),
@@ -42,13 +43,15 @@ class SysConfigRepository:
             updated_at=datetime.now(timezone.utc),
         )
         self.db.add(sys_config)
-        self.db.commit()
+        if commit:
+            self.db.commit()
         return sys_config
-    def delete_by_key(self, key: str) -> bool:
+    def delete_by_key(self, key: str, commit: bool = True) -> bool:
         """Delete config by key; returns True if deleted, else False."""
         sys_config = self.get_by_key(key)
         if sys_config:
             self.db.delete(sys_config)
-            self.db.commit()
+            if commit:
+                self.db.commit()
             return True
         return False

@@ -9,6 +9,8 @@ INVALID_INPUT_TOKEN = {"code": 400, "message": "Input token must be a non-negati
 INVALID_OUTPUT_TOKEN = {"code": 400, "message": "Output token must be a non-negative number"}
 INVALID_URL = {"code": 400, "message": "Invalid URL provided"}
 INVALID_FORMAT = {"code": 400, "message": "Invalid data format"}
+USER_NOT_FOUND = {"code": 400, "message": "User not found"}
+RESOURCE_NOT_FOUND = {"code": 400, "message": "Resource Group not found"}
 
 UNAUTHORIZED = {"code": 401, "message": "Authentication required"}
 INVALID_TOKEN = {"code": 401, "message": "Invalid or expired token"}

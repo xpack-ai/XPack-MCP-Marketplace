@@ -38,15 +38,21 @@ def email_login(
             if not email or not password:
                 return ResponseUtils.error(message="email and password required", code=400)
             token = auth_service.email_login_by_password(email=email, password=password)
+            if token:
+                return ResponseUtils.success({"user_token": token})
+            else:
+                return ResponseUtils.error(message="login failed, please enter the correct account or password", code=401)
         case "captcha":
             captcha = body.get("captcha")
             if not email or not captcha:
                 return ResponseUtils.error(message="email and captcha required", code=400)
             token = auth_service.email_login_by_captcha(email=email, captcha=captcha)
-    if token:
-        return ResponseUtils.success({"user_token": token})
-    else:
-        return ResponseUtils.error(message="login failed", code=401)
+            if token:
+                return ResponseUtils.success({"user_token": token})
+            else:  
+                return ResponseUtils.error(message="login failed, please enter the correct captcha", code=401)
+        case _:
+            return ResponseUtils.error(message="email login mode not supported", code=400)
 
 
 @router.post("/email/send_captcha", response_model=dict)

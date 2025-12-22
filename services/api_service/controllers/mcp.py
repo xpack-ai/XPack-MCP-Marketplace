@@ -5,6 +5,7 @@ Supports both service_id (UUID) and slug_name service identifiers
 
 from typing import Optional
 from datetime import datetime, timezone
+from sqlalchemy import false
 from starlette.requests import Request
 from starlette.responses import Response
 import asyncio
@@ -17,6 +18,9 @@ from mcp.server.lowlevel import Server
 from services.api_service.services.mcp_server_factory import McpServerFactory
 from services.common.logging_config import get_logger
 from services.api_service.repositories.user_apikey_repository import UserApiKeyRepository
+from services.api_service.repositories.user_repository import UserRepository
+from services.api_service.repositories.resource_group_repository import ResourceGroupMapRepository
+
 from services.api_service.utils.connection_manager import connection_manager
 from services.common.database import get_db
 from services.common.config import Config
@@ -177,6 +181,20 @@ class McpController:
                     return
 
                 user_id, apikey_id = user_info
+                
+                # Check invoke permission
+                if not self._check_invoke_permission(user_id, service_id):
+                    response_body = b"Invoke permission denied"
+                    await send({
+                        'type': 'http.response.start',
+                        'status': 403,
+                        'headers': [
+                            [b'content-type', b'text/plain'],
+                            [b'content-length', str(len(response_body)).encode()],
+                        ],
+                    })
+                    await send({'type': 'http.response.body', 'body': response_body})
+                    return
 
                 # Create MCP server instance (pass user_id and apikey_id for billing and logging)
                 mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
@@ -347,8 +365,19 @@ class McpController:
                     })
                     await send({'type': 'http.response.body', 'body': response_body})
                     return
-
                 user_id, apikey_id = user_info
+                if not self._check_invoke_permission(user_id, service_id):
+                    response_body = b"Invoke permission denied"
+                    await send({
+                        'type': 'http.response.start',
+                        'status': 403,
+                        'headers': [
+                            [b'content-type', b'text/plain'],
+                            [b'content-length', str(len(response_body)).encode()],
+                        ],
+                    })
+                    await send({'type': 'http.response.body', 'body': response_body})
+                    return
                 raw_client_id = req.headers.get('x-client-instance-id') or req.headers.get('x-client-id')
                 client_instance_id = (re.sub(r'[^a-zA-Z0-9._-]', '', raw_client_id)[:32]) if raw_client_id else None
                 ua = user_agent or ""
@@ -611,6 +640,43 @@ class McpController:
         finally:
             if db is not None:
                 db.close()
+    def _check_invoke_permission(self, user_id: str, service_id: str) -> bool:
+        db = None
+        try:
+            # Create database session
+            db = next(get_db())
+            user_repo = UserRepository(db)
+            # Query user info by apikey
+            user = user_repo.get_by_id(user_id)
+            if not user:
+                logger.warning(f"User not found in database: {user_id[:10]}...")
+                return False
+            logger.debug(f"Found user record - User ID: {user.id}, group id is: {user.group_id}")
+            if user.group_id == "allow-all":
+                return True
+            elif user.group_id == "deny-all":
+                return False
+            
+            resource_group_map_repo = ResourceGroupMapRepository(db)
+            resource_groups = resource_group_map_repo.get_by_id(user.group_id)
+            if not resource_groups:
+                logger.warning(f"Resource group not found for user: {user_id[:10]}...")
+                return False
+            
+            # Check if service_id is in resource_groups
+            if service_id not in resource_groups:
+                logger.warning(f"Service {service_id} not found in user's resource groups: {user_id[:10]}...")
+                return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error occurred while querying user apikey: {str(e)}", exc_info=True)
+            return False
+        finally:
+            if db is not None:
+                db.close()
+
 
     def _extract_user_info(self, request: Request) -> Optional[tuple[str, str]]:
         """Extract user ID and apikey ID from request by validating apikey parameter."""
@@ -649,6 +715,7 @@ class McpController:
                 if expire_at_utc < datetime.now(timezone.utc):
                     logger.warning(f"Apikey has expired: {apikey[:10]}..., expiry time: {user_apikey.expire_at}")
                     return None
+            
             
             logger.info(f"Apikey validation successful - User ID: {user_apikey.user_id}, API Key ID: {user_apikey.id}")
             return (user_apikey.user_id, user_apikey.id)

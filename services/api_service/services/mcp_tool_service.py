@@ -17,7 +17,7 @@ class McpToolService:
     def __init__(self):
         self.http_builder = HttpRequestBuilder()
     
-    async def execute_tool(self, tool_config, arguments: dict, call_params: dict) -> tuple[List[types.Content],dict]:
+    async def execute_tool(self, tool_config, arguments: dict, call_params: dict) -> tuple[List[types.Content],dict,bool]:
         """
         Execute tool call
         
@@ -42,12 +42,12 @@ class McpToolService:
             else:
                 response_data = {}
             logger.info("Tool execution completed successfully")
-            return [types.TextContent(type="text", text=response_text)],response_data
+            return [types.TextContent(type="text", text=response_text)],response_data,True
             
         except Exception as e:
             error_msg = f"Tool execution failed: {str(e)}"
             logger.error(f"Tool execution failed: {error_msg}", exc_info=True)
-            return [types.TextContent(type="text", text=error_msg)],{}
+            return [types.TextContent(type="text", text=error_msg)],{},False
     
     async def _send_http_request(self, request_info: Dict[str, Any]) -> str:
         """

@@ -3,9 +3,7 @@
 Includes endpoints to enable/disable services, update/delete services,
 import OpenAPI definitions, and query service info and lists.
 """
-import uuid
 import logging
-from annotated_types import Not
 from fastapi import APIRouter, Depends, Request, Body, UploadFile, File, HTTPException, Form
 from pydantic import BaseModel, HttpUrl
 from typing import Optional
@@ -15,12 +13,10 @@ from services.common.utils.response_utils import ResponseUtils
 from services.common.utils.validation_utils import ValidationUtils
 from services.admin_service.services.openapi_manager import openapi_manager
 from services.admin_service.services.mcp_manager_service import McpManagerService, parse_tags_to_array
-from services.common.utils.cache_utils import CacheUtils
-from services.common.redis_keys import RedisKeys
 from services.admin_service.utils.user_utils import UserUtils
 from services.common import error_msg
 from services.common.models.mcp_service import ChargeType
-
+from services.admin_service.services.resource_group_service import ResourceGroupService
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +31,8 @@ class OpenApiRequest(BaseModel):
 def get_mcp_manager(db: Session = Depends(get_db)) -> McpManagerService:
     return McpManagerService(db)
 
+def get_resource_group_service(db: Session = Depends(get_db)) -> ResourceGroupService:
+    return ResourceGroupService(db)
 
 @router.put("/service/enabled", summary="On/Off MCP service")
 def update_mcp_service_enabled(request: Request, body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
@@ -225,11 +223,7 @@ def get_mcp_service_list(
                 "slug_name": service.slug_name,
                 "short_description": service.short_description,
                 "long_description": service.long_description,
-                # "auth_method": service.auth_method.value if service.auth_method else None,
                 "base_url": service.base_url,
-                # "headers": json.loads(service.headers) if service.headers else [],
-                # "auth_header": service.auth_header,
-                # "auth_token": service.auth_token,
                 "charge_type": service.charge_type.value if service.charge_type else None,
                 "price": str(float(service.price)) if service.price and service.charge_type == ChargeType.PER_CALL else "0.00",
                 "input_token_price": str(float(service.input_token_price)) if service.input_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
@@ -244,4 +238,126 @@ def get_mcp_service_list(
         return ResponseUtils.success_page(data=service_list, page_num=page, page_size=page_size, total=total)
     except Exception as e:
         logger.error(f"Failed to get service list: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+@router.get("/service/list/simple", summary="Get MCP service simple list")
+def get_mcp_service_simple_list(
+    request: Request, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)
+):
+    """Get paginated list of all MCP services."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+
+    try:
+        # Fetch paginated data
+        services = mcp_manager_service.get_all()
+        service_list = [
+            {
+                "id": service.id,
+                "name": service.name,
+                "slug_name": service.slug_name,
+                "base_url": service.base_url,
+                "charge_type": service.charge_type.value if service.charge_type else None,
+                "price": str(float(service.price)) if service.price and service.charge_type == ChargeType.PER_CALL else "0.00",
+                "input_token_price": str(float(service.input_token_price)) if service.input_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "output_token_price": str(float(service.output_token_price)) if service.output_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
+                "enabled": service.enabled,
+            }
+            for service in services
+        ]
+        return ResponseUtils.success(data=service_list)
+    except Exception as e:
+        logger.error(f"Failed to get service simple list: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+@router.get("/service/resource_group/list", summary="Get MCP service's resource group list")
+def get_mcp_service_resource_group_list(
+    request: Request,
+    id: str,
+    page: int = 1,
+    page_size: int = 10,
+    keyword: Optional[str] = None,
+    resource_group_service: ResourceGroupService = Depends(get_resource_group_service),
+):
+    """Get paginated list of all MCP services' resource groups."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    if not id:
+        return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
+    try:
+        # Fetch paginated data
+        list,total = resource_group_service.get_bind_groups(id, page=page, page_size=page_size, keyword=keyword)
+        
+        return ResponseUtils.success_page(data=list, page_num=page, page_size=page_size, total=total)
+    except Exception as e:
+        logger.error(f"Failed to get service simple list: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+@router.get("/service/resource_group/list/unbind", summary="Get MCP service's unbind resource group list")
+def get_mcp_service_unbind_resource_group_list(
+    request: Request,
+    id: str,
+    resource_group_service: ResourceGroupService = Depends(get_resource_group_service),
+):
+    """Get paginated list of all MCP services' unbind resource groups."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    if not id:
+        return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
+    try:
+        # Fetch paginated data
+        list = resource_group_service.get_unbind_groups(id)
+        
+        return ResponseUtils.success(data=list)
+    except Exception as e:
+        logger.error(f"Failed to get unbind resource group list: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+        
+
+@router.put("/service/resource_group", summary="Bind resource groups to MCP service")
+def bind_group(
+    request: Request,
+    id: str,
+    body: dict = Body(...),
+    resource_group_service: ResourceGroupService = Depends(get_resource_group_service),
+):
+    """Bind resource groups to MCP service."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    if not id:
+        return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
+    group_ids = body.get("resource_groups") 
+    if not group_ids:
+        return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
+    try:
+        # Fetch paginated data
+        resource_group_service.bind_groups(id, group_ids)
+        
+        return ResponseUtils.success()
+    except Exception as e:
+        logger.error(f"Failed to bind resource groups: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+@router.delete("/service/resource_group", summary="Unbind resource groups from MCP service")
+def unbind_group(
+    request: Request,
+    id: str,
+    body: dict = Body(...),
+    resource_group_service: ResourceGroupService = Depends(get_resource_group_service),
+):
+    """Unbind resource groups from MCP service."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    if not id:
+        return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
+    group_ids = body.get("resource_groups")
+    if not group_ids:
+        return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
+    try:
+        # Fetch paginated data
+        resource_group_service.unbind_groups(id, group_ids)
+        
+        return ResponseUtils.success()
+    except Exception as e:
+        logger.error(f"Failed to unbind resource groups: {str(e)}")
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)

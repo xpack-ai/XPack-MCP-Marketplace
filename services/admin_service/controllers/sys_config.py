@@ -5,10 +5,6 @@ and to test email settings. All responses and comments are standardized in Engli
 """
 from fastapi import APIRouter, Depends, Body
 import json
-import socket
-import urllib.request
-from typing import Optional
-from sqlalchemy import false, table
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
@@ -19,6 +15,10 @@ from services.admin_service.services.platform_report_service import PlatformRepo
 from services.admin_service.constants import sys_config_key
 from services.common.logging_config import get_logger
 from services.admin_service.utils.ip import get_public_ip, get_local_ip
+from services.common.utils.validation_utils import ValidationUtils
+from services.common.exceptions import ValidationException
+
+
 
 logger = get_logger(__name__)
 
@@ -241,7 +241,12 @@ def set_sysconfig(
         email_smtp_password = email_config.get("smtp_password")
         email_smtp_sender = email_config.get("smtp_sender")
         
-        
+        if not domain:
+            # 正则检查domain格式
+            try:
+                domain = ValidationUtils.validate_domain(domain)
+            except ValidationException as e:
+                return ResponseUtils.error(message=str(e), code=400)
         
         # Batch update configuration
         configs = [

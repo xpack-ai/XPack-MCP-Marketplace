@@ -5,6 +5,11 @@ from services.common.database import SessionLocal
 
 from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.user_wallet_repository import UserWalletRepository
+from services.common.redis_keys import RedisKeys
+from services.common.utils.cache import get_model_cache, set_model_cache, delete_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class UserService:
@@ -43,3 +48,15 @@ class UserService:
     def update_admin(self, name: str, password: str) -> Optional[User]:
         """Update admin user info"""
         return self.user_repository.update_admin_user(name=name, password=password)
+        
+    def update_resource_group(self, user_id: str, group_id: str) -> Optional[User]:
+        """Update user resource group"""
+        try:
+            user = self.user_repository.update_resource_group(user_id=user_id, group_id=group_id)
+            cache_key = RedisKeys.user_key(user_id)
+            set_model_cache(cache_key, user)
+            return self.get_by_id(user_id)
+        except Exception as e:
+            logger.error(f"Failed to update user resource group for user_id {user_id}: {e}", exc_info=True)
+            return None
+          

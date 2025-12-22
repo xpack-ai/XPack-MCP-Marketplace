@@ -9,6 +9,8 @@ class UserResponse(BaseModel):
     user_name: Optional[str] = None
     user_email: Optional[str] = None
     role_id: Optional[int] = None
+    allow_all: Optional[bool] = None
+    service_ids: Optional[list] = None
     created_at: Optional[datetime.datetime] = None
     wallet: Optional[UserWalletResponse] = None
     register_type: Optional[str] = None

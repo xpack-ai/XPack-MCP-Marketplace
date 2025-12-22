@@ -28,7 +28,7 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
-    def create(self, email: str, register_type: str, role_id: int = 2, password: Optional[str] = None) -> Optional[User]:
+    def create(self, email: str, register_type: str, role_id: int = 2, group_id: str = "", password: Optional[str] = None) -> Optional[User]:
         from uuid import uuid4
         from services.common.models.user import RegisterType
 
@@ -44,6 +44,7 @@ class UserRepository:
             is_deleted=0,
             register_type=RegisterType(register_type),
             role_id=role_id,
+            group_id=group_id,
             created_at=now,
             updated_at=now
         )
@@ -84,7 +85,7 @@ class UserRepository:
     def get_user_list(self, offset: int, limit: int) -> Tuple[int, List[User]]:
         total = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).count()
 
-        users = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).offset(offset).limit(limit).all()
+        users = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).order_by(User.created_at.desc()).offset(offset).limit(limit).all()
         return total, users
 
     def get_admin_user(self) -> Optional[User]:
@@ -188,3 +189,22 @@ class UserRepository:
             current_day += timedelta(days=1)
         return result
         
+    def update_resource_group(self, user_id: str, group_id: str) -> Optional[User]:
+        """Update user resource group"""
+        user = self.db.query(User).filter(User.id == user_id, User.is_deleted == 0).first()
+        if not user:
+            return None
+        user.group_id = group_id
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+    def update_resource_group_by_group_id(self, group_id: str, new_group_id: str, commit: bool = True) -> List[User]:
+        """Update user resource group"""
+        users = self.db.query(User).filter(User.group_id == group_id, User.is_deleted == 0).all()
+        if not users:
+            return []
+        for user in users:
+            user.group_id = new_group_id    
+        if commit:
+            self.db.commit()
+        return users

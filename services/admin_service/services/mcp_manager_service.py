@@ -472,7 +472,7 @@ class McpManagerService:
             # 5. Build return data
             apis_list = []
             for temp_api in temp_apis:
-                api_dict = {"id": temp_api.id, "name": temp_api.name, "description": temp_api.description}
+                api_dict = {"id": temp_api.id, "name": temp_api.name,"url": temp_api.path, "description": temp_api.description}
                 apis_list.append(api_dict)
 
             result = {
@@ -480,14 +480,6 @@ class McpManagerService:
                 "name": temp_service.name,
                 "short_description": temp_service.short_description,
                 "long_description": temp_service.long_description,
-                "base_url": temp_service.base_url,
-                "headers": json.loads(temp_service.headers) if temp_service.headers else [],
-                "charge_type": temp_service.charge_type.value if temp_service.charge_type else None,
-                "price": str(float(temp_service.price)) if temp_service.price and temp_service.charge_type == ChargeType.PER_CALL else "0.00",
-                "input_token_price": str(float(temp_service.input_token_price)) if temp_service.input_token_price and temp_service.charge_type.value == ChargeType.PER_TOKEN else "0.00",
-                "output_token_price": str(float(temp_service.output_token_price)) if temp_service.output_token_price and temp_service.charge_type == ChargeType.PER_TOKEN else "0.00",
-                "enabled": temp_service.enabled,
-                "tags": parse_tags_to_array(temp_service.tags),
                 "apis": apis_list,
             }
             return result
@@ -553,7 +545,7 @@ class McpManagerService:
 
         # Build return data (according to API specification format)
         service_info = {
-            "id": service.slug_name,
+            "id": service.id,
             "name": service.name,
             "short_description": service.short_description,
             "long_description": service.long_description,

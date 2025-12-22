@@ -206,16 +206,17 @@ class McpServerFactory:
             logger.debug(f"Call params: {call_params}")
 
             # Execute tool
-            result,response_data = await self.tool_service.execute_tool(tool_config, arguments, call_params)
-            validation_ok, validation_msg = self._validate_output_schema(tool_config, response_data)
-            if not validation_ok:
-                call_success = False
-                error_text = f"Response validation failed: {validation_msg}"
-                result = [types.TextContent(type="text", text=error_text)]
-                response_data = {}
-            else:
-                call_success = True
-            logger.info(f"Tool call successful - User ID: {user_id}, Tool: {name}")
+            result,response_data,call_success = await self.tool_service.execute_tool(tool_config, arguments, call_params)
+            if call_success:
+                validation_ok, validation_msg = self._validate_output_schema(tool_config, response_data)
+                
+                if not validation_ok:
+                    call_success = False
+                    error_text = f"Response validation failed: {validation_msg}"
+                    result = [types.TextContent(type="text", text=error_text)]
+                    response_data = {}
+            if call_success:
+                    logger.info(f"Tool call successful - User ID: {user_id}, Tool: {name}")
             
             if pre_deduct_result.charge_type == "per_token" and result and call_success:
                 output_text = ""
