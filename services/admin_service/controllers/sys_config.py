@@ -241,8 +241,7 @@ def set_sysconfig(
         email_smtp_password = email_config.get("smtp_password")
         email_smtp_sender = email_config.get("smtp_sender")
         
-        if not domain:
-            # 正则检查domain格式
+        if domain:
             try:
                 domain = ValidationUtils.validate_domain(domain)
             except ValidationException as e:
