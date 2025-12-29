@@ -223,11 +223,7 @@ def get_mcp_service_list(
                 "slug_name": service.slug_name,
                 "short_description": service.short_description,
                 "long_description": service.long_description,
-                # "auth_method": service.auth_method.value if service.auth_method else None,
                 "base_url": service.base_url,
-                # "headers": json.loads(service.headers) if service.headers else [],
-                # "auth_header": service.auth_header,
-                # "auth_token": service.auth_token,
                 "charge_type": service.charge_type.value if service.charge_type else None,
                 "price": str(float(service.price)) if service.price and service.charge_type == ChargeType.PER_CALL else "0.00",
                 "input_token_price": str(float(service.input_token_price)) if service.input_token_price and service.charge_type == ChargeType.PER_TOKEN else "0.00",
@@ -272,6 +268,20 @@ def get_mcp_service_simple_list(
         return ResponseUtils.success(data=service_list)
     except Exception as e:
         logger.error(f"Failed to get service simple list: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
+@router.get("/service/tags", summary="Get MCP service tags")
+def get_mcp_service_tags(
+    request: Request,
+    mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
+):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    try:
+        tags = mcp_manager_service.get_tags_list(enabled_only=False)
+        return ResponseUtils.success(data=tags)
+    except Exception as e:
+        logger.error(f"Failed to get service tags: {str(e)}")
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
 
 @router.get("/service/resource_group/list", summary="Get MCP service's resource group list")

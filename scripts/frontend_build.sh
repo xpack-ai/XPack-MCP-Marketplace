@@ -73,7 +73,7 @@ frontend_build() {
     echo_info "Begin frontend build..."
     cd "${FRONTEND_DIR}" || exit 1
     echo_debug "Running command: pnpm install"
-    pnpm install || exit 1
+    pnpm install --no-frozen-lockfile || exit 1
     
     echo_debug "Running command: pnpm build"
     pnpm build || exit 1

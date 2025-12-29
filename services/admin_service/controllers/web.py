@@ -29,6 +29,7 @@ def get_public_mcp_services(
     keyword: Optional[str] = Query(None, description="Search keyword"),
     page: Optional[int] = Query(1, description="Page number (starts from 1)"),
     page_size: Optional[int] = Query(10, description="Page size (default 10)"),
+    tag: Optional[str] = Query(None, description="Filter by tag"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
 ):
     """Get paginated list of public MCP services with keyword search."""
@@ -43,11 +44,18 @@ def get_public_mcp_services(
 
     # Get service list - let any exception bubble up to middleware
     service_list, total = mcp_manager_service.get_public_services_paginated(
-        keyword=search_keyword, page=validated_page, page_size=validated_page_size
+        keyword=search_keyword, page=validated_page, page_size=validated_page_size, tag=tag
     )
 
     logger.info(f"Successfully retrieved {len(service_list)} services")
     return ResponseUtils.success_page(data=service_list, page_num=validated_page, page_size=validated_page_size, total=total)
+
+@router.get("/mcp_tags", summary="Get public MCP tags list")
+def get_public_mcp_tags(
+    mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
+):
+    tags = mcp_manager_service.get_tags_list(enabled_only=True)
+    return ResponseUtils.success(data=tags)
 
 
 @router.get("/mcp_service_info", summary="Get public MCP service information")

@@ -329,6 +329,31 @@ class McpManagerService:
         """Get service list with pagination"""
         return self.mcp_service_repository.get_all_paginated(page=page, page_size=page_size)
 
+    def get_tags_list(self, enabled_only: bool = False) -> List[str]:
+        tags_strings = self.mcp_service_repository.get_tags_strings(enabled_only=enabled_only)
+        tag_counts: dict[str, int] = {}
+        canonical: dict[str, str] = {}
+
+        for tags_str in tags_strings:
+            normalized_in_service: set[str] = set()
+            for tag in parse_tags_to_array(tags_str):
+                normalized = tag.casefold()
+                if not normalized:
+                    continue
+                if normalized in normalized_in_service:
+                    continue
+                normalized_in_service.add(normalized)
+                canonical.setdefault(normalized, tag)
+
+            for normalized in normalized_in_service:
+                tag_counts[normalized] = tag_counts.get(normalized, 0) + 1
+
+        sorted_normalized = sorted(
+            tag_counts.keys(),
+            key=lambda normalized: (-tag_counts[normalized], canonical[normalized].casefold()),
+        )
+        return [canonical[normalized] for normalized in sorted_normalized]
+
     def create_service_from_openapi(self, openapi_data: OpenApiForAI) -> str:
         # Convert OpenApiForAI info to McpService object and McpToolApi object list, return service ID or exception.
         try:
@@ -488,9 +513,9 @@ class McpManagerService:
             logger.error(f"Failed to update service from OpenAPI: {str(e)}")
             raise ValueError(f"Failed to update service from OpenAPI.")
 
-    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[List[dict], int]:
+    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10, tag: Optional[str] = None) -> Tuple[List[dict], int]:
         """Get public services list with pagination, returns formatted data with API info"""
-        services, total = self.mcp_service_repository.get_public_services_paginated(keyword, page, page_size)
+        services, total = self.mcp_service_repository.get_public_services_paginated(keyword, page, page_size, tag)
 
         service_list = []
         for service in services:

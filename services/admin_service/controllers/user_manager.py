@@ -132,7 +132,6 @@ async def recharge_balance(
     # calculate md5 hash of the body and timestamp
     md5_hash = hashlib.md5(f"{timestamp}{body_str}".encode('utf-8')).hexdigest()
     calculated_sign = hashlib.sha256(md5_hash.encode('utf-8')).hexdigest()
-    print(f"sign: {sign}, calculated_sign: {calculated_sign},md5_hash: {md5_hash}")
     if sign != calculated_sign:
         return ResponseUtils.error(message="Invalid signature")
     try:
@@ -147,7 +146,6 @@ async def recharge_balance(
     transaction_id = hashlib.md5(f"{timestamp}{user_id}{balance}{typ}".encode('utf-8')).hexdigest()
     if payment_service.check_transaction_id_exists(transaction_id):
         return ResponseUtils.error(message="Transaction ID already exists")
-    print(f"user_id: {user_id}, amount: {balance}, typ: {typ}, transaction_id: {transaction_id}")
     success = payment_service.platform_payment(user_id=user_id, amount=balance, typ=typ, transaction_id=transaction_id)
     if not success:
         return ResponseUtils.error(message="Failed to recharge wallet balance")
