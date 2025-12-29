@@ -144,6 +144,7 @@ def get_sysconfig(
                 "social_account_facebook_url": small_values.get(sys_config_key.KEY_SOCIAL_ACCOUNT_FACEBOOK_URL, ""),
                 "social_account_x_url": small_values.get(sys_config_key.KEY_SOCIAL_ACCOUNT_X_URL, ""),
                 "cname_a_ip": cname_a_ip,
+                "tag_bar_display": small_values.get(sys_config_key.KEY_TAG_BAR_DISPLAY, "").lower() in ("true", "t", "yes", "y", "1"),
             },
             "account": {
                 "username": admin_username,
@@ -219,6 +220,9 @@ def set_sysconfig(
         facebook_image_url = platform.get("facebook_image_url")
         social_account_facebook_url = platform.get("social_account_facebook_url")
         social_account_x_url = platform.get("social_account_x_url")
+        tag_bar_display = platform.get("tag_bar_display")
+
+
 
         account = body.get("account", {})
         admin_username = account.get("username")
@@ -270,6 +274,7 @@ def set_sysconfig(
             (sys_config_key.KEY_FACEBOOK_IMAGE_URL, facebook_image_url, "Facebook image URL"),
             (sys_config_key.KEY_SOCIAL_ACCOUNT_FACEBOOK_URL, social_account_facebook_url, "Facebook URL"),
             (sys_config_key.KEY_SOCIAL_ACCOUNT_X_URL, social_account_x_url, "X URL"),
+            (sys_config_key.KEY_TAG_BAR_DISPLAY, tag_bar_display, "Tag bar display"),
             (sys_config_key.KEY_LOGIN_GOOGLE_CLIENT, login_google_client, "Google login client ID"),
             (sys_config_key.KEY_LOGIN_GOOGLE_SECRET, login_google_secret, "Google login client secret"),
             (sys_config_key.KEY_LOGIN_GOOGLE_ENABLE, login_google_enable, "Google login enabled"),
@@ -318,6 +323,7 @@ def set_sysconfig(
                 "facebook_image_url": facebook_image_url,
                 "social_account_facebook_url": social_account_facebook_url,
                 "social_account_x_url": social_account_x_url,
+                "tag_bar_display": tag_bar_display,
             }
             
             # Use background reporting to avoid blocking the main configuration update
