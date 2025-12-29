@@ -242,8 +242,8 @@ class UserWalletHistoryRepository:
             .all()
         )
         return total, history
-
-    def get_by_id(self, history_id: str) -> Optional[UserWalletHistory]:
+    
+    def success_order_list_by_user(self, user_id: str, offset: int, limit: int, order_type: Optional[List[str]] = None, status: Optional[List[int]] = None) -> Tuple[int, List[UserWalletHistory]]:
         """
         Get user wallet history record by ID.
 
@@ -253,7 +253,25 @@ class UserWalletHistoryRepository:
         Returns:
             Optional[UserWalletHistory]: UserWalletHistory object or None
         """
-        return self.db.query(UserWalletHistory).filter(UserWalletHistory.id == history_id).first()
+    
+        query = self.db.query(UserWalletHistory).filter(
+            UserWalletHistory.user_id == user_id,
+        )
+        if order_type and len(order_type) > 0:
+            query = query.filter(UserWalletHistory.type.in_(order_type))
+        if status and len(status) > 0:
+            query = query.filter(UserWalletHistory.status.in_(status))
+        total = query.count()
+        if total < offset:
+            return total, []
+        history = (
+            query
+            .order_by(UserWalletHistory.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+        return total, history
 
     def add_consume_record(self, wallet_history: UserWalletHistory) -> Optional[UserWalletHistory]:
         """

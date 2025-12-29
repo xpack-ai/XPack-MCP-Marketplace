@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from services.common.models.mcp_service import McpService
 from typing import Optional, Tuple, List
@@ -103,7 +104,7 @@ class McpServiceRepository:
         self.db.refresh(mcp_service)
         return mcp_service
 
-    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10) -> Tuple[List[McpService], int]:
+    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10, tag: Optional[str] = None) -> Tuple[List[McpService], int]:
         """Get public service list with pagination, supports keyword search"""
         offset = (page - 1) * page_size
 
@@ -112,9 +113,21 @@ class McpServiceRepository:
         if keyword:
             keyword = f"%{keyword}%"
             query = query.filter((McpService.name.like(keyword)) | (McpService.short_description.like(keyword)))
+        if tag:
+            normalized_tag = tag.strip()
+            if normalized_tag:
+                normalized_tags = func.replace(func.replace(McpService.tags, ", ", ","), " ,", ",")
+                query = query.filter(func.find_in_set(normalized_tag, normalized_tags) > 0)
+        
 
         total = query.count()
 
         services = query.order_by(McpService.created_at.desc()).offset(offset).limit(page_size).all()
 
         return services, total
+
+    def get_tags_strings(self, enabled_only: bool = False) -> List[str]:
+        query = self.db.query(McpService.tags).filter(McpService.tags.isnot(None)).filter(McpService.tags != "")
+        if enabled_only:
+            query = query.filter(McpService.enabled == 1)
+        return [row[0] for row in query.all() if row and row[0]]

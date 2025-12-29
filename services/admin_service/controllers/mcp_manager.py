@@ -270,6 +270,20 @@ def get_mcp_service_simple_list(
         logger.error(f"Failed to get service simple list: {str(e)}")
         return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
 
+@router.get("/service/tags", summary="Get MCP service tags")
+def get_mcp_service_tags(
+    request: Request,
+    mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
+):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
+    try:
+        tags = mcp_manager_service.get_tags_list(enabled_only=False)
+        return ResponseUtils.success(data=tags)
+    except Exception as e:
+        logger.error(f"Failed to get service tags: {str(e)}")
+        return ResponseUtils.error(error_msg=error_msg.INTERNAL_ERROR)
+
 @router.get("/service/resource_group/list", summary="Get MCP service's resource group list")
 def get_mcp_service_resource_group_list(
     request: Request,
