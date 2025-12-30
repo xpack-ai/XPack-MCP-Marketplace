@@ -55,7 +55,7 @@ class UserWalletHistoryService:
             elif order.type == TransactionType.DEPOSIT:
                 info["order_type"] = "recharge"
                 if order.status == 1:
-                    info["balance_after"] = order.balance_after
+                    info["balance"] = order.balance_after
                 else:
                     info["balance"] = "-"
                 info["description"] = order.payment_method
