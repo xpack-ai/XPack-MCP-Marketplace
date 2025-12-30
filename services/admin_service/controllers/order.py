@@ -89,29 +89,5 @@ def get_user_order_list_by_user_id(
         for s in sl:
             status_list.append(int(s.strip()))
     total, orders = user_wallet_history_service.success_order_list_by_user(user_id, offset, page_size, order_type_list, status_list)
-    if not orders:
-        return ResponseUtils.success_page(data=[], total=total, page_num=page, page_size=page_size)
-    result = []
-    for order in orders:
-        confirm_at = ""
-        if order.status == 1:
-            confirm_at = order.updated_at
-        for order in orders:
-            info = {
-                "id": order.id,
-                "user_id": order.user_id,
-                "order_id": order.transaction_id,
-                "payment_type": order.payment_method,
-                "payment_state": order.status,
-                "amount": order.amount,
-                "create_at": order.created_at,
-                "confirm_at": confirm_at,
-            }
-            if order.type == TransactionType.API_CALL:
-                info["order_type"] = "purchase"
-            elif order.type == TransactionType.DEPOSIT:
-                info["order_type"] = "recharge"
-            else:
-                info["order_type"] = order.type
-            result.append(info)
-        return ResponseUtils.success_page(data=result, total=total, page_num=page, page_size=page_size)
+    
+    return ResponseUtils.success_page(data=orders, total=total, page_num=page, page_size=page_size)

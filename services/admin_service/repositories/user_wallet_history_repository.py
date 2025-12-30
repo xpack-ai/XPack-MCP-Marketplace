@@ -18,8 +18,20 @@ class UserWalletHistoryRepository:
 
     def __init__(self, db: Session):
         self.db = db
+    
+    def get_by_id(self, transaction_id: str) -> Optional[UserWalletHistory]:
+        """
+        Get a user wallet history record by ID.
 
-    def add_deposit(self, user_id: str, amount: float, payment_method: str, transaction_id: str = "", status: int = 0) -> UserWalletHistory:
+        Args:
+            transaction_id: Transaction ID
+
+        Returns:
+            Optional[UserWalletHistory]: Found record or None
+        """
+        return self.db.query(UserWalletHistory).filter(UserWalletHistory.id == transaction_id).first()
+
+    def add_deposit(self, user_id: str, amount: float, payment_method: str, transaction_id: str = "", status: int = 0, balance_after: float = 0.00) -> UserWalletHistory:
         """
         Create a new deposit record.
 
@@ -40,7 +52,7 @@ class UserWalletHistoryRepository:
             user_id=user_id,
             payment_method=PaymentMethod(payment_method),
             amount=amount,
-            balance_after=0.00,
+            balance_after=balance_after,
             type=TransactionType.DEPOSIT,
             transaction_id=transaction_id,
             status=status,
@@ -81,7 +93,7 @@ class UserWalletHistoryRepository:
         self.db.refresh(history)
         return history
 
-    def set_balance(self,user_id: str,amount:float, payment_method: str, transaction_id: str = "", status: int = 0) -> UserWalletHistory:
+    def set_balance(self,user_id: str,amount:float, payment_method: str, transaction_id: str = "", status: int = 0, balance_after: float = 0.00) -> UserWalletHistory:
         """
         Create a new balance record.
 
@@ -102,7 +114,7 @@ class UserWalletHistoryRepository:
             user_id=user_id,
             payment_method=PaymentMethod(payment_method),
             amount=amount,
-            balance_after=0.00,
+            balance_after=balance_after,
             type=TransactionType.RESET,
             status=status,  # 0=new, 1=completed, 2=refunded
             created_at=now,
