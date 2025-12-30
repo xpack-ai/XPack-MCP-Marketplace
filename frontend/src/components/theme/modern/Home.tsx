@@ -26,11 +26,18 @@ import { Navigation } from "./Navigation";
 import { Footer } from "./Footer";
 import { NavigationItem } from "@/shared/components/Navigation";
 import { Faq } from "@/components/marketplace/Faq";
+import { TagFilter } from "@/shared/components/marketplace/TagFilter";
+import { ThemeType } from "@/shared/types/system";
 
 interface HomeProps {
   // 状态
   searchQuery: string;
   services: ServiceData[];
+  isTagBarDisplay: boolean;
+  availableTags: string[];
+  selectedTag: string;
+  handleTagChange: (tag: string) => void;
+  currentTheme: ThemeType;
   currentPage: number;
   total: number;
   pageSize: number;
@@ -52,6 +59,11 @@ interface HomeProps {
 export const Home: React.FC<HomeProps> = ({
   searchQuery,
   services,
+  isTagBarDisplay,
+  availableTags,
+  selectedTag,
+  handleTagChange,
+  currentTheme,
   currentPage,
   total,
   pageSize,
@@ -78,7 +90,7 @@ export const Home: React.FC<HomeProps> = ({
       <Navigation items={navItems} />
       {/* Modern Hero Section */}
       <div className="pt-32">
-        <div className="mx-auto px-6 py-20 max-w-6xl">
+        <div className={`mx-auto px-6 max-w-6xl ${isTagBarDisplay ? 'py-16' : 'py-20'}`}>
           <div className="text-center mb-16">
             {/* Modern Icon */}
             <div className="flex justify-center mb-8">
@@ -91,9 +103,9 @@ export const Home: React.FC<HomeProps> = ({
             <h1 className="text-4xl lg:text-6xl font-bold mb-6 text-gray-900 leading-tight">
               {t(
                 platformConfig.headline ||
-                  platformConfig.name ||
-                  _DefaultPlatformConfig.headline ||
-                  ""
+                platformConfig.name ||
+                _DefaultPlatformConfig.headline ||
+                ""
               )}
             </h1>
 
@@ -101,8 +113,8 @@ export const Home: React.FC<HomeProps> = ({
             <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
               {t(
                 platformConfig.subheadline ||
-                  _DefaultPlatformConfig.subheadline ||
-                  ""
+                _DefaultPlatformConfig.subheadline ||
+                ""
               )}
             </p>
           </div>
@@ -144,6 +156,21 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </div>
       </div>
+
+      {/* filter section */}
+      {
+        isTagBarDisplay && (
+          <>
+            <TagFilter
+              theme={currentTheme}
+              tags={availableTags}
+              selectedTag={selectedTag}
+              onTagChange={handleTagChange}
+              maxWidthPercent={80}
+            />
+          </>
+        )
+      }
 
       <section>
         {/* Server List Section */}

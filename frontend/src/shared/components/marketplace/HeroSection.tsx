@@ -9,6 +9,7 @@ import {
 
 interface HeroSectionProps {
   searchQuery: string;
+  isTagBarDisplay: boolean;
   onSearchChange: (value: string) => void;
   onSearch?: () => void;
   searchSuggestions?: string[];
@@ -16,6 +17,7 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   searchQuery,
+  isTagBarDisplay,
   onSearchChange,
   onSearch,
   searchSuggestions = [],
@@ -77,7 +79,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <div className="relative overflow-hidden mx-auto p-6 py-24 max-w-7xl">
+    <div className={`relative overflow-hidden mx-auto p-6 ${isTagBarDisplay ? 'py-12' : 'py-24'} max-w-7xl`}>
       <div className="text-center mb-12">
         <h1 className="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
           {t(

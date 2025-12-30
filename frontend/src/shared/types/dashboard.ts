@@ -10,6 +10,7 @@ export enum TabKey {
   OVERVIEW = "overview",
   WALLET = "wallet",
   ACCOUNT = "account",
+  USER_ACCOUNT = "user-account",
 }
 
 export interface SidebarSubItem {

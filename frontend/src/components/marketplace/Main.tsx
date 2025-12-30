@@ -4,12 +4,19 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { HeroSection } from "../../shared/components/marketplace/HeroSection";
 import { ServiceListSection } from "@/shared/components/marketplace/ServiceListSection";
+import { TagFilter } from "@/shared/components/marketplace/TagFilter";
 import { ServiceData } from "@/shared/types/marketplace";
 import { fetchServices } from "@/services/marketplaceService";
 import { Spinner } from "@nextui-org/react";
+import { ThemeType } from "@/shared/types/system";
 
 interface MarketplaceMainProps {
   initialServices: ServiceData[];
+  availableTags: string[];
+  isTagBarDisplay: boolean;
+  selectedTag: string;
+  setSelectedTag: (tag: string) => void;
+  currentTheme: ThemeType;
   initialTotal: number;
   initialPage: number;
   initialSearch: string;
@@ -19,6 +26,11 @@ interface MarketplaceMainProps {
 
 export const MarketplaceMain: React.FC<MarketplaceMainProps> = ({
   initialServices,
+  availableTags,
+  isTagBarDisplay,
+  selectedTag,
+  setSelectedTag,
+  currentTheme,
   initialTotal,
   initialPage,
   initialSearch,
@@ -33,16 +45,18 @@ export const MarketplaceMain: React.FC<MarketplaceMainProps> = ({
   const [total, setTotal] = useState(initialTotal);
   const [loading, setLoading] = useState(false);
 
+
   // load services data
-  const loadServices = async (page: number, search: string) => {
+  const loadServices = async (page: number, search: string, tag: string = "ALL") => {
     try {
       setLoading(true);
       const result = await fetchServices({
         page,
         page_size: pageSize,
         keyword: search,
+        // 如果需要，可以在这里添加tag参数传递给API
+        tag: tag !== "ALL" ? tag : undefined,
       });
-
       setServices(result.data.services);
       setTotal(result.page.total);
       setCurrentPage(page);
@@ -79,13 +93,20 @@ export const MarketplaceMain: React.FC<MarketplaceMainProps> = ({
   // when page number changes, reload
   const handlePageChange = (page: number) => {
     updateURL(page, searchQuery);
-    loadServices(page, searchQuery);
+    loadServices(page, searchQuery, selectedTag);
   };
 
   // handle search submit
   const handleSearch = () => {
     updateURL(1, searchQuery);
-    loadServices(1, searchQuery);
+    loadServices(1, searchQuery, selectedTag);
+  };
+
+  // handle tag change
+  const handleTagChange = (tag: string) => {
+    setSelectedTag(tag);
+    setCurrentPage(1);
+    loadServices(1, searchQuery, tag);
   };
 
   // if there is an error, show error message
@@ -102,9 +123,25 @@ export const MarketplaceMain: React.FC<MarketplaceMainProps> = ({
       {/* Hero Section */}
       <HeroSection
         searchQuery={searchQuery}
+        isTagBarDisplay={isTagBarDisplay}
         onSearchChange={setSearchQuery}
         onSearch={handleSearch}
       />
+      
+      {/* filter section */}
+      {
+        isTagBarDisplay && (
+          <>
+            <TagFilter
+              theme={currentTheme}
+              tags={availableTags}
+              selectedTag={selectedTag}
+              onTagChange={handleTagChange}
+              maxWidthPercent={80}
+            />
+          </>
+        )
+      }
 
       {/* Server List Section */}
       {loading ? (

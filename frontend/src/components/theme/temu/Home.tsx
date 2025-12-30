@@ -23,11 +23,18 @@ import { Footer } from "./Footer";
 import { Navigation } from "./Navigation";
 import { NavigationItem } from "@/shared/components/Navigation";
 import { Faq } from "@/components/marketplace/Faq";
+import { TagFilter } from "@/shared/components/marketplace/TagFilter";
+import { ThemeType } from "@/shared/types/system";
 
 interface HomeProps {
   // 状态
   searchQuery: string;
   services: ServiceData[];
+  isTagBarDisplay: boolean;
+  availableTags: string[];
+  selectedTag: string;
+  handleTagChange: (tag: string) => void;
+  currentTheme: ThemeType;
   currentPage: number;
   total: number;
   pageSize: number;
@@ -49,6 +56,11 @@ interface HomeProps {
 export const Home: React.FC<HomeProps> = ({
   searchQuery,
   services,
+  isTagBarDisplay,
+  availableTags,
+  selectedTag,
+  handleTagChange,
+  currentTheme,
   currentPage,
   total,
   pageSize,
@@ -95,9 +107,9 @@ export const Home: React.FC<HomeProps> = ({
             <h1 className="text-4xl lg:text-6xl font-bold mb-6 text-white">
               {t(
                 platformConfig.headline ||
-                  platformConfig.name ||
-                  _DefaultPlatformConfig.headline ||
-                  ""
+                platformConfig.name ||
+                _DefaultPlatformConfig.headline ||
+                ""
               )}
             </h1>
 
@@ -105,8 +117,8 @@ export const Home: React.FC<HomeProps> = ({
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
               {t(
                 platformConfig.subheadline ||
-                  _DefaultPlatformConfig.subheadline ||
-                  ""
+                _DefaultPlatformConfig.subheadline ||
+                ""
               )}
             </p>
 
@@ -138,6 +150,21 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </div>
       </div>
+
+      {/* filter section */}
+      {
+        isTagBarDisplay && (
+          <div className="pt-12">
+            <TagFilter
+              theme={currentTheme}
+              tags={availableTags}
+              selectedTag={selectedTag}
+              onTagChange={handleTagChange}
+              maxWidthPercent={80}
+            />
+          </div>
+        )
+      }
 
       {/* Products Section */}
       <div className="mx-auto px-6 py-12 max-w-7xl">

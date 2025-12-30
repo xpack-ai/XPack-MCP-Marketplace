@@ -17,6 +17,7 @@ interface FetchServicesParams {
   page?: number;
   page_size?: number;
   keyword?: string;
+  tag?: string;
 }
 interface ServicesResponseData {
   services: ServiceData[];
@@ -42,6 +43,7 @@ export async function fetchServices(
     page_size: _BasePageDetail.page_size,
     page: _BasePageDetail.page,
     keyword: "",
+    tag: "",
   }
 ): Promise<ServicesResponse> {
   // Build query parameters
@@ -50,7 +52,7 @@ export async function fetchServices(
   if (params.page_size)
     queryParams.append("page_size", params.page_size.toString());
   if (params.keyword) queryParams.append("keyword", params.keyword);
-
+  if (params.tag) queryParams.append("tag", params.tag);
   const response = await fetchAPI<BaseMCPService[]>(
     `/api/web/mcp_services${queryParams.toString() ? "?" + queryParams.toString() : ""}`
   );
@@ -98,4 +100,27 @@ export async function fetchServiceById(
   }
 
   return convertMcpService([response.data])[0];
+}
+
+
+/**
+ * Fetch tags list
+ */
+export async function fetchTagsList(
+): Promise<string[] | []> {
+  const response = await fetchAPI<string[]>(
+    `/api/web/mcp_tags`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.success) {
+    return [];
+  }
+
+  return response.data || []
 }
