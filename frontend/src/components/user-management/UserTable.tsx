@@ -14,10 +14,12 @@ import {
   Spinner,
   Select,
   SelectItem,
+  Link
 } from "@nextui-org/react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { User } from "@/types/user";
 import { Trash2, CreditCard, Calendar, HelpCircle } from "lucide-react";
+
 import { AdminRechargeModal } from "@/components/user-management/AdminRechargeModal";
 import { fetchSimpleResourceGroups, updateUserResourceGroup } from "@/api/resourceGroup.api";
 import toast from "react-hot-toast";
@@ -27,6 +29,7 @@ interface UserTableProps {
   fetchUsers: () => void;
   loading?: boolean;
   onDelete: (user: User) => void;
+  viewUserBalanceDetail: (userId: User) => void;
   onRecharge: (id: string, amount: number) => Promise<boolean>;
   pagination: {
     page: number;
@@ -40,6 +43,7 @@ export const UserTable: React.FC<UserTableProps> = ({
   users,
   fetchUsers,
   loading = false,
+  viewUserBalanceDetail,
   onDelete,
   onRecharge,
   pagination,
@@ -185,7 +189,15 @@ export const UserTable: React.FC<UserTableProps> = ({
                 </Select>
               </TableCell>
               <TableCell>{formatDate(user.created_at)}</TableCell>
-              <TableCell>{user.balance.toFixed(2) || "-"}</TableCell>
+              <TableCell>
+                <Link
+                  href="#"
+                  className="text-xs cursor-pointer"
+                  onPress={() => viewUserBalanceDetail(user)}
+                >
+                  {user.balance.toFixed(2) || "-"}
+                </Link>
+              </TableCell>
 
               <TableCell>
                 <div className="relative flex items-center gap-2">
