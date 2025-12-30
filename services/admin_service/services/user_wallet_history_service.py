@@ -51,13 +51,13 @@ class UserWalletHistoryService:
                         info["description"] = service.name
                 except:
                     info["description"] = "-"
-                info["balance_after"] = order.balance_after
+                info["balance"] = order.balance_after
             elif order.type == TransactionType.DEPOSIT:
                 info["order_type"] = "recharge"
                 if order.status == 1:
                     info["balance_after"] = order.balance_after
                 else:
-                    info["balance_after"] = "-"
+                    info["balance"] = "-"
                 info["description"] = order.payment_method
             else:
                 info["order_type"] = order.type
