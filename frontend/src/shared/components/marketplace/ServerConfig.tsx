@@ -70,6 +70,7 @@ export const ServerConfig: React.FC<ServerConfigProps> = ({
             key: item.apikey,
             label: item.name,
           })));
+          setSelectedApiKey(data[0].apikey)
         }
       }
     }
