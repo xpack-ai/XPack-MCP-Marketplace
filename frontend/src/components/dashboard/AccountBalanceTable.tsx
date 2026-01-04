@@ -23,6 +23,7 @@ import { Calendar, HelpCircle, Filter } from "lucide-react";
 import { fetchAPI } from "@/shared/rpc/common-function";
 import i18n from "@/shared/lib/i18n";
 import { toast } from "react-hot-toast";
+import { fetchAdminAPI } from "@/rpc/admin-api";
 
 export interface OrderItem {
   id: string;
@@ -44,9 +45,10 @@ export interface OrderItem {
 
 interface AccountBalanceTableProps {
   userId?: string;
+  source?: "client" | "admin";
 }
 
-const AccountBalanceTable: React.FC<AccountBalanceTableProps> = ({ userId }) => {
+const AccountBalanceTable: React.FC<AccountBalanceTableProps> = ({ userId, source }) => {
   const { t } = useTranslation();
 
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -90,7 +92,7 @@ const AccountBalanceTable: React.FC<AccountBalanceTableProps> = ({ userId }) => 
           ? `/api/order/list/by_user?${params.toString()}`
           : `/api/user/order/list?${params.toString()}`;
 
-        const response = await fetchAPI<OrderItem[]>(apiUrl);
+        const response = source === "client" ? await fetchAPI<OrderItem[]>(apiUrl) : await fetchAdminAPI<OrderItem[]>(apiUrl);
         if (!response.success) {
           toast.error(response.error_message || i18n.t("Failed to load orders"));
           return {
@@ -166,6 +168,27 @@ const AccountBalanceTable: React.FC<AccountBalanceTableProps> = ({ userId }) => 
         </span>
       </div>
     );
+  };
+
+  // 格式化金额，带正负号和美元符号
+  const formatAmount = (amount: string | number): string => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(numAmount)) return '$0.00';
+    const absAmount = Math.abs(numAmount).toFixed(2);
+    if (numAmount > 0) {
+      return `+$${absAmount}`;
+    } else if (numAmount < 0) {
+      return `-$${absAmount}`;
+    }
+    return `$${absAmount}`;
+  };
+
+  // 格式化余额，只显示美元符号，不带正负号
+  const formatBalance = (balance: string | number): string => {
+    const numBalance = typeof balance === 'string' ? parseFloat(balance) : balance;
+    if (isNaN(numBalance)) return '$0.00';
+    
+    return `$${Math.abs(numBalance).toFixed(2)}`;
   };
 
   const getStatusColor = (status: number) => {
@@ -321,13 +344,10 @@ const AccountBalanceTable: React.FC<AccountBalanceTableProps> = ({ userId }) => 
                       : "text-red-500"
                   }
                 >
-                  <span>
-                    {order.order_type === "recharge" ? "+" : ""}
-                  </span>
-                  <span>{order.amount}</span>
+                  {formatAmount(order.amount)}
                 </span>
               </TableCell>
-              <TableCell>{order.balance}</TableCell>
+              <TableCell>{formatBalance(order.balance)}</TableCell>
               <TableCell>
                 <Chip
                   className="capitalize"
