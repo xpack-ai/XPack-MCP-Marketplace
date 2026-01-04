@@ -139,7 +139,7 @@ export const UserTable: React.FC<UserTableProps> = ({
         <TableHeader>
           <TableColumn>{t("Email")}</TableColumn>
           <TableColumn width={250}>{t("Resource Group")}</TableColumn>
-          <TableColumn>
+          <TableColumn width={200}>
             <div className="flex items-center gap-1">
               <span>{t("Register Date")}</span>
               <Tooltip
@@ -152,8 +152,8 @@ export const UserTable: React.FC<UserTableProps> = ({
               </Tooltip>
             </div>
           </TableColumn>
-          <TableColumn>{t("Balance")}</TableColumn>
-          <TableColumn>{t("Actions")}</TableColumn>
+          <TableColumn width={120}>{t("Balance")}</TableColumn>
+          <TableColumn width={100}>{t("Actions")}</TableColumn>
         </TableHeader>
         <TableBody
           items={items}

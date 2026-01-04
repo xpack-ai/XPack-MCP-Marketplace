@@ -14,7 +14,7 @@ const UserAccountBalance: React.FC = () => {
       description={t("View your balance and transaction history")}
     >
       <div className="space-y-6 w-full">
-        <AccountBalanceTable />
+        <AccountBalanceTable source="client" />
       </div>
     </DashboardDemoContent>
   );

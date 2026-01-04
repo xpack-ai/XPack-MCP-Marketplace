@@ -37,7 +37,7 @@ const BaseUserBalanceDetail: React.FC<UserBalanceDetailProps> = ({
         </div>
       </div>
       <div className="px-8">
-        <AccountBalanceTable userId={userId} />
+        <AccountBalanceTable userId={userId} source="admin" />
       </div>
     </div>
   );
