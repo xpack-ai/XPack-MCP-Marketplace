@@ -321,7 +321,7 @@ const AccountBalanceTable: React.FC<AccountBalanceTableProps> = ({ userId, sourc
         >
           {(order) => (
             <TableRow key={order.id}>
-              <TableCell>{formatDate(order.confirm_at)}</TableCell>
+              <TableCell>{formatDate(order.payment_state === 0 ? order.create_at : order.confirm_at)}</TableCell>
               <TableCell>
                 <span
                   className={
