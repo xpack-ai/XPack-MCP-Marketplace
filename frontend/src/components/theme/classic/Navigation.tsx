@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@nextui-org/react";
 import { useTranslation } from "react-i18next";
 
@@ -8,6 +8,7 @@ import { DynamicLogo } from "@/shared/components/DynamicLogo";
 import { useAuth } from "@/shared/lib/useAuth";
 import { NavigationItem } from "@/shared/components/Navigation";
 import Link from "next/link";
+import { useSharedStore } from "@/shared/store/share";
 
 interface NavigationProps {
   items?: NavigationItem[];
@@ -16,6 +17,13 @@ interface NavigationProps {
 export const Navigation: React.FC<NavigationProps> = ({ items }) => {
   const { t } = useTranslation();
   const { handleLogin } = useAuth();
+
+  const [userToken, setUserToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userToken = useSharedStore?.getState?.().user_token
+    setUserToken(userToken);
+  }, []);
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
@@ -26,21 +34,27 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
             <DynamicLogo alt="Platform Logo" className="h-[32px] text-white" />
           </div>
           <div className="flex space-x-2">
-            <Button
-              onPress={handleLogin}
-              variant="light"
-              className="hidden sm:block text-white text-sm px-4 py-1 rounded-sm font-medium"
-              size="sm"
-            >
-              <b className="text-md"> {t("Sign In")}</b>
-            </Button>
+            {
+              !userToken && (
+                <>
+                  <Button
+                    onPress={handleLogin}
+                    variant="light"
+                    className="hidden sm:block text-white text-sm px-4 py-1 rounded-sm font-medium"
+                    size="sm"
+                  >
+                    <b className="text-md"> {t("Sign In")}</b>
+                  </Button>
+                </>
+              )
+            }
             <Button
               color="primary"
               className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-1 rounded-sm font-medium"
               size="sm"
               onPress={handleLogin}
             >
-              {t("Get Started")}
+              {userToken ? t("Dashboard") : t("Get Started")}
             </Button>
           </div>
         </div>

@@ -24,11 +24,18 @@ import { Footer } from "./Footer";
 import { Navigation } from "./Navigation";
 import { NavigationItem } from "@/shared/components/Navigation";
 import { Faq } from "@/components/marketplace/Faq";
+import { TagFilter } from "@/shared/components/marketplace/TagFilter";
+import { ThemeType } from "@/shared/types/system";
 
 interface HomeProps {
   // 状态
   searchQuery: string;
   services: ServiceData[];
+  isTagBarDisplay: boolean;
+  availableTags: string[];
+  selectedTag: string;
+  handleTagChange: (tag: string) => void;
+  currentTheme: ThemeType;
   currentPage: number;
   total: number;
   pageSize: number;
@@ -50,6 +57,11 @@ interface HomeProps {
 export const Home: React.FC<HomeProps> = ({
   searchQuery,
   services,
+  isTagBarDisplay,
+  availableTags,
+  selectedTag,
+  handleTagChange,
+  currentTheme,
   currentPage,
   total,
   pageSize,
@@ -83,9 +95,9 @@ export const Home: React.FC<HomeProps> = ({
               <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-slate-800">
                 {t(
                   platformConfig.headline ||
-                    platformConfig.name ||
-                    _DefaultPlatformConfig.headline ||
-                    ""
+                  platformConfig.name ||
+                  _DefaultPlatformConfig.headline ||
+                  ""
                 )}
               </h1>
 
@@ -93,8 +105,8 @@ export const Home: React.FC<HomeProps> = ({
               <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
                 {t(
                   platformConfig.subheadline ||
-                    _DefaultPlatformConfig.subheadline ||
-                    ""
+                  _DefaultPlatformConfig.subheadline ||
+                  ""
                 )}
               </p>
             </div>
@@ -140,6 +152,21 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </div>
 
+        {/* filter section */}
+        {
+          isTagBarDisplay && (
+            <div className="pt-10">
+              <TagFilter
+                theme={currentTheme}
+                tags={availableTags}
+                selectedTag={selectedTag}
+                onTagChange={handleTagChange}
+                maxWidthPercent={80}
+              />
+            </div>
+          )
+        }
+
         {/* Server List Section */}
         {loading ? (
           <div className="mx-auto h-[200px] flex items-center justify-center">
@@ -148,7 +175,7 @@ export const Home: React.FC<HomeProps> = ({
             </div>
           </div>
         ) : (
-          <div className="bg-gray-50 py-16">
+          <div className={`bg-gray-50 ${isTagBarDisplay ? 'py-10' : 'py-16'}`}>
             <div className="mx-auto px-6 max-w-7xl">
               {/* Server Grid */}
               <div className="flex flex-wrap justify-center gap-4 mb-12">

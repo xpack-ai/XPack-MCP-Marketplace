@@ -53,6 +53,10 @@ const OverviewPage: React.FC = () => {
 
   useEffect(() => {
     fetchApiKeys();
+    if (sessionStorage.getItem('create_new_authorization')) {
+      handleNewKey();
+      sessionStorage.removeItem('create_new_authorization');
+    }
   }, []);
 
   // create new auth key

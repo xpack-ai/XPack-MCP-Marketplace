@@ -31,6 +31,7 @@ export interface PlatformConfig {
   facebook_description?: string; // facebook description
   facebook_image_url?: string; // facebook image url
   meta_description?: string; // meta description
+  tag_bar_display?: boolean; // whether to display tags bar
   [key: string]: any;
 }
 

@@ -8,6 +8,7 @@ export enum SettingModalTab {
   CODE_INJECTION = "code-injection",
   XPACK_EXPLORE = "xpack-explore",
   NAVIGATION = "navigation",
+  TAGS_BAR = "tagsBar",
   FAQ = "faq",
   CHANGE_PASSWORD = "change-password",
   EMAIL_LOGIN_SETTINGS = "email-login-settings",

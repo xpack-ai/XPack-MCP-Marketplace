@@ -9,7 +9,7 @@ import { Home as ClassicHome } from "./classic/Home";
 import { Home as CreativeHome } from "./creative/Home";
 import { Home as TemuHome } from "./temu/Home";
 import { ServiceData } from "@/shared/types/marketplace";
-import { fetchServices } from "@/services/marketplaceService";
+import { fetchServices, fetchTagsList } from "@/services/marketplaceService";
 import { Navigation } from "@/shared/components/Navigation";
 import { MarketplaceMain } from "../marketplace/Main";
 import { Footer } from "@/shared/components/Footer";
@@ -53,18 +53,36 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [total, setTotal] = useState(initialTotal);
   const [loading, setLoading] = useState(false);
-
+  const isTagBarDisplay = platformConfig.tag_bar_display || false;
+  // 可用的标签列表（这里可以从API获取或配置）
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState("ALL");
   // search suggestion
   const searchSuggestions = ["Search MCP servers"];
 
+  useEffect(() => {
+    const loadTagsList = async () => {
+      const tags = await fetchTagsList();
+      setAvailableTags(tags);
+    };
+    loadTagsList();
+  }, []);
+
+  // handle tag change
+  const handleTagChange = (tag: string) => {
+    setSelectedTag(tag);
+    setCurrentPage(1);
+    loadServices(1, searchQuery, tag);
+  };
   // loading service data
-  const loadServices = async (page: number, search: string) => {
+  const loadServices = async (page: number, search: string, tag: string = "ALL") => {
     try {
       setLoading(true);
       const result = await fetchServices({
         page,
         page_size: pageSize,
         keyword: search,
+        tag: tag !== "ALL" ? tag : undefined,
       });
 
       setServices(result.data.services);
@@ -103,13 +121,13 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   // page change handler
   const handlePageChange = (page: number) => {
     updateURL(page, searchQuery);
-    loadServices(page, searchQuery);
+    loadServices(page, searchQuery, selectedTag);
   };
 
   // search submit handler
   const handleSearch = () => {
     updateURL(1, searchQuery);
-    loadServices(1, searchQuery);
+    loadServices(1, searchQuery, selectedTag);
   };
 
   // search input change handler
@@ -122,6 +140,11 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     case Theme.MODERN:
       return (
         <ModernHome
+          currentTheme={currentTheme}
+          selectedTag={selectedTag}
+          handleTagChange={handleTagChange}
+          isTagBarDisplay={isTagBarDisplay}
+          availableTags={availableTags}
           searchQuery={searchQuery}
           services={services}
           currentPage={currentPage}
@@ -139,6 +162,11 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     case Theme.CLASSIC:
       return (
         <ClassicHome
+          currentTheme={currentTheme}
+          selectedTag={selectedTag}
+          handleTagChange={handleTagChange}
+          isTagBarDisplay={isTagBarDisplay}
+          availableTags={availableTags}
           searchQuery={searchQuery}
           services={services}
           currentPage={currentPage}
@@ -156,6 +184,11 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     case Theme.CREATIVE:
       return (
         <CreativeHome
+          currentTheme={currentTheme}
+          selectedTag={selectedTag}
+          handleTagChange={handleTagChange}
+          isTagBarDisplay={isTagBarDisplay}
+          availableTags={availableTags}
           searchQuery={searchQuery}
           services={services}
           currentPage={currentPage}
@@ -173,6 +206,11 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     case Theme.TEMU:
       return (
         <TemuHome
+          currentTheme={currentTheme}
+          selectedTag={selectedTag}
+          handleTagChange={handleTagChange}
+          isTagBarDisplay={isTagBarDisplay}
+          availableTags={availableTags}
           searchQuery={searchQuery}
           services={services}
           currentPage={currentPage}
@@ -194,6 +232,11 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
           <Navigation items={navigationItems} />
           <main className="flex-1">
             <MarketplaceMain
+              currentTheme={currentTheme}
+              selectedTag={selectedTag}
+              setSelectedTag={setSelectedTag}
+              isTagBarDisplay={isTagBarDisplay}
+              availableTags={availableTags}
               initialServices={services}
               initialTotal={total}
               initialPage={currentPage}

@@ -34,6 +34,7 @@ import {
   Palette,
   SquareMenu,
   TableOfContents,
+  Tags,
   Trello,
   XIcon,
 } from "lucide-react";
@@ -162,6 +163,12 @@ const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({
       description: "Configure site navigation and menus",
     },
     {
+      key: SettingModalTab.TAGS_BAR,
+      label: "Tags Bar",
+      icon: <Tags size={16} />,
+      description: "Configure tags bar display",
+    },
+    {
       key: SettingModalTab.FAQ,
       label: "FAQ",
       icon: <TableOfContents size={16} />,
@@ -240,6 +247,7 @@ const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({
         items: groupItems([
           SettingModalTab.THEME,
           SettingModalTab.NAVIGATION,
+          SettingModalTab.TAGS_BAR,
           SettingModalTab.FAQ,
         ]),
       },
