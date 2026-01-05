@@ -403,11 +403,21 @@ class PaymentService:
                     try:
                         if typ == "incr":
                             self.user_wallet_history_repository.add_deposit(
-                                user_id=user_id, amount=amount, payment_method=payment_method, transaction_id=transaction_id,status=1
+                                user_id=user_id, 
+                                amount=amount, 
+                                payment_method=payment_method, 
+                                transaction_id=transaction_id,
+                                status=1,
+                                balance_after=new_balance,
                             )
                         elif typ == "set":
                             self.user_wallet_history_repository.set_balance(
-                                user_id=user_id, amount=amount, payment_method=payment_method, transaction_id=transaction_id,status=1
+                                user_id=user_id, 
+                                amount=amount, 
+                                payment_method=payment_method, 
+                                transaction_id=transaction_id,
+                                status=1,
+                                balance_after=new_balance,
                             )
                         self._delete_wallet_cache(user_id)
                         logger.info(f"Successfully updated balance for user_id {user_id}: {current_wallet.balance} -> {new_balance}")
