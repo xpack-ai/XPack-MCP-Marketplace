@@ -178,10 +178,19 @@ class ResourceGroupService:
             "enabled": True,  # 统一为 bool
             "is_default": "deny-all" == default_group,
         }
-        if len(data) < page_size:
+        s_index = (page - 1) * page_size
+        e_index = page * page_size
+        if total > s_index and total < e_index:
             data.append(allow_all)
-        if len(data) < page_size:
+            if total < e_index-1:
+                data.append(deny_all)
+        elif total < s_index and s_index - total == 1:
             data.append(deny_all)
+        elif total == s_index:
+            data.append(allow_all)
+            data.append(deny_all)
+        
+        
 
         return data,total+2
 
