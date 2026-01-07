@@ -45,11 +45,12 @@ class ResourceGroupService:
     def update_group(self, gid: str, body: dict) -> bool:
         if not gid:
             raise ValueError("Group ID is required")
-        existing = self.group_repo.get_by_id(gid)
-        if not existing:
-            raise ValueError("Resource group not found")
+        
         try:
             if gid != "deny-all" and gid != "allow-all":
+                existing = self.group_repo.get_by_id(gid)
+                if not existing:
+                    raise ValueError("Resource group not found")
                 patch = ResourceGroup()
                 patch.id = gid
                 patch.name = body.get("name", existing.name)
@@ -353,7 +354,7 @@ class ResourceGroupService:
                     "created_at": str(s.created_at) if s.created_at else None,
                     "updated_at": str(s.updated_at) if s.updated_at else None,
                 }
-                for s in (service_map[sid] for sid in sids)
+                for s in (service_map[sid] for sid in sids if sid in service_map)
             ],total
     def get_unbind_services(self, gid: str) -> List[dict]:
         if gid == "deny-all" or gid == "allow-all":
