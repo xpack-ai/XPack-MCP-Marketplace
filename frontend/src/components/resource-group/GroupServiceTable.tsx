@@ -84,12 +84,6 @@ const GroupServiceTable: React.FC<GroupServiceTableProps> = ({
     return !['allow-all', 'deny-all'].includes(resourceGroupDetail.id);
   }, [resourceGroupDetail]);
 
-  // 是否展示编辑按钮
-  const showEditOptions = useMemo(() => {
-    if (!resourceGroupDetail) return false;
-    return !['deny-all'].includes(resourceGroupDetail.id);
-  }, [resourceGroupDetail]);
-
   const getResourceGroup = async (groupId: string) => {
     const response = await fetchResourceGroupDetail(groupId);
     if (response) {
@@ -112,7 +106,7 @@ const GroupServiceTable: React.FC<GroupServiceTableProps> = ({
               {resourceGroupDetail?.name}
             </h2>
             <div className="flex gap-2 h-[32px]">
-            {showEditOptions && currentGroupId && <>
+            {currentGroupId && <>
                 <Button
                   isIconOnly
                   size="sm"

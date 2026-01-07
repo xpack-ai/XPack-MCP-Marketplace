@@ -52,7 +52,7 @@ export const AddServerModal: React.FC<AddServerModalProps> = ({
             </ModalHeader>
             <ModalBody>
               {
-                id !== 'allow-all' && <>
+                !['allow-all', 'deny-all'].includes(id) && <>
                   <Input
                     label={t("Resource Group Name")}
                     value={serverName}
