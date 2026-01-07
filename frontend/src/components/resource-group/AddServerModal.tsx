@@ -5,6 +5,7 @@ interface AddServerModalProps {
   isOpen: boolean;
   onClose: () => void;
   name: string;
+  id: string;
   onSaveServer: (name: string, isDefault: boolean) => Promise<void>;
   type: "add" | "edit";
   isDefault: boolean;
@@ -13,6 +14,7 @@ export const AddServerModal: React.FC<AddServerModalProps> = ({
   isOpen,
   onClose,
   name,
+  id,
   onSaveServer,
   type,
   isDefault,
@@ -49,12 +51,16 @@ export const AddServerModal: React.FC<AddServerModalProps> = ({
               {type === "add" ? t("Create New Resource Group") : t("Edit Resource Group")}
             </ModalHeader>
             <ModalBody>
-              <Input
-                label={t("Resource Group Name")}
-                value={serverName}
-                placeholder={t("Edit Resource Group Name")}
-                onChange={(e) => setServerName(e.target.value)}
-              />
+              {
+                id !== 'allow-all' && <>
+                  <Input
+                    label={t("Resource Group Name")}
+                    value={serverName}
+                    placeholder={t("Edit Resource Group Name")}
+                    onChange={(e) => setServerName(e.target.value)}
+                  />
+                </>
+              }
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-medium">
@@ -73,9 +79,9 @@ export const AddServerModal: React.FC<AddServerModalProps> = ({
               </div>
             </ModalBody>
             <ModalFooter>
-              <Button 
-                color="danger" 
-                variant="light" 
+              <Button
+                color="danger"
+                variant="light"
                 onPress={onClose}
                 isDisabled={isLoading}
               >
