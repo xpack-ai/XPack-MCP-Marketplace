@@ -87,6 +87,7 @@ class ResourceGroupService:
                 raise ValueError("Resource group not found")
             users = self.user_repo.update_resource_group_by_group_id(gid, migrate_id or "deny-all", commit=False)
             if not users:
+                self.db.commit()
                 return True
             
             for user in users:
