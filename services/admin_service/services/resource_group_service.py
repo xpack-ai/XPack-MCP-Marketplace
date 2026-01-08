@@ -69,9 +69,10 @@ class ResourceGroupService:
     def delete_group(self, gid: str, migrate_id: Optional[str] = None) -> bool:
         try:
             if migrate_id:
-                migrate_group = self.group_repo.get_by_id(migrate_id)
-                if not migrate_group:
-                    raise ValueError("Migrate resource group not found")
+                if migrate_id != "deny-all" and migrate_id != "allow-all":
+                    migrate_group = self.group_repo.get_by_id(migrate_id)
+                    if not migrate_group:
+                        raise ValueError("Migrate resource group not found")
                 self.map_repo.migrate_services(gid, migrate_id, commit=False)
                 current_default = self.sys_repo.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
                 if current_default == gid:
@@ -86,7 +87,8 @@ class ResourceGroupService:
                 raise ValueError("Resource group not found")
             users = self.user_repo.update_resource_group_by_group_id(gid, migrate_id or "deny-all", commit=False)
             if not users:
-                raise ValueError("Failed to update user resource group")
+                return True
+            
             for user in users:
                 cache_key = f"xpack:user:{user.id}"
                 self.redis.set(cache_key, user, 600)
