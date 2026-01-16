@@ -58,6 +58,7 @@ export const AddServerModal: React.FC<AddServerModalProps> = ({
                     value={serverName}
                     placeholder={t("Edit Resource Group Name")}
                     onChange={(e) => setServerName(e.target.value)}
+                    maxLength={255}
                   />
                 </>
               }
