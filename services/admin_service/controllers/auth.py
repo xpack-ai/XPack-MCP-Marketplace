@@ -78,7 +78,7 @@ def account_login(body: dict = Body(...), auth_service: AuthService = Depends(ge
     if token:
         return ResponseUtils.success({"user_token": token})
     else:
-        return ResponseUtils.error(message="login failed", code=401)
+        return ResponseUtils.error(message="login failed, please enter the correct account or password", code=401)
 
 
 @router.post("/google/sign", response_model=dict)
@@ -95,7 +95,7 @@ def google_login(request: Request, body: dict = Body(...), auth_service: AuthSer
     if token:
         return ResponseUtils.success({"user_token": token})
     else:
-        return ResponseUtils.error(message=f"login failed: {redirect_uri}", code=401)
+        return ResponseUtils.error(message=f"login failed, please check the redirect_uri: {redirect_uri}", code=401)
 
 
 @router.delete("/logout", response_model=dict)
