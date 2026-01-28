@@ -11,8 +11,9 @@ import { formatCurrency } from "@/shared/utils/currency";
 // Import dashboard content components
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
 import WalletManagement from "@/components/wallet/WalletManagement";
+import UserAccountBalance from "@/components/dashboard/UserAccountBalance";
 import { Home, Key, Wallet } from "lucide-react";
-import { Avatar, Card, CardBody, Button, Divider } from "@nextui-org/react";
+import { Avatar, Card, CardBody, Button, Divider, Link } from "@nextui-org/react";
 import { RechargeModal } from "@/shared/components/modal/RechargeModal";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { ChangePasswordModal } from "@/components/common/ChangePasswordModal";
@@ -41,7 +42,7 @@ const DashboardContent: React.FC = () => {
   const [isRechargeModalOpen, setIsRechargeModalOpen] = useState(false);
   const getInitialTab = (): TabKey => {
     const tabFromUrl = searchParams.get("tab") as TabKey;
-    if (tabFromUrl && [TabKey.OVERVIEW, TabKey.WALLET].includes(tabFromUrl)) {
+    if (tabFromUrl && [TabKey.OVERVIEW, TabKey.WALLET, TabKey.USER_ACCOUNT].includes(tabFromUrl)) {
       return tabFromUrl;
     }
     return TabKey.OVERVIEW;
@@ -158,8 +159,15 @@ const DashboardContent: React.FC = () => {
                         <Wallet size={16} />
                         <span>
                           {t("Balance: {{amount}}", {
-                            amount: formatCurrency(user?.wallet?.balance || 0),
-                          })}
+                            amount: "",
+                          }).replace("{{amount}}", "")}
+                          <Link
+                            href="#"
+                            className="text-xs cursor-pointer"
+                            onPress={() => handleTabNavigate(TabKey.USER_ACCOUNT)}
+                          >
+                            {formatCurrency(user?.wallet?.balance || 0)}
+                          </Link>
                         </span>
                       </div>
 
@@ -187,6 +195,7 @@ const DashboardContent: React.FC = () => {
           {activeTab === TabKey.WALLET && (
             <WalletManagement onRecharge={() => setIsRechargeModalOpen(true)} />
           )}
+          {activeTab === TabKey.USER_ACCOUNT && <UserAccountBalance />}
         </div>
       </div>
 

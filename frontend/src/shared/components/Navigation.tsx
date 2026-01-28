@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Navbar,
   NavbarContent,
@@ -15,6 +15,7 @@ import { useAuth } from "@/shared/lib/useAuth";
 import { ArrowRightIcon } from "lucide-react";
 import { DynamicLogo } from "@/shared/components/DynamicLogo";
 import Link from "next/link";
+import { useSharedStore } from "../store/share";
 export type NavigationItem = {
   label: string;
   href: string;
@@ -44,6 +45,13 @@ function NavigationClient({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useTranslation();
   const { handleLogin } = useAuth();
+
+  const [userToken, setUserToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userToken = useSharedStore?.getState?.().user_token
+    setUserToken(userToken);
+  }, []);
 
   return (
     <>
@@ -97,9 +105,17 @@ function NavigationClient({
           {langNode ? (
             langNode
           ) : (
-            <Button onPress={handleLogin} variant="light">
-              <b className="text-md"> {t("Sign In")}</b>
-            </Button>
+            <>
+              {
+                !userToken && (
+                  <>
+                  <Button onPress={handleLogin} variant="light">
+                    <b className="text-md"> {t("Sign In")}</b>
+                  </Button>
+                  </>
+                )
+              }
+            </>
           )}
 
           {/* Desktop Auth Button */}
@@ -110,7 +126,7 @@ function NavigationClient({
               radius="full"
               onPress={onLogin || handleLogin}
             >
-              <b className="text-md"> {t(signinText)}</b>
+              <b className="text-md"> {userToken ? t("Dashboard") : t(signinText) }</b>
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-[#9ab0f2] flex items-center justify-center rounded-full">
                 <ArrowRightIcon
                   size={16}
@@ -128,7 +144,7 @@ function NavigationClient({
                 onPress={onLogin || handleLogin}
                 size="sm"
               >
-                <b className="text-md"> {t(signinText)}</b>
+                <b className="text-md"> {userToken ? t("Dashboard") : t(signinText) }</b>
               </Button>
             </div>
           )}
@@ -156,7 +172,7 @@ function NavigationClient({
               radius="full"
               onPress={onLogin || handleLogin}
             >
-              <b className="text-md"> {t(signinText)}</b>
+              <b className="text-md"> {userToken ? t("Dashboard") : t(signinText) }</b>
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-[#9ab0f2] flex items-center justify-center rounded-full">
                 <ArrowRightIcon
                   size={16}

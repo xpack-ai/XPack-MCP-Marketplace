@@ -106,7 +106,7 @@ const GroupServiceTable: React.FC<GroupServiceTableProps> = ({
               {resourceGroupDetail?.name}
             </h2>
             <div className="flex gap-2 h-[32px]">
-              {showOptions && currentGroupId && <>
+            {currentGroupId && <>
                 <Button
                   isIconOnly
                   size="sm"
@@ -114,7 +114,9 @@ const GroupServiceTable: React.FC<GroupServiceTableProps> = ({
                   onPress={() => onEditGroup(currentGroupId)}
                 >
                   <Edit2 size={18} />
-                </Button>
+                </Button></>
+              }
+              {showOptions && currentGroupId && <>
                 <Button
                   isIconOnly
                   size="sm"

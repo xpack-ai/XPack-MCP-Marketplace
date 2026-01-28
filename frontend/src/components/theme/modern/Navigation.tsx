@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@nextui-org/react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
@@ -16,6 +16,7 @@ import { ArrowRightIcon } from "lucide-react";
 import { DynamicLogo } from "@/shared/components/DynamicLogo";
 import { useAuth } from "@/shared/lib/useAuth";
 import { NavigationItem } from "@/shared/components/Navigation";
+import { useSharedStore } from "@/shared/store/share";
 
 interface NavigationProps {
   items?: NavigationItem[];
@@ -25,7 +26,12 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
   const { t } = useTranslation();
   const { handleLogin } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userToken, setUserToken] = useState<string | null>(null);
 
+  useEffect(() => {
+    const userToken = useSharedStore?.getState?.().user_token
+    setUserToken(userToken);
+  }, []);
   return (
     <>
       {/* Modern Navigation */}
@@ -61,16 +67,22 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
         </NavbarContent>
         <NavbarContent justify="end" className="items-center gap-2 sm:gap-4">
           <div className="hidden sm:flex gap-2">
-            <Button onPress={handleLogin} variant="light">
-              <b className="text-md"> {t("Sign In")}</b>
-            </Button>
+            {
+              !userToken && (
+                <>
+                  <Button onPress={handleLogin} variant="light">
+                    <b className="text-md"> {t("Sign In")}</b>
+                  </Button>
+                </>
+              )
+            }
             <Button
               color="primary"
               className="bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 flex items-center justify-center gap-4 pr-1 h-[45px] shadow-lg"
               radius="full"
               onPress={handleLogin}
             >
-              <b className="text-md">{t("Get Started")}</b>
+              <b className="text-md">{userToken ? t("Dashboard") : t("Get Started")}</b>
               <div className="w-8 h-8 bg-white/20 flex items-center justify-center rounded-full">
                 <ArrowRightIcon
                   size={16}
@@ -85,7 +97,7 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
               onPress={handleLogin}
               size="sm"
             >
-              <b className="text-md">{t("Get Started")}</b>
+              <b className="text-md">{userToken ? t("Dashboard") : t("Get Started")}</b>
             </Button>
           </div>
         </NavbarContent>
@@ -97,7 +109,7 @@ export const Navigation: React.FC<NavigationProps> = ({ items }) => {
               radius="full"
               onPress={handleLogin}
             >
-              <b className="text-md">{t("Get Started")}</b>
+              <b className="text-md">{userToken ? t("Dashboard") : t("Get Started")}</b>
               <div className="w-8 h-8 bg-white/20 flex items-center justify-center rounded-full">
                 <ArrowRightIcon
                   size={16}

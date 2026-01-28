@@ -31,6 +31,7 @@ import { AdminConfig, EmailConfig } from "@/types/system";
 import { LoginSettingsContent } from "./LoginSettingsContent";
 import { EmailConfigForm } from "@/components/system-setting/EmailConfigForm";
 import { LanguageSetting } from "@/components/system-setting/LanguageSetting";
+import { TagsBarSetting } from "../system-setting/TagsBarSetting";
 
 interface SystemSettingsRightContentProps {
   filteredKeys: string[];
@@ -198,6 +199,13 @@ const SystemSettingsRightContent: React.FC<SystemSettingsRightContentProps> = ({
                 onSave={saveNavigationConfig}
                 config={homepageConfig.top_navigation}
                 labelPlacement="outside"
+              />
+            )}
+
+            {section.key === "tagsBar" && (
+              <TagsBarSetting
+                isEnabled={!!platformConfig.tag_bar_display}
+                onSave={onSavePlatformConfig}
               />
             )}
 

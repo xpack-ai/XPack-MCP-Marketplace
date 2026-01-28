@@ -18,8 +18,20 @@ class UserWalletHistoryRepository:
 
     def __init__(self, db: Session):
         self.db = db
+    
+    def get_by_id(self, transaction_id: str) -> Optional[UserWalletHistory]:
+        """
+        Get a user wallet history record by ID.
 
-    def add_deposit(self, user_id: str, amount: float, payment_method: str, transaction_id: str = "", status: int = 0) -> UserWalletHistory:
+        Args:
+            transaction_id: Transaction ID
+
+        Returns:
+            Optional[UserWalletHistory]: Found record or None
+        """
+        return self.db.query(UserWalletHistory).filter(UserWalletHistory.id == transaction_id).first()
+
+    def add_deposit(self, user_id: str, amount: float, payment_method: str, transaction_id: str = "", status: int = 0, balance_after: float = 0.00) -> UserWalletHistory:
         """
         Create a new deposit record.
 
@@ -40,7 +52,7 @@ class UserWalletHistoryRepository:
             user_id=user_id,
             payment_method=PaymentMethod(payment_method),
             amount=amount,
-            balance_after=0.00,
+            balance_after=balance_after,
             type=TransactionType.DEPOSIT,
             transaction_id=transaction_id,
             status=status,
@@ -81,7 +93,7 @@ class UserWalletHistoryRepository:
         self.db.refresh(history)
         return history
 
-    def set_balance(self,user_id: str,amount:float, payment_method: str, transaction_id: str = "", status: int = 0) -> UserWalletHistory:
+    def set_balance(self,user_id: str,amount:float, payment_method: str, transaction_id: str = "", status: int = 0, balance_after: float = 0.00) -> UserWalletHistory:
         """
         Create a new balance record.
 
@@ -102,7 +114,7 @@ class UserWalletHistoryRepository:
             user_id=user_id,
             payment_method=PaymentMethod(payment_method),
             amount=amount,
-            balance_after=0.00,
+            balance_after=balance_after,
             type=TransactionType.RESET,
             status=status,  # 0=new, 1=completed, 2=refunded
             created_at=now,
@@ -253,8 +265,8 @@ class UserWalletHistoryRepository:
             .all()
         )
         return total, history
-
-    def get_by_id(self, history_id: str) -> Optional[UserWalletHistory]:
+    
+    def success_order_list_by_user(self, user_id: str, offset: int, limit: int, order_type: Optional[List[str]] = None, status: Optional[List[int]] = None) -> Tuple[int, List[UserWalletHistory]]:
         """
         Get user wallet history record by ID.
 
@@ -264,7 +276,25 @@ class UserWalletHistoryRepository:
         Returns:
             Optional[UserWalletHistory]: UserWalletHistory object or None
         """
-        return self.db.query(UserWalletHistory).filter(UserWalletHistory.id == history_id).first()
+    
+        query = self.db.query(UserWalletHistory).filter(
+            UserWalletHistory.user_id == user_id,
+        )
+        if order_type and len(order_type) > 0:
+            query = query.filter(UserWalletHistory.type.in_(order_type))
+        if status and len(status) > 0:
+            query = query.filter(UserWalletHistory.status.in_(status))
+        total = query.count()
+        if total < offset:
+            return total, []
+        history = (
+            query
+            .order_by(UserWalletHistory.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+        return total, history
 
     def add_consume_record(self, wallet_history: UserWalletHistory) -> Optional[UserWalletHistory]:
         """

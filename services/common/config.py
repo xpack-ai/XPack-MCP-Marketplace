@@ -58,6 +58,7 @@ class Config:
         "/api/auth/account/sign",
         "/api/auth/email/send_captcha",
         "/api/auth/google/sign",
+        "/api/web/mcp_tags",
         "/api/web/mcp_services",
         "/api/web/mcp_service_info",
         "/api/payment/callback_stripe",

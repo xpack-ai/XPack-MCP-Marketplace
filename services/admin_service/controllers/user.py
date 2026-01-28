@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request,Body
+from fastapi import APIRouter, Depends, Request,Body,Query
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.admin_service.constants.user_task import user_task_ids
@@ -10,6 +10,9 @@ from services.admin_service.services.user_wallet_service import UserWalletServic
 from services.admin_service.services.user_task_service import UserTaskService
 from services.admin_service.services.auth_service import AuthService
 from services.admin_service.services.resource_group_service import ResourceGroupService
+from services.admin_service.services.user_wallet_history_service import UserWalletHistoryService
+
+from typing import Optional,List
 
 router = APIRouter()
 
@@ -26,6 +29,10 @@ def get_user_task_service(db: Session = Depends(get_db)) -> UserTaskService:
 
 def get_resource_group_service(db: Session = Depends(get_db)) -> ResourceGroupService:
     return ResourceGroupService(db)
+
+def get_order_service(db: Session = Depends(get_db)) -> UserWalletHistoryService:
+    return UserWalletHistoryService(db)
+
 
 @router.get("/info", response_model=dict)
 def get_user(request: Request, user_wallet: UserWalletService = Depends(get_user_wallet), user_task: UserTaskService = Depends(get_user_task_service), resource_group_service: ResourceGroupService = Depends(get_resource_group_service)):
@@ -87,3 +94,37 @@ def update_password(
 
     return ResponseUtils.error(message="not found user", code=404)
 
+@router.get("/order/list", summary="Get order list")
+def get_order_list(
+    request: Request,
+    page: int = Query(1, description="Current page number"),
+    page_size: int = Query(15, description="Number of items per page"),
+    order_type: Optional[str] = Query(None, description="Order type"),
+    status: Optional[str] = Query(None, description="Order status"),
+    user_wallet_history_service: UserWalletHistoryService = Depends(get_order_service),
+):
+    """Get order list."""
+    user = UserUtils.get_request_user(request)
+    if not user:
+        return ResponseUtils.error(message="not found user", code=404)
+    offset = (page - 1) * page_size
+    order_type_list = []
+    if order_type:
+        # 将字符串转成列表，中间使用逗号分隔
+        ots = order_type.split(",")
+        for ot in ots:
+            ot = ot.strip()
+            if ot == "purchase":
+                order_type_list.append("api_call")
+            elif ot == "recharge":
+                order_type_list.append("deposit")
+            else:
+                order_type_list.append(ot)
+    status_list: Optional[List[int]] = []
+    if status:
+        sl = status.split(",")
+        for s in sl:
+            status_list.append(int(s.strip()))
+    total, orders = user_wallet_history_service.success_order_list_by_user(user.id, offset, page_size, order_type_list, status_list)
+    
+    return ResponseUtils.success_page(data=orders, total=total, page_num=page, page_size=page_size)

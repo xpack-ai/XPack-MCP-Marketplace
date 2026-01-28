@@ -67,6 +67,7 @@ def get_config(
                 "facebook_image_url": values.get(KEY_FACEBOOK_IMAGE_URL, ""),
                 "social_account_facebook_url": values.get(KEY_SOCIAL_ACCOUNT_FACEBOOK_URL, ""),
                 "social_account_x_url": values.get(KEY_SOCIAL_ACCOUNT_X_URL, ""),
+                "tag_bar_display": values.get(KEY_TAG_BAR_DISPLAY, "false").lower() in ("true", "t", "yes", "y", "1"),
             },
             "faq": faq,
             "embeded_html": embeded_html,

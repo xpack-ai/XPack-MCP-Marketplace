@@ -330,6 +330,7 @@ const ResourceGroupManagement: React.FC = () => {
           setEditingGroup(null);
         }}
         name={editingGroup?.name || ""}
+        id={editingGroup?.id || ""}
         isDefault={editingGroup?.isDefault || false}
         onSaveServer={handleSaveGroup}
         type={editingGroup ? "edit" : "add"}

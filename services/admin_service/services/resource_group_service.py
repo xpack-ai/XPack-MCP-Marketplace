@@ -45,11 +45,12 @@ class ResourceGroupService:
     def update_group(self, gid: str, body: dict) -> bool:
         if not gid:
             raise ValueError("Group ID is required")
-        existing = self.group_repo.get_by_id(gid)
-        if not existing:
-            raise ValueError("Resource group not found")
+        
         try:
             if gid != "deny-all" and gid != "allow-all":
+                existing = self.group_repo.get_by_id(gid)
+                if not existing:
+                    raise ValueError("Resource group not found")
                 patch = ResourceGroup()
                 patch.id = gid
                 patch.name = body.get("name", existing.name)
@@ -68,9 +69,10 @@ class ResourceGroupService:
     def delete_group(self, gid: str, migrate_id: Optional[str] = None) -> bool:
         try:
             if migrate_id:
-                migrate_group = self.group_repo.get_by_id(migrate_id)
-                if not migrate_group:
-                    raise ValueError("Migrate resource group not found")
+                if migrate_id != "deny-all" and migrate_id != "allow-all":
+                    migrate_group = self.group_repo.get_by_id(migrate_id)
+                    if not migrate_group:
+                        raise ValueError("Migrate resource group not found")
                 self.map_repo.migrate_services(gid, migrate_id, commit=False)
                 current_default = self.sys_repo.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
                 if current_default == gid:
@@ -85,7 +87,9 @@ class ResourceGroupService:
                 raise ValueError("Resource group not found")
             users = self.user_repo.update_resource_group_by_group_id(gid, migrate_id or "deny-all", commit=False)
             if not users:
-                raise ValueError("Failed to update user resource group")
+                self.db.commit()
+                return True
+            
             for user in users:
                 cache_key = f"xpack:user:{user.id}"
                 self.redis.set(cache_key, user, 600)
@@ -177,10 +181,19 @@ class ResourceGroupService:
             "enabled": True,  # 统一为 bool
             "is_default": "deny-all" == default_group,
         }
-        if len(data) < page_size:
+        s_index = (page - 1) * page_size
+        e_index = page * page_size
+        if total > s_index and total < e_index:
             data.append(allow_all)
-        if len(data) < page_size:
+            if total < e_index-1:
+                data.append(deny_all)
+        elif total < s_index and s_index - total == 1:
             data.append(deny_all)
+        elif total == s_index:
+            data.append(allow_all)
+            data.append(deny_all)
+        
+        
 
         return data,total+2
 
@@ -353,7 +366,7 @@ class ResourceGroupService:
                     "created_at": str(s.created_at) if s.created_at else None,
                     "updated_at": str(s.updated_at) if s.updated_at else None,
                 }
-                for s in (service_map[sid] for sid in sids)
+                for s in (service_map[sid] for sid in sids if sid in service_map)
             ],total
     def get_unbind_services(self, gid: str) -> List[dict]:
         if gid == "deny-all" or gid == "allow-all":

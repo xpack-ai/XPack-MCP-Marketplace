@@ -937,5 +937,17 @@
   "Failed to load resource group detail": "获取资源组详情失败",
   "Resource Group Detail": "资源组详情",
   "Current display time is UTC time": "当前显示时间为UTC时间",
-  "View Resource Group Detail": "查看资源组详情"
+  "View Resource Group Detail": "查看资源组详情",
+  "Configure tags bar display": "配置标签栏显示",
+  "Failed to load orders": "加载订单失败",
+  "Transaction Time": "交易时间",
+  "All": "全部",
+  "Purchase": "消费",
+  "No orders found": "无订单",
+  "Account Balance": "账户余额",
+  "View your balance and transaction history": "查看您的余额和交易历史",
+  "Display tags bar": "显示标签栏",
+  "Front end displays tags bar and allows users to filter products based on tags.": "前端显示标签栏，允许用户根据标签过滤产品。",
+  "Tags Bar": "标签栏",
+  "Auth Key Name": "认证密钥名称"
 }

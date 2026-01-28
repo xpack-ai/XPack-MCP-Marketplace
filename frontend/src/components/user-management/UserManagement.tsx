@@ -7,6 +7,9 @@ import { UserTable } from "./UserTable";
 import { DeleteConfirmModal } from "@/shared/components/modal/DeleteConfirmModal";
 import DashboardDemoContent from "@/shared/components/DashboardDemoContent";
 import { useUserManagement } from "@/hooks/useUserManagement";
+import { UserBalanceDetail } from "./UserBalanceDetail";
+
+type ViewMode = "list" | "detail";
 
 const UserManagement: React.FC = () => {
   const { t } = useTranslation();
@@ -28,11 +31,28 @@ const UserManagement: React.FC = () => {
     user: null as User | null,
   });
 
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
+
+
   const handleDeleteUserClick = useCallback((user: User) => {
     setDeleteModal({
       isOpen: true,
       user,
     });
+  }, []);
+
+  const handleViewUserBalanceDetail = useCallback((user: User) => {
+    setSelectedUserId(user.id);
+    setSelectedUserEmail(user.email);
+    setViewMode('detail');
+  }, []);
+
+  const handleCloseUserBalanceDetail = useCallback(() => {
+    setSelectedUserId(null);
+    setSelectedUserEmail(null);
+    setViewMode('list');
   }, []);
 
   const handleConfirmDelete = useCallback(async () => {
@@ -61,6 +81,16 @@ const UserManagement: React.FC = () => {
     [handleRechargeUser]
   );
 
+  if (viewMode === "detail" ) {
+    return (
+      <UserBalanceDetail
+        userId={selectedUserId || ''}
+        userEmail={selectedUserEmail || ''}
+        onCancel={handleCloseUserBalanceDetail}
+      />
+    );
+  }
+
   return (
     <DashboardDemoContent
       title={t("User")}
@@ -74,6 +104,7 @@ const UserManagement: React.FC = () => {
           fetchUsers={fetchUsers}
           loading={loading}
           onDelete={handleDeleteUserClick}
+          viewUserBalanceDetail={handleViewUserBalanceDetail}
           onRecharge={handleRecharge}
           pagination={pagination}
           onPageChange={setPage}
