@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableHeader,
@@ -11,11 +11,16 @@ import {
   Pagination,
   Chip,
   Spinner,
-  Tooltip
+  Tooltip,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Button
 } from '@nextui-org/react';
 import { useTranslation } from '@/shared/lib/useTranslation';
 import { PaymentState, RevenueRecord } from '@/types/revenue';
-import { Calendar, CreditCard, HelpCircle } from 'lucide-react';
+import { Calendar, CreditCard, HelpCircle, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatCurrency } from '@/shared/utils/currency';
 
 interface RevenueTableProps {
@@ -27,6 +32,8 @@ interface RevenueTableProps {
     total: number;
   };
   onPageChange: (page: number) => void;
+  onPaymentTypeChange?: (paymentType: string) => void;
+  onSortChange?: (field: string | undefined, order: 'asc' | 'desc' | undefined) => void;
 }
 
 export const RevenueTable: React.FC<RevenueTableProps> = ({
@@ -34,8 +41,12 @@ export const RevenueTable: React.FC<RevenueTableProps> = ({
   loading = false,
   pagination,
   onPageChange,
+  onPaymentTypeChange,
+  onSortChange,
 }) => {
   const { t } = useTranslation();
+  const [selectedPaymentType, setSelectedPaymentType] = useState('all');
+  const [sortState, setSortState] = useState<'none' | 'desc' | 'asc'>('none');
 
   const pages = Math.ceil(pagination.total / pagination.pageSize);
   const currentPage = pagination.page;
@@ -92,6 +103,35 @@ export const RevenueTable: React.FC<RevenueTableProps> = ({
     );
   };
 
+  // 处理付款方式筛选
+  const handlePaymentTypeChange = (type: string) => {
+    setSelectedPaymentType(type);
+    onPaymentTypeChange?.(type);
+  };
+
+  // 处理排序
+  const handleSortClick = () => {
+    let newSortState: 'none' | 'desc' | 'asc';
+    if (sortState === 'none') {
+      newSortState = 'desc';
+      onSortChange?.('amount', 'desc');
+    } else if (sortState === 'desc') {
+      newSortState = 'asc';
+      onSortChange?.('amount', 'asc');
+    } else {
+      newSortState = 'none';
+      onSortChange?.(undefined, undefined);
+    }
+    setSortState(newSortState);
+  };
+
+  // 获取排序图标
+  const getSortIcon = () => {
+    if (sortState === 'desc') return <ArrowDown className="w-4 h-4" />;
+    if (sortState === 'asc') return <ArrowUp className="w-4 h-4" />;
+    return <ArrowUpDown className="w-4 h-4" />;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -122,7 +162,20 @@ export const RevenueTable: React.FC<RevenueTableProps> = ({
       >
         <TableHeader>
           <TableColumn>{t('Account (Email)')}</TableColumn>
-          <TableColumn>{t('Recharge Amount')}</TableColumn>
+          <TableColumn>
+            <div className="flex items-center gap-2">
+              <span>{t('Recharge Amount')}</span>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+                onPress={handleSortClick}
+                className="min-w-unit-6 w-6 h-6"
+              >
+                {getSortIcon()}
+              </Button>
+            </div>
+          </TableColumn>
           <TableColumn>
             <div className="flex items-center gap-1">
               <span>{t('Recharge Time')}</span>
@@ -136,7 +189,41 @@ export const RevenueTable: React.FC<RevenueTableProps> = ({
               </Tooltip>
             </div>
           </TableColumn>
-          <TableColumn>{t('Payment Method')}</TableColumn>
+          <TableColumn>
+            <div className="flex items-center gap-2">
+              <span>{t('Payment Method')}</span>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    aria-label="Filter by payment method"
+                    className="min-w-unit-6 w-6 h-6"
+                  >
+                    <Filter
+                      className={`w-4 h-4 ${
+                        selectedPaymentType !== 'all' ? 'text-primary' : ''
+                      }`}
+                    />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Payment method filter"
+                  selectionMode="single"
+                  selectedKeys={[selectedPaymentType]}
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    handlePaymentTypeChange(selected);
+                  }}
+                >
+                  <DropdownItem key="all">{t('All')}</DropdownItem>
+                  <DropdownItem key="stripe">Stripe</DropdownItem>
+                  <DropdownItem key="platform">Platform</DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            </div>
+          </TableColumn>
           <TableColumn>{t('Transaction ID')}</TableColumn>
           <TableColumn>{t('Status')}</TableColumn>
         </TableHeader>

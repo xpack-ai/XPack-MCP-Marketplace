@@ -63,8 +63,8 @@ export const getMCPServiceList = async (
   const queryParams = new URLSearchParams({
     page: params.page.toString(),
     page_size: params.page_size.toString(),
-    ...(params.search && { search: params.search }),
-    ...(params.status && { status: params.status }),
+    ...(params.search && { keyword: params.search }),
+    ...(params.status && { filter_status: params.status }),
   });
 
   const response = await fetchAdminAPI<MCPService[]>(

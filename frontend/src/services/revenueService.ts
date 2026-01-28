@@ -15,6 +15,9 @@ export interface GetRevenueListParams {
   user_id?: string;
   search?: string;
   status?: string;
+  payment_type?: string; // 付款方式筛选
+  sort_by?: string; // 排序字段
+  sort_order?: 'asc' | 'desc'; // 排序顺序
 }
 
 /**
@@ -29,8 +32,10 @@ export const getRevenueList = async (
     ...(params.start_date && { start_date: params.start_date }),
     ...(params.end_date && { end_date: params.end_date }),
     ...(params.user_id && { user_id: params.user_id }),
-    ...(params.search && { search: params.search }),
+    ...(params.search && { keyword: params.search }),
     ...(params.status && { status: params.status }),
+    ...(params.payment_type && { filter_payment_type: params.payment_type }),
+    ...(params.sort_by === 'amount' && params.sort_order && { sort_amount: params.sort_order }),
   });
 
   const response = await fetchAdminAPI<RevenueRecord[]>(
