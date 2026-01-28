@@ -16,6 +16,9 @@ class UserApiKeyService:
         self.user_apikey_repository = UserApiKeyRepository(db)
 
     def create(self, user_id: str, name: str, description: str = "") -> UserApiKey:
+        """Create a new API key for the user with generated token."""
+        if self.user_apikey_repository.check_user_apikey_by_name(user_id, name):
+            raise ValueError("API key name already exists")
         user_apikey = self.user_apikey_repository.create(user_id, name, description)
         return user_apikey
 
