@@ -16,6 +16,7 @@ from services.admin_service.constants.sys_config_key import (
     KEY_DEFAULT_RESOURCE_GROUP,
 )
 from services.common.utils.auth import delete_token
+from services.common.redis import redis_client
 
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
@@ -31,6 +32,32 @@ class AuthService:
         self.user_repository = UserRepository(db)
         self.user_access_token_repository = UserAccessTokenRepository(db)
         self.sys_config_service = SysConfigService(db)
+
+    def check_ip_ban(self, ip: str, user: str) -> bool:
+        """Check if IP is banned. Returns True if banned."""
+        ban_key = RedisKeys.login_ban_key(ip,user)
+        return redis_client.exists(ban_key) > 0
+
+    def record_login_fail(self, ip: str, user: str):
+        """Record login failure for IP."""
+        fail_key = RedisKeys.login_fail_count_key(ip,user)  
+        # Increment count
+        count = redis_client.incr(fail_key)
+        # Set expiration if it's the first failure
+        if count == 1:
+            redis_client.expire(fail_key, 300) # 5 minutes window
+
+        if count >= 5:
+            # Ban IP
+            ban_key = RedisKeys.login_ban_key(ip,user)
+            redis_client.set(ban_key, "1", ex=300) # Ban for 5 minutes
+            # Clear fail count
+            redis_client.delete(fail_key)
+
+    def clear_login_fail(self, ip: str, user: str):
+        """Clear login failure count for IP."""
+        fail_key = RedisKeys.login_fail_count_key(ip,user)          
+        redis_client.delete(fail_key)
 
     def send_email_login_captcha(self, email: str) -> bool:
         """

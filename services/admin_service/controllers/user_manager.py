@@ -50,7 +50,7 @@ async def update_user_resource_group(
     group_id = body.get("resource_group")
     if not user_id or not group_id:
         return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
-    group = resource_group_service.get_info(group_id)
+    group = resource_group_service.get_info(group_id, "")
     if not group:
         return ResponseUtils.error(error_msg=error_msg.RESOURCE_NOT_FOUND)
     user = user_service.get_by_id(user_id)
