@@ -325,9 +325,9 @@ class McpManagerService:
     def get_all(self) -> List[McpService]:
         return self.mcp_service_repository.get_all()
 
-    def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[List[McpService], int]:
+    def get_all_paginated(self, page: int = 1, page_size: int = 10,keyword: Optional[str] = None,filter_status: Optional[list] = None) -> Tuple[List[McpService], int]:
         """Get service list with pagination"""
-        return self.mcp_service_repository.get_all_paginated(page=page, page_size=page_size)
+        return self.mcp_service_repository.get_all_paginated(page=page, page_size=page_size,keyword=keyword,filter_status=filter_status)
 
     def get_tags_list(self, enabled_only: bool = False) -> List[str]:
         tags_strings = self.mcp_service_repository.get_tags_strings(enabled_only=enabled_only)

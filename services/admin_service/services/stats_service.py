@@ -20,7 +20,7 @@ class StatsService:
         self.mcp_service_repository = McpServiceRepository(db)
         self.drop_mcp_service_repository = DropMcpServiceRepository(db)
     
-    def get_registered_user_stats(self) -> dict:
+    def get_registered_user_stats(self, start: datetime, end: datetime) -> dict:
         """
         Get registered stats
 
@@ -29,14 +29,13 @@ class StatsService:
         """
         # Start of day (00:00)
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        pass30 = today_start - timedelta(days=30)
         
         return {
-            "total": self.user_repository.get_registered_user_count(),
+            "total": self.user_repository.get_registered_user_count(start, end),
             "today": self.user_repository.get_registered_user_count(today_start),
-            "days": self.user_repository.get_registered_user_trend(pass30)
+            "days": self.user_repository.get_registered_user_trend(start, end)
         }
-    def get_deposit_stats(self) -> dict:
+    def get_deposit_stats(self, start: datetime, end: datetime) -> dict:
         """
         Get deposit stats
 
@@ -45,14 +44,13 @@ class StatsService:
         """
         # Start of day (00:00)
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        pass30 = today_start - timedelta(days=30)
         
         return {
-            "total": self.user_wallet_repository.stats_deposit_amount(),
+            "total": self.user_wallet_repository.stats_deposit_amount(start, end),
             "today": self.user_wallet_repository.stats_deposit_amount(today_start),
-            "days": self.user_wallet_repository.stats_deposit_amount_trend(pass30)
+            "days": self.user_wallet_repository.stats_deposit_amount_trend(start,end)
         }
-    def get_call_stats(self) -> dict:
+    def get_call_stats(self, start: datetime, end: datetime) -> dict:
         """
         Get call stats
 
@@ -64,22 +62,20 @@ class StatsService:
         pass30 = today_start - timedelta(days=30)
         
         return {
-            "total": self.stats_mcp_service_date_repository.stats_call_count(),
+            "total": self.stats_mcp_service_date_repository.stats_call_count(start, end),
             "today": self.stats_mcp_service_date_repository.stats_call_count(today_start),
-            "days": self.stats_mcp_service_date_repository.stats_call_count_trend(pass30)
+            "days": self.stats_mcp_service_date_repository.stats_call_count_trend(start, end)
         }
         
-    def get_call_stats_group_by_service(self) -> list:
+    def get_call_stats_group_by_service(self, start: datetime, end: datetime) -> list:
         """
         Get call stats group by service
 
         Returns:
             dict: Call stats group by service
         """
-        now = datetime.now()
-        pass30 = now - timedelta(days=30)
         # Get stats (include only services with calls)
-        stats = self.stats_mcp_service_date_repository.stats_call_count_group_by_service(pass30)
+        stats = self.stats_mcp_service_date_repository.stats_call_count_group_by_service(start, end)
         stats_map = {item["service_id"]: int(item.get("count", 0)) for item in stats}
 
         # Iterate all services, fill missing call count as 0, sort by calls desc

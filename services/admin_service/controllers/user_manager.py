@@ -90,6 +90,7 @@ async def delete_user(
 async def get_user_list(
     page: int = Query(1, description="Page number (starts from 1)"),
     page_size: int = Query(15, description="Number of items per page"),
+    keyword: str = Query(None, description="Search keyword for email or name"),
     user_service: UserService = Depends(get_user_service),
     user_wallet_service: UserWalletService = Depends(get_user_wallet_service),
 ):
@@ -104,7 +105,7 @@ async def get_user_list(
     skip = (validated_page - 1) * validated_page_size
 
     # Get user list - let any exception bubble up to middleware
-    total, users = user_service.get_user_list(skip, validated_page_size)
+    total, users = user_service.get_user_list(skip, validated_page_size, keyword)
 
     # Convert user data to list
     user_list = []
