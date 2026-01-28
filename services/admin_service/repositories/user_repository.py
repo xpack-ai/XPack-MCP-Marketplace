@@ -81,11 +81,23 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+    
+    def get_all_user(self,keyword: Optional[str] = None,include_deleted: bool = False) -> List[User]:
+        """Get all user"""
+        query = self.db.query(User).filter(User.role_id == 2)
+        if not include_deleted:
+            query = query.filter(User.is_deleted == 0)
+        if keyword:
+            query = query.filter((User.email.like(f"%{keyword}%")) | (User.name.like(f"%{keyword}%")))
+        return query.all()
 
-    def get_user_list(self, offset: int, limit: int) -> Tuple[int, List[User]]:
-        total = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).count()
-
-        users = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2).order_by(User.created_at.desc()).offset(offset).limit(limit).all()
+    def get_user_list(self, offset: int, limit: int, keyword: Optional[str] = None) -> Tuple[int, List[User]]:
+        """Get user list"""
+        query = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2)
+        if keyword:
+            query = query.filter((User.email.like(f"%{keyword}%")) | (User.name.like(f"%{keyword}%")))
+        total = query.count()
+        users = query.order_by(User.created_at.desc()).offset(offset).limit(limit).all()
         return total, users
 
     def get_admin_user(self) -> Optional[User]:

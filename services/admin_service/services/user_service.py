@@ -37,9 +37,9 @@ class UserService:
         """Delete user"""
         return self.user_repository.delete(user_id)
 
-    def get_user_list(self, offset: int, limit: int) -> Tuple[int, List[User]]:
+    def get_user_list(self, offset: int, limit: int, keyword: Optional[str] = None) -> Tuple[int, List[User]]:
         """Get user list"""
-        return self.user_repository.get_user_list(offset, limit)
+        return self.user_repository.get_user_list(offset, limit, keyword)
 
     def get_admin_user(self) -> Optional[User]:
         """Get admin user"""

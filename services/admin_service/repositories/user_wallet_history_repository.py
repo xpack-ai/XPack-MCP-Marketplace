@@ -216,7 +216,7 @@ class UserWalletHistoryRepository:
             self.db.rollback()
             return False
 
-    def success_deposit_order_list(self, offset: int, limit: int) -> Tuple[int, List[UserWalletHistory]]:
+    def success_deposit_order_list(self, offset: int, limit: int, userIds: Optional[list] = None, sort_amount: Optional[str] = "desc", filter_payment_type: Optional[list] = None) -> Tuple[int, List[UserWalletHistory]]:
         """
         Get list of successful orders.
 
@@ -231,9 +231,20 @@ class UserWalletHistoryRepository:
             UserWalletHistory.status == 1,
             UserWalletHistory.type == TransactionType.DEPOSIT,
         )
+        if userIds and len(userIds) > 0:
+            query = query.filter(UserWalletHistory.user_id.in_(userIds))
+        
+        if filter_payment_type and len(filter_payment_type) > 0:
+            filter_payment_type_enum = [PaymentMethod(method) for method in filter_payment_type]
+            print(f"filter_payment_type,{filter_payment_type_enum}")
+            query = query.filter(UserWalletHistory.payment_method.in_(filter_payment_type_enum))
         total = query.count()
         if total < offset:
             return total, []
+        if sort_amount == "desc":
+            query = query.order_by(UserWalletHistory.amount.desc())
+        else:
+            query = query.order_by(UserWalletHistory.amount.asc())
         history = (
             query
             .order_by(UserWalletHistory.created_at.desc())

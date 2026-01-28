@@ -21,12 +21,19 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 def get_user_order_list(
     page: int = Query(1, description="Current page number"),
     page_size: int = Query(15, description="Number of items per page"),
+    keyword: str = Query("", description="Search keyword for user email or name"),
+    sort_amount: str = Query("desc", description="Sort amount by desc or asc"),
+    filter_payment_type: str = Query("", description="Filter payment type"),
     user_service: UserService = Depends(get_user_service),
     user_wallet_history_service: UserWalletHistoryService = Depends(get_user_wallet_history_service),
 ):
     """Get paginated list of user order history."""
     offset = (page - 1) * page_size
-    total, orders = user_wallet_history_service.success_deposit_order_list(offset, page_size)
+    if filter_payment_type:
+        filter_payment_type_list = filter_payment_type.split(",")
+    else:
+        filter_payment_type_list = None
+    total, orders = user_wallet_history_service.success_deposit_order_list(offset, page_size, keyword, sort_amount, filter_payment_type_list)
     if not orders:
         return ResponseUtils.success_page(data=[], total=total, page_num=page, page_size=page_size)
     result = []
