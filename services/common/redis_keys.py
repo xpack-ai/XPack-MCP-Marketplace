@@ -42,3 +42,13 @@ class RedisKeys:
     def user_apikey_key(apikey_hash: str) -> str:
         """Generate user API key cache key (using hash for security)"""
         return f"xpack:user_apikey:{apikey_hash}"
+
+    @staticmethod
+    def login_fail_count_key(ip: str, user: str) -> str:
+        """Generate login fail count cache key"""
+        return f"xpack:login:fail:{user}:{ip}"
+
+    @staticmethod
+    def login_ban_key(ip: str, user: str) -> str:
+        """Generate login ban cache key"""
+        return f"xpack:login:ban:{user}:{ip}"

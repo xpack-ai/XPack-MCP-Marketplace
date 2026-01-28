@@ -94,6 +94,13 @@ class RedisClient:
         except redis.RedisError as e:
             raise Exception(f"Redis TTL operation failed: {e}")
 
+    def incr(self, key: str, amount: int = 1) -> Any:
+        """Increment key value"""
+        try:
+            return self.client.incr(key, amount)
+        except redis.RedisError as e:
+            raise Exception(f"Redis INCR operation failed: {e}")
+
     def close(self):
         """Close Redis connection"""
         try:
