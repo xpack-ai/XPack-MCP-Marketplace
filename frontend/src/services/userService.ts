@@ -28,7 +28,7 @@ export const getUserList = async (
   const queryParams = new URLSearchParams({
     page: params.page.toString(),
     page_size: params.page_size.toString(),
-    ...(params.search && { search: params.search }),
+    ...(params.search && { keyword: params.search }),
     ...(params.status && { status: params.status }),
   });
 

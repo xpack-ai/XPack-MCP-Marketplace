@@ -125,6 +125,8 @@ class CacheUtils:
                 else:
                     logger.warning(f"Unexpected cache value type for key {cache_key}: {type(cache_value)}")
                     return None
+                if isinstance(model_data,list):
+                    return model_data
                 return SqlalchemyUtils.dict_to_model(model_class, model_data)
             return None
         except Exception as e:
@@ -145,7 +147,10 @@ class CacheUtils:
             bool: True if successful, False otherwise
         """
         try:
-            model_dict = SqlalchemyUtils.model_to_dict(model)
+            if isinstance(model, list):
+                return CacheUtils.set_sqlalchemy_list_cache(cache_key, model, expire_time)
+            else:
+                model_dict = SqlalchemyUtils.model_to_dict(model)
             serialized_data = json.dumps(model_dict, ensure_ascii=False)
             redis_client.set(cache_key, serialized_data, ex=expire_time)
             return True
@@ -203,11 +208,15 @@ class CacheUtils:
             if not isinstance(model_list, list):
                 logger.error(f"Expected list for cache key {cache_key}, got {type(model_list)}")
                 return False
-                
-            model_dict_list = [SqlalchemyUtils.model_to_dict(model) for model in model_list]
-            serialized_data = json.dumps(model_dict_list, ensure_ascii=False)
+            data = []
+            for model in model_list:
+                if isinstance(model,dict):
+                    data.append(SqlalchemyUtils.model_to_dict(model))
+                else:
+                    data.append(model)
+            serialized_data = json.dumps(data, ensure_ascii=False)
             redis_client.set(cache_key, serialized_data, ex=expire_time)
             return True
         except Exception as e:
-            logger.error(f"Failed to set SQLAlchemy list cache for key {cache_key}: {e}")
+            logger.error(f"Failed to set SQLAlchemy list cache for key aaa {cache_key}: {e}")
             return False

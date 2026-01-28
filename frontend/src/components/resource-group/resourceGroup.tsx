@@ -10,6 +10,7 @@ import { DeleteServerModal } from "./DeleteServerModal";
 import { Divider, Select, SelectItem } from "@nextui-org/react";
 import { useResourceGroups } from "@/hooks/useResourceGroups";
 import { AddMcpServerModal } from "./AddMcpServerModal";
+import toast from "react-hot-toast";
 
 const ResourceGroupManagement: React.FC = () => {
   const { t } = useTranslation();
@@ -99,19 +100,43 @@ const ResourceGroupManagement: React.FC = () => {
 
   // 保存组(创建或编辑)
   const handleSaveGroup = async (name: string, isDefault: boolean) => {
+    // 去除首尾空格
+    const trimmedName = name.trim();
+
+    // 验证保留名称（不区分大小写）
+    const reservedNames = ['allow all', 'deny all'];
+    if (reservedNames.some(reserved => reserved.toLowerCase() === trimmedName.toLowerCase())) {
+      toast.error(t('Resource group name "{{name}}" is reserved and cannot be used', { name: trimmedName }));
+      return;
+    }
+
+    // 验证名称是否重复
+    const isDuplicate = groups.some(group => {
+      // 编辑时排除当前组
+      if (editingGroup && group.id === editingGroup.id) {
+        return false;
+      }
+      return group.name.toLowerCase() === trimmedName.toLowerCase();
+    });
+
+    if (isDuplicate) {
+      toast.error(t('Resource group name "{{name}}" already exists', { name: trimmedName }));
+      return;
+    }
+
     let success = false;
 
     if (editingGroup) {
       // 编辑现有组
-      success = await updateGroup(editingGroup.id, name, isDefault);
+      success = await updateGroup(editingGroup.id, trimmedName, isDefault);
       if (success && selectedGroup?.id === editingGroup.id) {
-        setSelectedGroup({ ...selectedGroup, name, isDefault });
+        setSelectedGroup({ ...selectedGroup, name: trimmedName, isDefault });
         // 触发 GroupServiceTable 刷新
         setRefreshTrigger(prev => prev + 1);
       }
     } else {
       // 创建新组
-      const newGroupId = await createGroup(name, isDefault);
+      const newGroupId = await createGroup(trimmedName, isDefault);
       success = !!newGroupId;
       if (newGroupId) {
         setNewGroupId(newGroupId);

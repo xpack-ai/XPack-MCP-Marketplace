@@ -78,15 +78,15 @@ export const useMCPServicesList = () => {
 
   // load servers list when component mount
   useEffect(() => {
-    loadServices(1);
+    loadServices(1, searchTerm, statusFilter);
   }, []); // only execute once when component mount
 
   // pagination
   const handlePageChange = useCallback(
     (page: number) => {
-      loadServices(page);
+      loadServices(page, searchTerm, statusFilter);
     },
-    [loadServices]
+    [loadServices, searchTerm, statusFilter]
   );
 
   // search
@@ -156,7 +156,7 @@ export const useMCPServicesList = () => {
       try {
         const result = await saveMCPService(data);
 
-        if (result) await loadServices(1);
+        if (result) await loadServices(1, searchTerm, statusFilter);
         return result;
       } catch (err) {
         const errorMessage =
@@ -167,7 +167,7 @@ export const useMCPServicesList = () => {
         setLoading(false);
       }
     },
-    [loadServices]
+    [loadServices, searchTerm, statusFilter]
   );
 
   // update server
@@ -180,7 +180,7 @@ export const useMCPServicesList = () => {
         const formDataWithId = { ...data, id: serviceId };
         const result = await saveMCPService(formDataWithId);
 
-        if (result) await loadServices(pagination.page);
+        if (result) await loadServices(pagination.page, searchTerm, statusFilter);
         return result;
       } catch (err) {
         const errorMessage =
@@ -191,7 +191,7 @@ export const useMCPServicesList = () => {
         setLoading(false);
       }
     },
-    [loadServices, pagination.page]
+    [loadServices, pagination.page, searchTerm, statusFilter]
   );
 
   // delete server
@@ -205,7 +205,7 @@ export const useMCPServicesList = () => {
 
         if (result) {
           // reload servers list
-          await loadServices();
+          await loadServices(pagination.page, searchTerm, statusFilter);
         }
       } catch (err) {
         const errorMessage =
@@ -216,7 +216,7 @@ export const useMCPServicesList = () => {
         setLoading(false);
       }
     },
-    [loadServices]
+    [loadServices, pagination.page, searchTerm, statusFilter]
   );
 
   // toggle server status

@@ -90,6 +90,7 @@ export const APIKeyModal = ({
         toast.success(t("Auth key updated successfully"));
         onClose();
       }
+      setName('')
     } catch (error) {
       console.error("Error creating/updating auth key:", error);
       toast.error(t("Failed to create/update auth key"));
