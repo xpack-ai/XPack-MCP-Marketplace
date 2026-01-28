@@ -14,6 +14,9 @@ export const useRevenueManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState("all"); // 付款方式筛选
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined); // 排序字段
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | undefined>(undefined); // 排序顺序
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
     pageSize: 10,
@@ -30,6 +33,9 @@ export const useRevenueManagement = () => {
         page_size: pagination.pageSize,
         search: searchQuery,
         status: statusFilter === "all" ? undefined : statusFilter,
+        payment_type: paymentTypeFilter === "all" ? undefined : paymentTypeFilter,
+        sort_by: sortBy,
+        sort_order: sortOrder,
       });
 
       if (response.success && response.data) {
@@ -52,7 +58,7 @@ export const useRevenueManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.pageSize, searchQuery, statusFilter]);
+  }, [pagination.page, pagination.pageSize, searchQuery, statusFilter, paymentTypeFilter, sortBy, sortOrder]);
 
   const setSearch = useCallback((search: string) => {
     setSearchQuery(search);
@@ -72,6 +78,17 @@ export const useRevenueManagement = () => {
     setPagination((prev) => ({ ...prev, pageSize, page: 1 }));
   }, []);
 
+  const setPaymentType = useCallback((paymentType: string) => {
+    setPaymentTypeFilter(paymentType);
+    setPagination((prev) => ({ ...prev, page: 1 })); // reset to first page
+  }, []);
+
+  const setSort = useCallback((field: string | undefined, order: 'asc' | 'desc' | undefined) => {
+    setSortBy(field);
+    setSortOrder(order);
+    setPagination((prev) => ({ ...prev, page: 1 })); // reset to first page
+  }, []);
+
   // initial load and pagination change
   useEffect(() => {
     fetchRevenues();
@@ -83,10 +100,15 @@ export const useRevenueManagement = () => {
     error,
     searchQuery,
     statusFilter,
+    paymentTypeFilter,
+    sortBy,
+    sortOrder,
     pagination,
     fetchRevenues,
     setSearch,
     setStatus,
+    setPaymentType,
+    setSort,
     setPage,
     setPageSize,
   };

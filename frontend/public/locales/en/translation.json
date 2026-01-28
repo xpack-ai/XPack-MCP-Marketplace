@@ -881,5 +881,13 @@
   "Server Name must be less than 255 characters": "Server Name must be less than 255 characters",
   "API Endpoint must be a valid HTTP/HTTPS URL": "API Endpoint must be a valid HTTP/HTTPS URL",
   "Server ID is required": "Server ID is required",
-  "Short description is required": "Short description is required"
+  "Short description is required": "Short description is required",
+  "Auth Key Name": "Auth Key Name",
+  "Search by email": "Search by email",
+  "Search by service name": "Search by service name",
+  "Select Date Range": "Select Date Range",
+  "Resource group name \"{{name}}\" is reserved and cannot be used": "Resource group name \"{{name}}\" is reserved and cannot be used",
+  "Resource group name \"{{name}}\" already exists": "Resource group name \"{{name}}\" already exists",
+  "Start date must be before end date": "Start date must be before end date",
+  "Start date cannot be earlier than 30 days ago": "Start date cannot be earlier than 30 days ago"
 }

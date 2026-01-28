@@ -293,40 +293,42 @@ class HttpRequestBuilder:
         """
         if not hasattr(tool_config, 'request_body_schema') or not tool_config.request_body_schema or tool_config.method.value not in ["POST", "PUT", "PATCH"]:
             return None
-        
         try:
-            # First try to parse as parameters list (similar to query/path parameters)
+            request_body = {}
             body_params = self._safe_parse_params(tool_config.request_body_schema, 'body')
             if body_params:
-                # If it's a list of parameters, process them like query parameters
-                request_body = {}
                 for param in body_params:
-                    if isinstance(param, dict) and "name" in param:
-                        param_name = param["name"]
-                        if param_name in arguments:
-                            request_body[param_name] = arguments[param_name]
-                
+                    if isinstance(param, dict):
+                        name = param.get("name")
+                        if name and name in arguments:
+                            request_body[name] = arguments[name]
+                        else:
+                            t = param.get("type")
+                            if t == "object":
+                                props = param.get("properties")
+                                if isinstance(props, dict):
+                                    for prop_name in props.keys():
+                                        if prop_name in arguments:
+                                            request_body[prop_name] = arguments[prop_name]
                 if request_body:
-                    # logger.debug(f"Built request body from parameters: {request_body}")
                     return request_body
-            else:
-                # If not a parameters list, try to parse as JSON schema object
-                try:
-                    body_schema = json.loads(tool_config.request_body_schema)
-                    logger.debug(f"Request body schema: {body_schema}")
-                    
-                    if isinstance(body_schema, dict) and "properties" in body_schema:
-                        request_body = {}
-                        for prop_name in body_schema["properties"]:
+            try:
+                body_schema = json.loads(tool_config.request_body_schema)
+                if isinstance(body_schema, dict):
+                    props = body_schema.get("properties")
+                    if isinstance(props, dict):
+                        for prop_name in props.keys():
                             if prop_name in arguments:
                                 request_body[prop_name] = arguments[prop_name]
-                        
-                        if request_body:
-                            # logger.debug(f"Built request body from schema: {request_body}")
-                            return request_body
-                except json.JSONDecodeError:
-                    logger.warning(f"Failed to parse request body schema as JSON")
-                    
+                    else:
+                        for key in body_schema.keys():
+                            if key in arguments:
+                                request_body[key] = arguments[key]
+                    if request_body:
+                        return request_body
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse request body schema as JSON")
+            
         except Exception as e:
             logger.warning(f"Request body schema parsing failed: {e}")
         

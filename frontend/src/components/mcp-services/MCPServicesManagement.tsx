@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useMCPServicesList } from "@/hooks/useMCPServicesList";
 import { MCPService, MCPServiceFormData } from "@/shared/types/mcp-service";
@@ -12,6 +12,8 @@ import { DeleteConfirmModal } from "@/shared/components/modal/DeleteConfirmModal
 import DashboardDemoContent from "@/shared/components/DashboardDemoContent";
 import { ServiceTable } from "@/shared/components/mcp-services/ServiceTable";
 import { OpenAPIGeneratorModal } from "@/shared/components/mcp-services/OpenAPIGeneratorModal";
+import { Input } from "@nextui-org/react";
+import { Search } from "lucide-react";
 
 type ViewMode = "list" | "edit" | "create";
 
@@ -30,8 +32,23 @@ export const MCPServicesManagement: React.FC = () => {
     toggleServiceStatus,
     parseOpenAPIDocument,
     loadServices,
+    setSearchTerm,
+    setStatusFilter,
   } = useMCPServicesList();
   const [addServiceType, setAddServiceType] = useState<string | null>(null);
+
+  // 搜索相关状态
+  const [searchValue, setSearchValue] = useState('');
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, []);
 
   // Get initial state from URL
   const getInitialViewMode = (): ViewMode => {
@@ -190,6 +207,26 @@ export const MCPServicesManagement: React.FC = () => {
     setServiceToDelete(null);
   }, []);
 
+  // 处理搜索 - 使用防抖
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchValue(value);
+    
+    // 清除之前的定时器
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+    
+    // 设置新的定时器，500ms 后触发搜索
+    searchTimerRef.current = setTimeout(() => {
+      setSearchTerm(value);
+    }, 500);
+  }, [setSearchTerm]);
+
+  // 处理状态筛选
+  const handleStatusFilterChange = useCallback((status: string) => {
+    setStatusFilter(status);
+  }, [setStatusFilter]);
+
   // Render edit page if in edit/create mode
   if (viewMode === "edit" || viewMode === "create") {
     return (
@@ -214,8 +251,27 @@ export const MCPServicesManagement: React.FC = () => {
       )}
     >
       <div className="space-y-6 w-full">
-        {/* comming soon:Filters and Actions */}
-        <ServiceFiltersBar onAddService={handleCreateService} />
+        {/* Filters and Actions */}
+        <div className="flex justify-between items-center gap-4">
+          <ServiceFiltersBar onAddService={handleCreateService} />
+          
+          {/* 搜索框 - 右侧 */}
+          <Input
+            isClearable
+            className="w-full sm:max-w-[400px]"
+            placeholder={t('Search by service name')}
+            startContent={<Search className="w-4 h-4" />}
+            value={searchValue}
+            onClear={() => {
+              setSearchValue('');
+              if (searchTimerRef.current) {
+                clearTimeout(searchTimerRef.current);
+              }
+              setSearchTerm('');
+            }}
+            onValueChange={handleSearchChange}
+          />
+        </div>
 
         {/* Servers Table */}
         <ServiceTable
@@ -226,6 +282,7 @@ export const MCPServicesManagement: React.FC = () => {
           onDelete={handleDeleteService}
           onToggleStatus={handleToggleStatus}
           onPageChange={onPageChange}
+          onStatusFilterChange={handleStatusFilterChange}
         />
 
         {/* Modals */}

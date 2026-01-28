@@ -16,6 +16,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
     "@iconify/react": "^5.0.2",
+    "@internationalized/date": "^3.10.1",
     "@nextui-org/react": "^2.6.11",
     "@nextui-org/theme": "^2.4.5",
     "@tailwindcss/typography": "^0.5.16",

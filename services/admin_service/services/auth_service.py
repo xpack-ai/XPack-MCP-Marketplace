@@ -271,5 +271,5 @@ class AuthService:
             return token
 
         except Exception as e:
-            logger.error(f"Google login failed: {e}")
+            logger.error(f"Google login failed, error: {e}")
             return None

@@ -10,7 +10,9 @@ import {
   Listbox,
   ListboxItem,
   Skeleton,
+  DateRangePicker
 } from "@nextui-org/react";
+import { parseDate } from "@internationalized/date";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import {
   LineChart,
@@ -60,9 +62,9 @@ const transformToChartData = (
       userRegDay?.stats_day || payDay?.stats_day || callDay?.stats_day;
     const formattedDate = rawDate
       ? new Date(rawDate).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
+        month: "short",
+        day: "numeric",
+      })
       : `Day ${i + 1}`;
 
     chartData.push({
@@ -99,12 +101,114 @@ const ConsoleStats: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
 
-  // Fetch analytics data on component mount
+  // 日期范围状态 - 默认最近30天
+  const [dateRange, setDateRange] = useState<any>(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 29);
+
+    // 格式化为 YYYY-MM-DD
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    return {
+      start: parseDate(formatDate(thirtyDaysAgo)),
+      end: parseDate(formatDate(today)),
+    };
+  });
+
+  // 计算最早可选日期（30天前）
+  const minValue = useMemo(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return parseDate(`${year}-${month}-${day}`);
+  }, []);
+
+  // 计算最大可选日期（今天）
+  const maxValue = useMemo(() => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return parseDate(`${year}-${month}-${day}`);
+  }, []);
+
+  // 校验：开始日期必须早于结束日期，且不能早于30天前
+  const dateValidation = useMemo(() => {
+    if (!dateRange?.start || !dateRange?.end) {
+      return { isInvalid: false, error: "" };
+    }
+    
+    const start = dateRange.start;
+    const end = dateRange.end;
+    const minDate = minValue;
+    
+    // 检查开始日期是否早于30天前
+    const isStartTooEarly = 
+      start.year < minDate.year ||
+      (start.year === minDate.year && start.month < minDate.month) ||
+      (start.year === minDate.year && start.month === minDate.month && start.day < minDate.day);
+    
+    if (isStartTooEarly) {
+      return { 
+        isInvalid: true, 
+        error: t("Start date cannot be earlier than 30 days ago") 
+      };
+    }
+    
+    // 检查开始日期是否晚于结束日期
+    const isEndBeforeStart = 
+      start.year > end.year ||
+      (start.year === end.year && start.month > end.month) ||
+      (start.year === end.year && start.month === end.month && start.day >= end.day);
+    
+    if (isEndBeforeStart) {
+      return { 
+        isInvalid: true, 
+        error: t("Start date must be before end date") 
+      };
+    }
+    
+    return { isInvalid: false, error: "" };
+  }, [dateRange, minValue, t]);
+
+  // 错误消息
+  const errorMessage = dateValidation.error;
+  const isInvalidDateRange = dateValidation.isInvalid;
+
+  // Fetch analytics data on component mount and when date range changes
   useEffect(() => {
     const fetchData = async () => {
+      if (!dateRange?.start || !dateRange?.end) return;
+      
+      // 如果日期范围无效，不发送请求
+      if (isInvalidDateRange) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const response = await getAdminAnalytics();
+
+        // parseDate 返回的对象有 year, month, day 属性
+        const start = dateRange.start;
+        const end = dateRange.end;
+
+        // 转换日期为时间戳（秒）
+        const startDateTime = new Date(start.year, start.month - 1, start.day, 0, 0, 0);
+        const startTime = Math.floor(startDateTime.getTime() / 1000);
+
+        const endDateTime = new Date(end.year, end.month - 1, end.day, 23, 59, 59);
+        const endTime = Math.floor(endDateTime.getTime() / 1000);
+
+        const response = await getAdminAnalytics(startTime, endTime);
 
         if (response.success) {
           setAnalyticsData(response.data);
@@ -113,14 +217,15 @@ const ConsoleStats: React.FC = () => {
             response.error_message || "Failed to load analytics data"
           );
         }
-      } catch (err) {
+      } catch {
+        toast.error("Failed to load analytics data");
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [dateRange, isInvalidDateRange]);
 
   // Transform API data to chart format
   const chartData = useMemo<ChartDataItem[]>(() => {
@@ -156,6 +261,24 @@ const ConsoleStats: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* 日期范围选择器 */}
+       <div className="flex justify-end">
+         <DateRangePicker
+           label={t("Select Date Range")}
+           value={dateRange}
+           onChange={setDateRange}
+           minValue={minValue}
+           maxValue={maxValue}
+           isInvalid={isInvalidDateRange}
+           errorMessage={errorMessage}
+           onKeyDown={(e) => e.preventDefault()}
+           onKeyUp={(e) => e.preventDefault()}
+           className="w-[250px]"
+           visibleMonths={2}
+           granularity="day"
+         />
+       </div>
+
       {/* Charts with Tabs */}
       <Card shadow="none" className="border-1">
         <CardHeader className="p-0 flex items-center justify-between">
