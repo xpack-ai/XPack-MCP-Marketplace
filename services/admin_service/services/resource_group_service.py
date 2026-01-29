@@ -26,10 +26,9 @@ class ResourceGroupService:
             if gid != "deny-all" and gid != "allow-all":
                 # 忽略大小写检查重复
                 lower_name = name.strip().lower() if name else None
-                if lower_name == "allow all" or lower_name == "deny all":
-                    raise ValueError("Invalid resource group name")
-                if self.group_repo.check_name_duplicate(gid, name):
+                if lower_name == "allow all" or lower_name == "deny all" or self.group_repo.check_name_duplicate(gid, name):
                     raise ValueError("Resource group name \"{{name}}\" already exists")
+                    
                 group = ResourceGroup()
                 group.id = gid
                 group.name = name
@@ -53,10 +52,7 @@ class ResourceGroupService:
                 name = body.get("name","")
                 # 忽略大小写检查重复
                 lower_name = name.strip().lower() if name else None
-                if lower_name == "allow all" or lower_name == "deny all":
-                    raise ValueError("Invalid resource group name")
-                
-                if self.group_repo.check_name_duplicate(gid, name):
+                if lower_name == "allow all" or lower_name == "deny all" or self.group_repo.check_name_duplicate(gid, name):
                     raise ValueError("Resource group name \"{{name}}\" already exists")
                 existing = self.group_repo.get_by_id(gid)   
                 if not existing:

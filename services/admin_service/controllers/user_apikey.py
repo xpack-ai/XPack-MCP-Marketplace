@@ -75,7 +75,10 @@ def modify_apikey(request: Request, apikey_service: UserApiKeyService = Depends(
     expire_at = body.get("expire_at")
     if id is None:
         return ResponseUtils.error(message="id are required")
-    apikey_obj = apikey_service.modify(id, user_id, name=name, description=description, expire_at=expire_at)
-    if not apikey_obj:
-        return ResponseUtils.error(message="Modify failed or not found or no permission")
-    return ResponseUtils.success(data=convert_to_apikey_response(apikey_obj))
+    try:
+        apikey_obj = apikey_service.modify(id, user_id, name=name, description=description, expire_at=expire_at)
+        if not apikey_obj:
+            return ResponseUtils.error(message="Modify failed or not found or no permission")
+        return ResponseUtils.success(data=convert_to_apikey_response(apikey_obj))
+    except ValueError as e:
+        return ResponseUtils.error(message=str(e))
