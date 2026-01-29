@@ -66,8 +66,8 @@ export const StripeConfigForm: React.FC<StripeConfigFormProps> = ({
     onSave(formData);
   };
 
-  const isFormValid =
-    formData.secret.trim() !== "" && formData.webhook_secret.trim() !== "";
+  const isFormValid = 
+    formData?.secret?.trim() !== "" && formData?.webhook_secret?.trim() !== "";
 
   const panelContent = () => {
     return (
