@@ -33,11 +33,14 @@ def add_apikey(request: Request, apikey_service: UserApiKeyService = Depends(get
     name = body.get("name")
     if name is None:
         return ResponseUtils.error(message="name are required")
-
-    user_apikey = apikey_service.create(user_id=user_id, name=name)
-    if not user_apikey:
-        return ResponseUtils.error(message="Create failed")
-    return ResponseUtils.success(data=convert_to_apikey_response(user_apikey))
+    try:
+        user_apikey = apikey_service.create(user_id=user_id, name=name)
+        if not user_apikey:
+            return ResponseUtils.error(message="Create failed")
+        return ResponseUtils.success(data=convert_to_apikey_response(user_apikey))
+    except ValueError as e:
+        return ResponseUtils.error(message=str(e))
+    
 
 
 @router.get("/list", summary="get user apikey list")
