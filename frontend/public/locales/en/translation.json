@@ -888,6 +888,7 @@
   "Select Date Range": "Select Date Range",
   "Resource group name \"{{name}}\" is reserved and cannot be used": "Resource group name \"{{name}}\" is reserved and cannot be used",
   "Resource group name \"{{name}}\" already exists": "Resource group name \"{{name}}\" already exists",
+  "Auth key name \"{{name}}\" already exists": "Auth key name \"{{name}}\" already exists",
   "Start date must be before end date": "Start date must be before end date",
   "Start date cannot be earlier than 30 days ago": "Start date cannot be earlier than 30 days ago"
 }
