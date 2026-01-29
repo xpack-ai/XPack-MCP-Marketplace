@@ -39,7 +39,7 @@ def email_login(
     # Check IP ban
     ip = RequestUtils.get_client_ip(request)
     if auth_service.check_ip_ban(ip, email):
-        return ResponseUtils.error(message="Login failed: IP banned due to too many failed attempts. Please try again in 5 minutes.", code=403)
+        return ResponseUtils.error(message="Login failed: You are banned due to too many failed attempts. Please try again in 5 minutes.", code=403)
 
     token = None
     match email_mode:
@@ -91,7 +91,7 @@ def account_login(request: Request, body: dict = Body(...), auth_service: AuthSe
     # Check IP ban
     ip = RequestUtils.get_client_ip(request)
     if auth_service.check_ip_ban(ip, name):
-        return ResponseUtils.error(message="Login failed: IP banned due to too many failed attempts. Please try again in 5 minutes.", code=403)
+        return ResponseUtils.error(message="Login failed: You are banned due to too many failed attempts. Please try again in 5 minutes.", code=403)
 
     password = body.get("password")
     if not name or not password:
@@ -102,7 +102,7 @@ def account_login(request: Request, body: dict = Body(...), auth_service: AuthSe
         return ResponseUtils.success({"user_token": token})
     else:
         auth_service.record_login_fail(ip, name)
-        return ResponseUtils.error(message="login failed, please enter the correct account or password", code=401)
+    return ResponseUtils.error(message="login failed, please enter the correct account or password", code=401)
 
 
 @router.post("/google/sign", response_model=dict)
