@@ -103,27 +103,6 @@ const ResourceGroupManagement: React.FC = () => {
     // 去除首尾空格
     const trimmedName = name.trim();
 
-    // 验证保留名称（不区分大小写）
-    const reservedNames = ['allow all', 'deny all'];
-    if (reservedNames.some(reserved => reserved.toLowerCase() === trimmedName.toLowerCase())) {
-      toast.error(t('Resource group name "{{name}}" is reserved and cannot be used', { name: trimmedName }));
-      return;
-    }
-
-    // 验证名称是否重复
-    const isDuplicate = groups.some(group => {
-      // 编辑时排除当前组
-      if (editingGroup && group.id === editingGroup.id) {
-        return false;
-      }
-      return group.name.toLowerCase() === trimmedName.toLowerCase();
-    });
-
-    if (isDuplicate) {
-      toast.error(t('Resource group name "{{name}}" already exists', { name: trimmedName }));
-      return;
-    }
-
     let success = false;
 
     if (editingGroup) {

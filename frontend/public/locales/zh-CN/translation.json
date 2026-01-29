@@ -955,6 +955,7 @@
   "Select Date Range": "选择日期范围",
   "Resource group name \"{{name}}\" is reserved and cannot be used": "资源组名称 \"{{name}}\" 是保留名称，不能使用",
   "Resource group name \"{{name}}\" already exists": "资源组名称 \"{{name}}\" 已存在",
+  "Auth key name \"{{name}}\" already exists": "认证密钥 \"{{name}}\" 已存在",
   "Start date must be before end date": "开始日期必须早于结束日期",
   "Start date cannot be earlier than 30 days ago": "开始日期不能早于30天前"
 }
