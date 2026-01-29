@@ -29,7 +29,7 @@ class ResourceGroupService:
                 if lower_name == "allow all" or lower_name == "deny all":
                     raise ValueError("Invalid resource group name")
                 if self.group_repo.check_name_duplicate(gid, name):
-                    raise ValueError("Resource group name already exists")
+                    raise ValueError("Resource group name \"{{name}}\" already exists")
                 group = ResourceGroup()
                 group.id = gid
                 group.name = name
@@ -57,7 +57,7 @@ class ResourceGroupService:
                     raise ValueError("Invalid resource group name")
                 
                 if self.group_repo.check_name_duplicate(gid, name):
-                    raise ValueError("Resource group name already exists")
+                    raise ValueError("Resource group name \"{{name}}\" already exists")
                 existing = self.group_repo.get_by_id(gid)   
                 if not existing:
                     raise ValueError("Resource group not found")
