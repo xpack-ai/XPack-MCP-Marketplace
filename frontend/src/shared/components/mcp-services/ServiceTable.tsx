@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableHeader,
@@ -13,10 +13,14 @@ import {
   Tooltip,
   Pagination,
   Spinner,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from "@nextui-org/react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { EnabledEnum, MCPService } from "@/shared/types/mcp-service";
-import { Trash2, PencilIcon, Calendar } from "lucide-react";
+import { Trash2, PencilIcon, Calendar, Filter } from "lucide-react";
 import { Price } from "@/shared/components/marketplace/Price";
 import { MdOutlineUnpublished, MdOutlineCheckCircle } from "react-icons/md";
 import { withComponentInjection } from "@/shared/hooks/useComponentInjection";
@@ -33,6 +37,7 @@ interface ServiceTableProps {
   onDelete: (service: MCPService) => void;
   onToggleStatus: (serviceId: string) => void;
   onPageChange: (page: number) => void;
+  onStatusFilterChange?: (status: string) => void;
   columns?: string[];
 }
 
@@ -44,9 +49,11 @@ const BaseServiceTable: React.FC<ServiceTableProps> = ({
   onDelete,
   onToggleStatus,
   onPageChange,
+  onStatusFilterChange,
   columns = ["name", "endpoints", "status", "pricing", "actions"],
 }) => {
   const { t } = useTranslation();
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
 
   const pages = Math.ceil(pagination.total / pagination.pageSize);
   const currentPage = pagination.page;
@@ -78,6 +85,13 @@ const BaseServiceTable: React.FC<ServiceTableProps> = ({
     },
     [onToggleStatus]
   );
+
+  // 处理状态筛选
+  const handleStatusFilterChange = React.useCallback((status: string) => {
+    setSelectedStatusFilter(status);
+    onStatusFilterChange?.(status);
+  }, [onStatusFilterChange]);
+
   const formatDate = (dateString: string) => {
     return (
       <div className="flex items-center gap-1">
@@ -122,7 +136,41 @@ const BaseServiceTable: React.FC<ServiceTableProps> = ({
         <TableHeader>
           <TableColumn>{t("Service Name")}</TableColumn>
           <TableColumn>{t("API Endpoint")}</TableColumn>
-          <TableColumn>{t("Status")}</TableColumn>
+          <TableColumn>
+            <div className="flex items-center gap-2">
+              <span>{t("Status")}</span>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    aria-label="Filter by status"
+                    className="min-w-unit-6 w-6 h-6"
+                  >
+                    <Filter
+                      className={`w-4 h-4 ${
+                        selectedStatusFilter !== 'all' ? 'text-primary' : ''
+                      }`}
+                    />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Status filter"
+                  selectionMode="single"
+                  selectedKeys={[selectedStatusFilter]}
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    handleStatusFilterChange(selected);
+                  }}
+                >
+                  <DropdownItem key="all">{t('All')}</DropdownItem>
+                  <DropdownItem key="1">{t('Published')}</DropdownItem>
+                  <DropdownItem key="0">{t('Unpublished')}</DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            </div>
+          </TableColumn>
           <TableColumn hidden={!columns.includes("pricing")}>
             {t("Pricing")}
           </TableColumn>

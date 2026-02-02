@@ -949,5 +949,13 @@
   "Display tags bar": "显示标签栏",
   "Front end displays tags bar and allows users to filter products based on tags.": "前端显示标签栏，允许用户根据标签过滤产品。",
   "Tags Bar": "标签栏",
-  "Auth Key Name": "认证密钥名称"
+  "Auth Key Name": "认证密钥名称",
+  "Search by email": "按邮箱搜索",
+  "Search by service name": "按服务名称搜索",
+  "Select Date Range": "选择日期范围",
+  "Resource group name \"{{name}}\" is reserved and cannot be used": "资源组名称 \"{{name}}\" 是保留名称，不能使用",
+  "Resource group name \"{{name}}\" already exists": "资源组名称 \"{{name}}\" 已存在",
+  "Auth key name \"{{name}}\" already exists": "认证密钥 \"{{name}}\" 已存在",
+  "Start date must be before end date": "开始日期必须早于结束日期",
+  "Start date cannot be earlier than 30 days ago": "开始日期不能早于30天前"
 }

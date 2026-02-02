@@ -183,7 +183,14 @@ export const createResourceGroup = async (name: string, isDefault: boolean): Pro
       body: { name: name, is_default: isDefault } as unknown as BodyInit,
     });
     if (!response.success) {
-      toast.error(response.error_message || i18n.t("Failed to create resource group"));
+      const errorMsg = response.error_message
+      if (errorMsg?.endsWith('already exists')) {
+        toast.error(i18n.t(errorMsg, { name: name }));
+      } else if(errorMsg?.endsWith('cannot be used')) {
+        toast.error(i18n.t(errorMsg, { name: name }));
+      } else {
+        toast.error(errorMsg || i18n.t("Failed to create resource group"));
+      }
       return {
         success: false,
         id: "",
@@ -215,7 +222,14 @@ export const updateResourceGroup = async (
       body: { name: name, is_default: isDefault } as unknown as BodyInit,
     });
     if (!response.success) {
-      toast.error(response.error_message || i18n.t("Failed to update resource group"));
+      const errorMsg = response.error_message
+      if (errorMsg?.endsWith('already exists')) {
+        toast.error(i18n.t(errorMsg, { name: name }));
+      } else if(errorMsg?.endsWith('cannot be used')) {
+        toast.error(i18n.t(errorMsg, { name: name }));
+      } else {
+        toast.error(errorMsg || i18n.t("Failed to update resource group"));
+      }
       return false;
     }
     return true;

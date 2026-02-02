@@ -67,9 +67,26 @@ export interface AdminAnalyticsResponse
 /**
  * Get admin analytics data
  * Headers: { Authorization: string }
+ * @param start_time - Start time timestamp (seconds)
+ * @param end_time - End time timestamp (seconds)
  */
-export async function getAdminAnalytics(): Promise<AdminAnalyticsResponse> {
-  return fetchAdminAPI<AdminAnalyticsData>("/api/admin/stats/analytics", {
+export async function getAdminAnalytics(
+  start_time?: number,
+  end_time?: number
+): Promise<AdminAnalyticsResponse> {
+  const params = new URLSearchParams();
+  
+  if (start_time !== undefined) {
+    params.append('start', start_time.toString());
+  }
+  
+  if (end_time !== undefined) {
+    params.append('end', end_time.toString());
+  }
+  
+  const url = `/api/admin/stats/analytics${params.toString() ? `?${params.toString()}` : ''}`;
+  
+  return fetchAdminAPI<AdminAnalyticsData>(url, {
     method: "GET",
   }) as unknown as AdminAnalyticsResponse;
 }

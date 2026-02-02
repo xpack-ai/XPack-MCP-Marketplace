@@ -64,7 +64,12 @@ export const APIKeyModal = ({
 
         if (!response.success) {
           console.error("Error creating auth key:", response.error_message);
-          toast.error(t("Failed to create auth key"));
+          const errorMsg = response.error_message
+          if (errorMsg?.endsWith('already exists')) {
+            toast.error(t(errorMsg, { name: keyName }));
+          } else {
+            toast.error(t("Failed to create auth key"));
+          }
           return;
         }
 
@@ -79,7 +84,12 @@ export const APIKeyModal = ({
 
         if (!response.success) {
           console.error("Error updating auth key:", response.error_message);
-          toast.error(t("Failed to update auth key"));
+          const errorMsg = response.error_message
+          if (errorMsg?.endsWith('already exists')) {
+            toast.error(t(errorMsg, { name: keyName }));
+          } else {
+            toast.error(t("Failed to update auth key"));
+          }
           return;
         }
 
@@ -90,6 +100,7 @@ export const APIKeyModal = ({
         toast.success(t("Auth key updated successfully"));
         onClose();
       }
+      setName('')
     } catch (error) {
       console.error("Error creating/updating auth key:", error);
       toast.error(t("Failed to create/update auth key"));

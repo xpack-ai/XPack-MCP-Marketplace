@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useTranslation } from "@/shared/lib/useTranslation";
 import { User } from "@/types/user";
 import { UserTable } from "./UserTable";
@@ -8,6 +8,8 @@ import { DeleteConfirmModal } from "@/shared/components/modal/DeleteConfirmModal
 import DashboardDemoContent from "@/shared/components/DashboardDemoContent";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { UserBalanceDetail } from "./UserBalanceDetail";
+import { Input } from "@nextui-org/react";
+import { Search } from "lucide-react";
 
 type ViewMode = "list" | "detail";
 
@@ -23,6 +25,7 @@ const UserManagement: React.FC = () => {
     handleDeleteUser,
     setPage,
     handleRechargeUser,
+    setSearch,
   } = useUserManagement();
 
   // Modal states
@@ -34,6 +37,19 @@ const UserManagement: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
+
+  // 搜索相关状态
+  const [searchValue, setSearchValue] = useState('');
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, []);
 
 
   const handleDeleteUserClick = useCallback((user: User) => {
@@ -81,6 +97,21 @@ const UserManagement: React.FC = () => {
     [handleRechargeUser]
   );
 
+  // 处理搜索 - 使用防抖
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchValue(value);
+    
+    // 清除之前的定时器
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+    
+    // 设置新的定时器，500ms 后触发搜索
+    searchTimerRef.current = setTimeout(() => {
+      setSearch(value);
+    }, 500);
+  }, [setSearch]);
+
   if (viewMode === "detail" ) {
     return (
       <UserBalanceDetail
@@ -99,6 +130,25 @@ const UserManagement: React.FC = () => {
       )}
     >
       <div className="space-y-6 w-full">
+        {/* 搜索框 - 右上角 */}
+        <div className="flex justify-end items-center gap-4">
+          <Input
+            isClearable
+            className="w-full sm:max-w-[400px]"
+            placeholder={t('Search by email')}
+            startContent={<Search className="w-4 h-4" />}
+            value={searchValue}
+            onClear={() => {
+              setSearchValue('');
+              if (searchTimerRef.current) {
+                clearTimeout(searchTimerRef.current);
+              }
+              setSearch('');
+            }}
+            onValueChange={handleSearchChange}
+          />
+        </div>
+
         <UserTable
           users={users}
           fetchUsers={fetchUsers}
