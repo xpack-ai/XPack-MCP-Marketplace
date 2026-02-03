@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 # Build database engine configuration
 engine_config = {
-    "url": f"mysql+mysqlconnector://{Config.MYSQL_USER}:{Config.MYSQL_PASSWORD}@{Config.MYSQL_HOST}:{Config.MYSQL_PORT}/{Config.MYSQL_DB}",
+    "url": f"mysql+pymysql://{Config.MYSQL_USER}:{Config.MYSQL_PASSWORD}@{Config.MYSQL_HOST}:{Config.MYSQL_PORT}/{Config.MYSQL_DB}",
     "echo": Config.DEBUG,
     "pool_size": Config.DB_POOL_SIZE,
     "max_overflow": Config.DB_MAX_OVERFLOW,
