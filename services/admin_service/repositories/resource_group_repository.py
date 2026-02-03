@@ -44,6 +44,10 @@ class ResourceGroupRepository:
             self.db.commit()
         return existing
 
+    def check_name_duplicate(self, id: str, name: str) -> bool:
+        """Check if the resource group name already exists."""
+        return self.db.query(ResourceGroup).filter(ResourceGroup.name == name, ResourceGroup.id != id).first() is not None
+
     def get_by_id(self, id: str) -> Optional[ResourceGroup]:
         return self.db.query(ResourceGroup).filter(ResourceGroup.id == id).first()
 

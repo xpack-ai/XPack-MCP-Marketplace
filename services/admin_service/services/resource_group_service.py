@@ -7,7 +7,7 @@ from services.admin_service.repositories.resource_group_service_map_repository i
 from services.admin_service.repositories.user_repository import UserRepository
 from services.admin_service.repositories.mcp_service_repository import McpServiceRepository
 from services.admin_service.repositories.sys_config_repository import SysConfigRepository
-from services.admin_service.constants.sys_config_key import KEY_DEFAULT_RESOURCE_GROUP
+
 from services.common.models.mcp_service import ChargeType
 from services.common.redis import redis_client 
 
@@ -20,11 +20,15 @@ class ResourceGroupService:
         self.user_repo = UserRepository(db)
         self.map_repo = ResourceGroupServiceMapRepository(db)
         self.mcp_repo = McpServiceRepository(db)
-        self.sys_repo = SysConfigRepository(db)
 
-    def create_group(self, gid: str, name: str, description: Optional[str], is_default: bool = False) -> str:
+    def create_group(self, gid: str, name: str, description: Optional[str]) -> str:
         try:
             if gid != "deny-all" and gid != "allow-all":
+                # 忽略大小写检查重复
+                lower_name = name.strip().lower() if name else None
+                if lower_name == "allow all" or lower_name == "deny all" or self.group_repo.check_name_duplicate(gid, name):
+                    raise ValueError("Resource group name \"{{name}}\" already exists")
+                    
                 group = ResourceGroup()
                 group.id = gid
                 group.name = name
@@ -34,8 +38,6 @@ class ResourceGroupService:
                 if result is None:
                     raise ValueError("Failed to create resource group")
             
-            if is_default:
-                self.sys_repo.set_value_by_key(key=KEY_DEFAULT_RESOURCE_GROUP, value=gid, description="Default resource group", commit=False)
             self.db.commit()
             return gid
         except Exception:
@@ -45,10 +47,14 @@ class ResourceGroupService:
     def update_group(self, gid: str, body: dict) -> bool:
         if not gid:
             raise ValueError("Group ID is required")
-        
         try:
             if gid != "deny-all" and gid != "allow-all":
-                existing = self.group_repo.get_by_id(gid)
+                name = body.get("name","")
+                # 忽略大小写检查重复
+                lower_name = name.strip().lower() if name else None
+                if lower_name == "allow all" or lower_name == "deny all" or self.group_repo.check_name_duplicate(gid, name):
+                    raise ValueError("Resource group name \"{{name}}\" already exists")
+                existing = self.group_repo.get_by_id(gid)   
                 if not existing:
                     raise ValueError("Resource group not found")
                 patch = ResourceGroup()
@@ -57,16 +63,14 @@ class ResourceGroupService:
                 patch.description = body.get("description", existing.description)
                 patch.enabled = body.get("enabled", existing.enabled)
                 self.group_repo.update(patch, commit=False)
-            is_default = body.get("is_default", False)
-            if is_default:
-                self.sys_repo.set_value_by_key(key=KEY_DEFAULT_RESOURCE_GROUP, value=gid, description="Default resource group", commit=False)
+            
             self.db.commit()
             return True
         except Exception:
             self.db.rollback()
             raise
 
-    def delete_group(self, gid: str, migrate_id: Optional[str] = None) -> bool:
+    def delete_group(self, gid: str,  migrate_id: Optional[str] = None) -> bool:
         try:
             if migrate_id:
                 if migrate_id != "deny-all" and migrate_id != "allow-all":
@@ -74,14 +78,10 @@ class ResourceGroupService:
                     if not migrate_group:
                         raise ValueError("Migrate resource group not found")
                 self.map_repo.migrate_services(gid, migrate_id, commit=False)
-                current_default = self.sys_repo.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
-                if current_default == gid:
-                    self.sys_repo.set_value_by_key(KEY_DEFAULT_RESOURCE_GROUP, migrate_id, "Default resource group", commit=False)
+        
             else:
                 self.map_repo.delete_by_group_id(gid, commit=False)
-                current_default = self.sys_repo.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
-                if current_default == gid:
-                    self.sys_repo.set_value_by_key(KEY_DEFAULT_RESOURCE_GROUP, "", "Default resource group", commit=False)
+                
             deleted = self.group_repo.delete(gid, commit=False)
             if deleted is None:
                 raise ValueError("Resource group not found")
@@ -101,8 +101,7 @@ class ResourceGroupService:
             self.db.rollback()
             raise
 
-    def get_info(self, gid: str) -> Optional[dict]:
-        default_group = self.sys_repo.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
+    def get_info(self, gid: str,default_group: str) -> Optional[dict]:
         if gid == "allow-all":
             return {
                 "id":"allow-all",
@@ -131,8 +130,7 @@ class ResourceGroupService:
             "is_default": g.id == default_group,
         }
 
-    def list_groups(self, page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[dict], int]:
-        default_group = self.sys_repo.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
+    def list_groups(self, page: int = 1, page_size: int = 10, default_group: str = "", keyword: Optional[str] = None) -> Tuple[List[dict], int]:
         groups,total =  self.group_repo.get_all_paginated(page=page, page_size=page_size, keyword=keyword)
         if total == 0:
             return [

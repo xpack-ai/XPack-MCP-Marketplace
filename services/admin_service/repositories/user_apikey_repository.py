@@ -12,6 +12,12 @@ class UserApiKeyRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def check_user_apikey_by_name(self, user_id: str, name: str, id: Optional[str] = None) -> bool:
+        """Check if the API key already exists."""
+        if id:
+            return self.db.query(UserApiKey).filter(UserApiKey.id != id, UserApiKey.user_id == user_id, UserApiKey.name == name,UserApiKey.is_deleted == 0).first() is not None
+        return self.db.query(UserApiKey).filter(UserApiKey.user_id == user_id, UserApiKey.name == name,UserApiKey.is_deleted == 0).first() is not None
+
     def create(self, user_id: str, name: str, description: str) -> UserApiKey:
         """Create a new API key for the user with generated token."""
         now = datetime.now(timezone.utc)
@@ -54,14 +60,15 @@ class UserApiKeyRepository:
         user_apikey = self.db.query(UserApiKey).filter(UserApiKey.id == id).first()
         if not user_apikey:
             raise ValueError("API key not found or does not belong to the user")
-
-        self.db.delete(user_apikey)
+        
+        user_apikey.is_deleted = 1
+        user_apikey.updated_at = datetime.now(timezone.utc)
         self.db.commit()
 
     def get_by_user_id(self, user_id: str) -> List[UserApiKey]:
         """List API keys belonging to the specified user."""
-        return self.db.query(UserApiKey).filter(UserApiKey.user_id == user_id).all()
+        return self.db.query(UserApiKey).filter(UserApiKey.user_id == user_id, UserApiKey.is_deleted == 0).all()
     
     def get_by_id(self, id: str) -> Optional[UserApiKey]:
         """Get API key by primary ID."""
-        return self.db.query(UserApiKey).filter(UserApiKey.id == id).first()
+        return self.db.query(UserApiKey).filter(UserApiKey.id == id, UserApiKey.is_deleted == 0).first()

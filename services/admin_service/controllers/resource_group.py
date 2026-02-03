@@ -8,7 +8,7 @@ from services.admin_service.utils.user_utils import UserUtils
 from services.common import error_msg
 from services.admin_service.services.resource_group_service import ResourceGroupService
 from services.admin_service.services.sys_config_service import SysConfigService
-
+from services.admin_service.constants.sys_config_key import KEY_DEFAULT_RESOURCE_GROUP
 
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,12 @@ def get_resource_group_service(db: Session = Depends(get_db)) -> ResourceGroupSe
 
 
 @router.post("", summary="Create resource group")
-def create_group(request: Request, body: dict = Body(...), svc: ResourceGroupService = Depends(get_resource_group_service)):
+def create_group(
+    request: Request, 
+    body: dict = Body(...), 
+    svc: ResourceGroupService = Depends(get_resource_group_service), 
+    sys_svc: SysConfigService = Depends(get_sysconfig_service)
+    ):
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     gid = body.get("id")
@@ -36,20 +41,26 @@ def create_group(request: Request, body: dict = Body(...), svc: ResourceGroupSer
         return ResponseUtils.error(error_msg=error_msg.MISSING_PARAMETER)
     is_default = body.get("is_default", False)
     try:
-        gid = svc.create_group(gid=gid, name=name, description=description, is_default=is_default)
+        svc.create_group(gid=gid, name=name, description=description)
+        if is_default:
+            sys_svc.set_value_by_key(key=KEY_DEFAULT_RESOURCE_GROUP, value=gid, description="Default resource group")
     except ValueError as e:
         return ResponseUtils.error(message=str(e))
-    
     
     return ResponseUtils.success(data={"id": gid})
 
 
 @router.put("", summary="Update resource group")
-def update_group(request: Request,id: str, body: dict = Body(...), svc: ResourceGroupService = Depends(get_resource_group_service)):
+def update_group(request: Request,id: str, body: dict = Body(...), svc: ResourceGroupService = Depends(get_resource_group_service), sys_svc: SysConfigService = Depends(get_sysconfig_service)):
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     try:
-        svc.update_group(id, body)
+        ok = svc.update_group(id, body)
+        if not ok:
+            return ResponseUtils.error(code=400,message="Failed to update group, check the input data")
+        is_default = body.get("is_default", False)
+        if is_default:
+            sys_svc.set_value_by_key(key=KEY_DEFAULT_RESOURCE_GROUP, value=id, description="Default resource group")
         return ResponseUtils.success()
     except ValueError as e:
         return ResponseUtils.error(message=str(e))
@@ -59,7 +70,7 @@ def update_group(request: Request,id: str, body: dict = Body(...), svc: Resource
 
 
 @router.delete("", summary="Delete resource group")
-def delete_group(request: Request, id: str, migrate_id: str | None = None, svc: ResourceGroupService = Depends(get_resource_group_service)):
+def delete_group(request: Request, id: str, migrate_id: str | None = None, svc: ResourceGroupService = Depends(get_resource_group_service), sys_svc: SysConfigService = Depends(get_sysconfig_service)):
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     if not id:
@@ -68,6 +79,9 @@ def delete_group(request: Request, id: str, migrate_id: str | None = None, svc: 
     ok = svc.delete_group(id, migrate_id)
     if not ok:
         return ResponseUtils.error(error_msg=error_msg.NOT_FOUND)
+    default_group = sys_svc.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
+    if id == default_group:
+        sys_svc.set_value_by_key(key=KEY_DEFAULT_RESOURCE_GROUP, value="", description="Default resource group")
     return ResponseUtils.success()
 
 
@@ -75,7 +89,9 @@ def delete_group(request: Request, id: str, migrate_id: str | None = None, svc: 
 def get_group_info(request: Request, id: str, svc: ResourceGroupService = Depends(get_resource_group_service), sys_svc: SysConfigService = Depends(get_sysconfig_service)):
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
-    info = svc.get_info(id)
+    default_group = sys_svc.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
+    
+    info = svc.get_info(id, default_group)
     if not info:
         return ResponseUtils.error(error_msg=error_msg.NOT_FOUND)
     return ResponseUtils.success(data=info)
@@ -86,7 +102,8 @@ def get_group_list(request: Request, page: int = 1, page_size: int = 10, keyword
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     
-    groups, total = svc.list_groups(page=page, page_size=page_size, keyword=keyword)
+    default_group = sys_svc.get_value_by_key(KEY_DEFAULT_RESOURCE_GROUP)
+    groups, total = svc.list_groups(page=page, page_size=page_size, default_group=default_group, keyword=keyword)
     
     return ResponseUtils.success_page(data=groups, page_num=page, page_size=page_size, total=total)
 

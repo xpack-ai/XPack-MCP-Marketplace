@@ -1,4 +1,4 @@
-from sqlalchemy import String, Text, DateTime
+from sqlalchemy import Integer, String, Text, DateTime, false
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from services.common.models.base import Base
@@ -27,3 +27,4 @@ class UserApiKey(Base):
         server_onupdate=func.current_timestamp(),
         comment="Last update timestamp",
     )
+    is_deleted: Mapped[int] = mapped_column(Integer,nullable=False,default=0,comment="Already be Deleted")

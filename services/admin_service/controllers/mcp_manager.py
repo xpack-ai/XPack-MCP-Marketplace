@@ -197,16 +197,18 @@ def get_mcp_service_info(request: Request, id: str, mcp_manager_service: McpMana
 
 @router.get("/service/list", summary="Get MCP service list")
 def get_mcp_service_list(
-    request: Request, page: int = 1, page_size: int = 10, mcp_manager_service: McpManagerService = Depends(get_mcp_manager)
+    request: Request, page: int = 1, page_size: int = 10,keyword: str = "",filter_status: str = "", mcp_manager_service: McpManagerService = Depends(get_mcp_manager)
 ):
     """Get paginated list of all MCP services."""
     if not UserUtils.is_admin(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
-
+    status = None
+    if filter_status:
+        status = filter_status.split(",")
     try:
         # Fetch paginated data
         try:
-            services, total = mcp_manager_service.get_all_paginated(page=page, page_size=page_size)
+            services, total = mcp_manager_service.get_all_paginated(page=page, page_size=page_size,keyword=keyword,filter_status=status)
         except AttributeError:
             # Fallback to non-paginated method when missing
             all_services = mcp_manager_service.get_all()
