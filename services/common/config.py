@@ -25,7 +25,8 @@ class Config:
     DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", 20))
     DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", 30))
     DB_POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", 30))
-    DB_POOL_RECYCLE = int(os.getenv("DB_POOL_RECYCLE", 3600))
+    # 默认回收时间改为600秒（10分钟），避免防火墙或MySQL wait_timeout断开连接
+    DB_POOL_RECYCLE = int(os.getenv("DB_POOL_RECYCLE", 600))
     DB_POOL_PRE_PING = os.getenv("DB_POOL_PRE_PING", "true").lower() == "true"
 
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.example.com")
