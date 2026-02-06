@@ -1,13 +1,14 @@
-input::placeholder,
-textarea::placeholder {
-  --nextui-foreground-500: 240 5.03% 64.9%;
-}
+/* Import theme styles */
+@import "../styles/themes.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Import theme styles */
-@import "../styles/themes.css";
+input::placeholder,
+textarea::placeholder {
+  --nextui-foreground-500: 240 5.03% 64.9%;
+}
 
 html,
 body {
