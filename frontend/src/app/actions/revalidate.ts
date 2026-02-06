@@ -12,7 +12,7 @@ export async function revalidatePlatformConfig() {
   revalidatePath("/", "layout");
 
   // Revalidate host-specific cache tag
-  revalidateTag(`platform-config-${host}`);
+  revalidateTag(`platform-config-${host}`, 'max');
 
   console.info(
     `Platform config cache revalidated for host: platform-config-${host}`
