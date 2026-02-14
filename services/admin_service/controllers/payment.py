@@ -34,7 +34,7 @@ def create_payment_link(
     payment: PaymentService = Depends(get_payment),
 ):
     """Create Stripe payment link for the user."""
-    if not UserUtils.is_admin(request):
+    if not UserUtils.is_normal_user(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     user = request.scope.get("user")
     if not user:
@@ -95,7 +95,7 @@ async def order_status(
     get_user_wallet_history: UserWalletHistoryService = Depends(get_user_wallet_history),
 ):
     """Check payment order completion status."""
-    if not UserUtils.is_admin(request):
+    if not UserUtils.is_normal_user(request):
         return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     if get_user_wallet_history.check_order_complete(payment_id):
         return ResponseUtils.success({"status": 1})
