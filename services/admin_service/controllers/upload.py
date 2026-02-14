@@ -3,7 +3,10 @@ import hashlib
 import os
 import shutil
 from datetime import datetime
+from fastapi import Request
 from services.common.utils.response_utils import ResponseUtils
+from services.admin_service.utils.user_utils import UserUtils
+from services.common import error_msg
 
 router = APIRouter()
 
@@ -14,6 +17,7 @@ and store files under date-based directories.
 """
 @router.post("/image")
 async def upload(
+    request: Request,
     img: UploadFile = File(None),
     sha256: str = Form(None),
     ):
@@ -24,6 +28,8 @@ async def upload(
     - Saves the file under `uploads/images/<YYYYMMDD>/`
     - Returns the relative `file_path`
     """
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     # 1. Get uploaded file name
     if not img:
         return ResponseUtils.error(message="No file provided", code=400)

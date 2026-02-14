@@ -33,7 +33,7 @@ def verify_token(token: str, db: Session) -> Optional[User]:
             set_model_cache(token_cache_key, user_access_token, TOKEN_CACHE_EXPIRE_TIME)
 
         logging.info(f"query token info")
-
+        print(f'user_access_token: {user_access_token}, expire_at: {user_access_token.expire_at},token_cache_key: {token_cache_key}')
         # Check if token is expired
         expire_at = user_access_token.expire_at
         try:

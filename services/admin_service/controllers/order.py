@@ -1,13 +1,13 @@
-from os import stat
 from typing import Optional, List
-from fastapi import APIRouter, Depends, Query
-from services.common.models.user_wallet_history import TransactionType
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import table
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.user_service import UserService
 from services.admin_service.services.user_wallet_history_service import UserWalletHistoryService
+from services.admin_service.utils.user_utils import UserUtils
+from services.common import error_msg
 
 router = APIRouter()
 
@@ -22,6 +22,7 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 
 @router.get("/list", summary="Get user order list")
 def get_user_order_list(
+    request: Request,
     page: int = Query(1, description="Current page number"),
     page_size: int = Query(15, description="Number of items per page"),
     keyword: str = Query("", description="Search keyword for user email or name"),
@@ -30,6 +31,8 @@ def get_user_order_list(
     user_service: UserService = Depends(get_user_service),
     user_wallet_history_service: UserWalletHistoryService = Depends(get_user_wallet_history_service),
 ):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     """Get paginated list of user order history."""
     offset = (page - 1) * page_size
     if filter_payment_type:
@@ -65,6 +68,7 @@ def get_user_order_list(
 
 @router.get("/list/by_user", summary="Get user order list by user id")
 def get_user_order_list_by_user_id(
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     page: int = Query(1, description="Current page number"),
     page_size: int = Query(15, description="Number of items per page"),
@@ -73,6 +77,8 @@ def get_user_order_list_by_user_id(
     user_service: UserService = Depends(get_user_service),
     user_wallet_history_service: UserWalletHistoryService = Depends(get_user_wallet_history_service),
 ):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     """Get paginated list of user order history by user id."""
     user = user_service.get_by_id(user_id)
     if not user:

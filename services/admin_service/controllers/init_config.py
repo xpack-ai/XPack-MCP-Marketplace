@@ -1,11 +1,13 @@
 # Read config from sys_config table, key is configured in services/admin_service/constants/sys_config_key.py
 
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 import json
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
+from services.admin_service.utils.user_utils import UserUtils
+from services.common import error_msg
 from services.admin_service.services.sys_config_service import SysConfigService
 from services.admin_service.constants.sys_config_key import *
 from services.admin_service.services.payment_channel_service import PaymentChannelService
@@ -16,9 +18,12 @@ router = APIRouter()
 
 @router.get("/config", summary="Get configuration (no login required)", tags=["common"])
 def get_config(
+        request: Request,
         db: Session = Depends(get_db),
 ):
     """Get platform configuration settings without authentication."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     try:
         # Create service instance
         sys_config_service = SysConfigService(db)
@@ -81,8 +86,13 @@ def get_config(
         return ResponseUtils.error(message="Failed to get configuration")
 
 @router.get("/homepage", summary="Get homepage configuration (no login required)", tags=["common"])
-def get_homepage_config(db: Session = Depends(get_db)):
+def get_homepage_config(
+        request: Request,
+        db: Session = Depends(get_db),
+):
     """Get homepage configuration settings without authentication."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     try:
         # Create service instance
         sys_config_service = SysConfigService(db)
