@@ -3,7 +3,7 @@
 Provides endpoints to read and update platform configurations, homepage content,
 and to test email settings. All responses and comments are standardized in English.
 """
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends, Body, Request
 import json
 from sqlalchemy.orm import Session
 from services.common.database import get_db
@@ -11,6 +11,8 @@ from services.common.utils.response_utils import ResponseUtils
 from services.common.utils.email_utils import EmailUtils
 from services.admin_service.services.sys_config_service import SysConfigService
 from services.admin_service.services.user_service import UserService
+from services.admin_service.utils.user_utils import UserUtils
+from services.common import error_msg
 from services.admin_service.services.platform_report_service import PlatformReportService
 from services.admin_service.constants import sys_config_key
 from services.common.logging_config import get_logger
@@ -91,9 +93,12 @@ def update_homepage(
 
 @router.get("/info")
 def get_sysconfig(
+    request: Request,
     sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
     user_service: UserService = Depends(get_user_service),
 ):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     """Get all system configuration settings."""
     admin_user = user_service.get_admin_user()
     # Batch read configurations (small table)
@@ -173,10 +178,13 @@ def get_sysconfig(
 
 @router.put("/info")
 def set_sysconfig(
+    request: Request,
     body: dict = Body(...),
     user_service: UserService = Depends(get_user_service),
     sysconfig_service: SysConfigService = Depends(get_sysconfig_service),
 ):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     """Update system configuration settings."""
     try:
         platform_name = ""
@@ -334,7 +342,7 @@ def set_sysconfig(
             # Log error but continue with main operation - reporting failure should not affect configuration update
             logger.warning(f"Failed to initiate platform reporting: {e}")
 
-        return get_sysconfig(sysconfig_service, user_service)
+        return get_sysconfig(request, sysconfig_service, user_service)
 
     except Exception as e:
         return ResponseUtils.error(f"Failed to update system configuration: {str(e)}")

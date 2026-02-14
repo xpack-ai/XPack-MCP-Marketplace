@@ -7,6 +7,8 @@ from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.payment_service import PaymentService
 from services.admin_service.services.user_wallet_history_service import UserWalletHistoryService
 from services.admin_service.tasks.order_monitor_task import OrderMonitorTask
+from services.admin_service.utils.user_utils import UserUtils
+from services.common import error_msg
 router = APIRouter()
 
 
@@ -32,6 +34,8 @@ def create_payment_link(
     payment: PaymentService = Depends(get_payment),
 ):
     """Create Stripe payment link for the user."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     user = request.scope.get("user")
     if not user:
         return ResponseUtils.error(message="User not found", code=404)
@@ -86,10 +90,13 @@ async def callback_stripe(
 
 @router.get("/order_status", response_model=dict)
 async def order_status(
+    request: Request,
     payment_id: str,
     get_user_wallet_history: UserWalletHistoryService = Depends(get_user_wallet_history),
 ):
     """Check payment order completion status."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     if get_user_wallet_history.check_order_complete(payment_id):
         return ResponseUtils.success({"status": 1})
     return ResponseUtils.success({"status": 0})

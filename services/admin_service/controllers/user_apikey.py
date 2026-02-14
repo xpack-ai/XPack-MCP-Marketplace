@@ -6,6 +6,9 @@ from services.common.response.apikey_response import ApikeyResponse
 from services.admin_service.services.user_apikey_service import UserApiKeyService
 from services.admin_service.utils.user_utils import UserUtils
 from services.common.models.user_apikey import UserApiKey
+from services.common import error_msg
+
+
 
 router = APIRouter()
 
@@ -29,6 +32,8 @@ def convert_to_apikey_response(user_apikey: UserApiKey) -> ApikeyResponse:
 @router.post("/info", summary="add apikey")
 def add_apikey(request: Request, apikey_service: UserApiKeyService = Depends(get_apikey_service), body: dict = Body(...)):
     """Create a new API key for the user."""
+    if not UserUtils.is_normal_user(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     user_id = UserUtils.get_request_user_id(request)
     name = body.get("name")
     if name is None:
@@ -46,6 +51,8 @@ def add_apikey(request: Request, apikey_service: UserApiKeyService = Depends(get
 @router.get("/list", summary="get user apikey list")
 def get_user_apikey_list(request: Request, apikey_service: UserApiKeyService = Depends(get_apikey_service)):
     """Get list of API keys for the current user."""
+    if not UserUtils.is_normal_user(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     user_id = UserUtils.get_request_user_id(request)
     apikey_list = apikey_service.get_by_user_id(user_id)
     data = [convert_to_apikey_response(item) for item in apikey_list]
@@ -55,6 +62,8 @@ def get_user_apikey_list(request: Request, apikey_service: UserApiKeyService = D
 @router.delete("/info", summary="delete user apikey")
 def delete_apikey(request: Request, apikey_service: UserApiKeyService = Depends(get_apikey_service), body: dict = Body(...)):
     """Delete an API key by ID for the current user."""
+    if not UserUtils.is_normal_user(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     user_id = UserUtils.get_request_user_id(request)
     id = body.get("apikey_id")
     if id is None:
@@ -68,6 +77,8 @@ def delete_apikey(request: Request, apikey_service: UserApiKeyService = Depends(
 @router.put("/info", summary="modify user apikey")
 def modify_apikey(request: Request, apikey_service: UserApiKeyService = Depends(get_apikey_service), body: dict = Body(...)):
     """Update API key information for the current user."""
+    if not UserUtils.is_normal_user(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     user_id = UserUtils.get_request_user_id(request)
     id = body.get("apikey_id")
     name = body.get("name")

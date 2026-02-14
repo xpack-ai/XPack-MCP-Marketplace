@@ -2,12 +2,14 @@
 User statistics controller
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 from services.common.database import get_db
 from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.user_stats_service import UserStatsService
+from services.admin_service.utils.user_utils import UserUtils
 from services.common.logging_config import get_logger
+from services.common import error_msg
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -15,10 +17,13 @@ router = APIRouter()
 
 @router.get("/key_call_tool")
 async def get_key_call_tool(
+    request: Request,
     apikey_id: str = Query(..., description="apikey ID (not the apikey itself)"),
     last_day: int = Query(30, description="Days to query, default 30"),
     db: Session = Depends(get_db),
 ):
+    if not UserUtils.is_normal_user(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     """
     Get tool call statistics by apikey
     """
@@ -51,12 +56,12 @@ async def get_key_call_tool(
 
     except ValueError as e:
         # Handle business logic errors (invalid apikey_id)
-        error_msg = str(e)
-        logger.error(f"Business logic error: {error_msg}")
-        return ResponseUtils.error(error_msg, code=400)
+        err_msg = str(e)
+        logger.error(f"Business logic error: {err_msg}")
+        return ResponseUtils.error(err_msg, code=400)
 
     except Exception as e:
         # Handle unexpected errors
-        error_msg = f"Failed to retrieve call tool statistics: {str(e)}"
-        logger.error(f"Unexpected error in get_key_call_tool_count: {error_msg}", exc_info=True)
+        err_msg = f"Failed to retrieve call tool statistics: {str(e)}"
+        logger.error(f"Unexpected error in get_key_call_tool_count: {err_msg}", exc_info=True)
         return ResponseUtils.error("Internal server error occurred while retrieving statistics", code=500)
