@@ -90,7 +90,9 @@ def update_mcp_service_info(request: Request, body: dict = Body(...), mcp_manage
 
 
 @router.delete("/service", summary="Delete MCP service")
-def delete_mcp_service(body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+def delete_mcp_service(request: Request, body: dict = Body(...), mcp_manager_service: McpManagerService = Depends(get_mcp_manager)):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     """Delete MCP service by ID."""
     id = body.get("id")
     if not id:
@@ -102,11 +104,14 @@ def delete_mcp_service(body: dict = Body(...), mcp_manager_service: McpManagerSe
 
 @router.post("/openapi_parse", summary="openapi import", response_model=dict)
 async def openapi_parse(
+    request: Request,
     url: Optional[HttpUrl] = Form(None, description="OpenAPI document URL (optional)"),
     file: Optional[UploadFile] = File(None, description="OpenAPI document file (JSON/YAML, optional)"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
 ):
     """Parse and import OpenAPI document from URL or file upload."""
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     try:
         if url:
             url_str = str(url)

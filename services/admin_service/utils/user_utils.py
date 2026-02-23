@@ -25,3 +25,9 @@ class UserUtils:
         """Check if current user is admin"""
         user = UserUtils.get_request_user(request)
         return user and user.role_id == 1 if user else False
+    
+    @staticmethod
+    def is_normal_user(request) -> bool:
+        """Check if current user is normal user"""
+        user = UserUtils.get_request_user(request)
+        return user and user.role_id == 2 if user else False

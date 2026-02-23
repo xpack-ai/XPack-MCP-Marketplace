@@ -15,8 +15,8 @@ class UserRepository:
     def get_by_email(self, email: str) -> Optional[User]:
         return self.db.query(User).filter(User.email == email).first()
 
-    def get_by_account(self, name: str) -> Optional[User]:
-        return self.db.query(User).filter(User.name == name).first()
+    def get_by_account(self, name: str, role_id: int = 1) -> Optional[User]:
+        return self.db.query(User).filter(User.name == name, User.role_id == role_id).first()
 
     def update_password(self,user_id:str, password:str) -> Optional[User]:
         user = self.get_by_id(user_id)

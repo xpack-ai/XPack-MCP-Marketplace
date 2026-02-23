@@ -63,11 +63,13 @@ async def update_user_resource_group(
 
 @router.delete("/account", summary="Delete user account")
 async def delete_user(
+    request: Request,
     id: str,
     user_service: UserService = Depends(get_user_service),
 ):
     """Delete user by ID."""
-    
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     # Validate user ID parameter
     ValidationUtils.require_non_empty_string(id, "id")
     
@@ -88,6 +90,7 @@ async def delete_user(
 
 @router.get("/account/list", summary="Get user list with pagination")
 async def get_user_list(
+    request: Request,
     page: int = Query(1, description="Page number (starts from 1)"),
     page_size: int = Query(15, description="Number of items per page"),
     keyword: str = Query(None, description="Search keyword for email or name"),
@@ -95,7 +98,8 @@ async def get_user_list(
     user_wallet_service: UserWalletService = Depends(get_user_wallet_service),
 ):
     """Get paginated list of users with wallet information."""
-    
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     # Validate pagination parameters
     validated_page, validated_page_size = ValidationUtils.validate_pagination(page, page_size)
     
@@ -126,6 +130,8 @@ async def recharge_balance(
     request: Request,
     payment_service: PaymentService = Depends(get_payment_service),
 ):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     body = await request.body()
     body_str = body.decode('utf-8')
     timestamp=request.headers.get("x-xpack-timestamp")

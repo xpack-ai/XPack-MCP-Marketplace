@@ -11,6 +11,9 @@ from services.admin_service.services.user_task_service import UserTaskService
 from services.admin_service.services.auth_service import AuthService
 from services.admin_service.services.resource_group_service import ResourceGroupService
 from services.admin_service.services.user_wallet_history_service import UserWalletHistoryService
+from services.common import error_msg
+
+
 
 from typing import Optional,List
 
@@ -37,6 +40,8 @@ def get_order_service(db: Session = Depends(get_db)) -> UserWalletHistoryService
 @router.get("/info", response_model=dict)
 def get_user(request: Request, user_wallet: UserWalletService = Depends(get_user_wallet), user_task: UserTaskService = Depends(get_user_task_service), resource_group_service: ResourceGroupService = Depends(get_resource_group_service)):
     """Get current user information and wallet balance."""
+    if not UserUtils.is_normal_user(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     user_response = UserResponse()
     user_wallet_resp = UserWalletResponse()
     user_wallet_resp.balance = 0.00

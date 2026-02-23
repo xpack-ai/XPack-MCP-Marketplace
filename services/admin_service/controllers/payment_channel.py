@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Body
+from fastapi import APIRouter, Depends, Query, Body, Request
 from sqlalchemy.orm import Session
 
 from services.common.database import get_db
@@ -6,7 +6,8 @@ from services.common.utils.response_utils import ResponseUtils
 from services.admin_service.services.payment_channel_service import PaymentChannelService
 from services.common.utils.secure_config import decrypt_config, encrypt_config
 from services.admin_service.tasks.order_monitor_task import OrderMonitorTask
-import json
+from services.admin_service.utils.user_utils import UserUtils
+from services.common import error_msg
 
 router = APIRouter()
 
@@ -17,10 +18,13 @@ def get_payment_channel(db: Session = Depends(get_db)) -> PaymentChannelService:
 
 @router.get("/list")
 async def payment_channel_list(
+    request: Request,
     page: int = Query(1, description="Current page number"),
     page_size: int = Query(15, description="Number of items per page"),
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
 ):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     """Get paginated list of payment channels."""
     total, list = payment_channel_service.list()
     if total == 0:
@@ -45,9 +49,12 @@ async def payment_channel_list(
 
 @router.put("/enable")
 async def payment_channel_enable(
+    request: Request,
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
     body: dict = Body(..., description="Payment channel configuration"),
 ):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     """Enable a payment channel by ID."""
     id = body.get("id")
     if not id:
@@ -103,9 +110,12 @@ async def payment_channel_disable(
 
 @router.put("/info")
 async def payment_channel_config(
+    request: Request,
     payment_channel_service: PaymentChannelService = Depends(get_payment_channel),
     body: dict = Body(..., description="Payment channel configuration"),
 ):
+    if not UserUtils.is_admin(request):
+        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     """Update payment channel configuration."""
     id = body.get("id")
     if not id:
