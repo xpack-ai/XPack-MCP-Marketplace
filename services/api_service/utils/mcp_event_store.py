@@ -45,7 +45,9 @@ class RedisEventStore(EventStore):
 
     async def store_event(self, stream_id: StreamId, message: JSONRPCMessage) -> EventId:
         key = self._key(stream_id)
-        payload = json.dumps(message.model_dump(by_alias=True, exclude_none=True))
+        payload = json.dumps(
+            message.model_dump(by_alias=True, exclude_none=True) if message is not None else {}
+        )
         # Append to Redis list via thread wrapper to avoid blocking
         seq: int = await asyncio.to_thread(self._rpush, key, payload)
         # rpush returns new length; sequence index is length-1
