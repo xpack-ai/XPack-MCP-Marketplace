@@ -397,7 +397,7 @@ class McpController:
 
                     # Ensure transport is connected before delegating (avoid race on first request)
                     try:
-                        await self._wait_transport_ready(transport, timeout_seconds=10.0)
+                        await self._wait_transport_ready(transport, timeout_seconds=2.0)
                     except TimeoutError:
                         logger.error("Transport not ready within timeout; refusing request")
                         response_body = b"Service Unavailable: transport not ready"
@@ -469,7 +469,7 @@ class McpController:
 
         return asgi
 
-    async def _wait_transport_ready(self, transport: StreamableHTTPServerTransport, timeout_seconds: float = 3.0) -> None:
+    async def _wait_transport_ready(self, transport: StreamableHTTPServerTransport, timeout_seconds: float = 2.0) -> None:
         """Wait until StreamableHTTP transport is connected and streams are initialized.
 
         The underlying transport sets internal streams in connect(); POST/GET handling
@@ -484,9 +484,7 @@ class McpController:
             # Heuristic: writer/reader set once connect() started
             has_read_writer = getattr(transport, "_read_stream_writer", None) is not None
             has_write_reader = getattr(transport, "_write_stream_reader", None) is not None
-            initialized_session_id = getattr(transport, "mcp_session_id", None)
-            initialized_flag = getattr(transport, "_initialized", False) or getattr(transport, "_has_initialized", False)
-            if has_read_writer and has_write_reader and (initialized_session_id is not None or initialized_flag):
+            if has_read_writer and has_write_reader:
                 return
             if time.time() > deadline:
                 raise TimeoutError("Transport not ready")
