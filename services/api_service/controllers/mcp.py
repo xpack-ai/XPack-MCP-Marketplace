@@ -397,7 +397,7 @@ class McpController:
 
                     # Ensure transport is connected before delegating (avoid race on first request)
                     try:
-                        await self._wait_transport_ready(transport, timeout_seconds=2.0)
+                        await self._wait_transport_ready(transport, timeout_seconds=10.0)
                     except TimeoutError:
                         logger.error("Transport not ready within timeout; refusing request")
                         response_body = b"Service Unavailable: transport not ready"
