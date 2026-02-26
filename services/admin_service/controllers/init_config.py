@@ -22,8 +22,6 @@ def get_config(
         db: Session = Depends(get_db),
 ):
     """Get platform configuration settings without authentication."""
-    if not UserUtils.is_admin(request):
-        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     try:
         # Create service instance
         sys_config_service = SysConfigService(db)
@@ -90,9 +88,6 @@ def get_homepage_config(
         request: Request,
         db: Session = Depends(get_db),
 ):
-    """Get homepage configuration settings without authentication."""
-    if not UserUtils.is_admin(request):
-        return ResponseUtils.error(error_msg=error_msg.NO_PERMISSION)
     try:
         # Create service instance
         sys_config_service = SysConfigService(db)
