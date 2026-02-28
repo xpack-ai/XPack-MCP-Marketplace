@@ -100,6 +100,120 @@ class RedisClient:
             return self.client.incr(key, amount)
         except redis.RedisError as e:
             raise Exception(f"Redis INCR operation failed: {e}")
+    
+    # Redis Stream operations
+    def xadd(self, stream: str, fields: dict, message_id: str = "*", maxlen: Optional[int] = None) -> str:
+        """Add message to Redis Stream"""
+        try:
+            safe_fields = {}
+            for k, v in fields.items():
+                key = str(k)
+                if isinstance(v, bytes):
+                    try:
+                        val = v.decode("utf-8")
+                    except Exception:
+                        val = v.decode("latin1", errors="ignore")
+                elif isinstance(v, str):
+                    val = v
+                else:
+                    val = str(v)
+                safe_fields[key] = val
+            resp = self.client.xadd(stream, safe_fields, id=message_id, maxlen=maxlen)
+            if isinstance(resp, bytes):
+                try:
+                    return resp.decode("utf-8")
+                except Exception:
+                    return resp.decode("latin1", errors="ignore")
+            if isinstance(resp, str):
+                return resp
+            raise TypeError("Redis XADD did not return str")
+        except redis.RedisError as e:
+            raise Exception(f"Redis XADD operation failed: {e}")
+
+    def xread(self, streams: dict, count: Optional[int] = None, block: Optional[int] = None) -> list:
+        """Read messages from Redis Streams"""
+        try:
+            resp = self.client.xread(streams, count=count, block=block)
+            if isinstance(resp, list):
+                return resp
+            raise TypeError("Redis XREAD did not return list")
+        except redis.RedisError as e:
+            raise Exception(f"Redis XREAD operation failed: {e}")
+
+    def xgroup_create(self, stream: str, group: str, id: str = "0", mkstream: bool = True) -> bool:
+        """Create consumer group for Redis Stream"""
+        try:
+            resp = self.client.xgroup_create(stream, group, id=id, mkstream=mkstream)
+            if resp in (True, "OK", b"OK"):
+                return True
+            return bool(resp)
+        except redis.ResponseError as e:
+            if "BUSYGROUP" in str(e):
+                # Group already exists
+                return True
+            raise Exception(f"Redis XGROUP CREATE operation failed: {e}")
+        except redis.RedisError as e:
+            raise Exception(f"Redis XGROUP CREATE operation failed: {e}")
+
+    def xreadgroup(self, group: str, consumer: str, streams: dict, count: Optional[int] = None, block: Optional[int] = None, noack: bool = False) -> list:
+        """Read messages from Redis Stream using consumer group"""
+        try:
+            resp = self.client.xreadgroup(group, consumer, streams, count=count, block=block, noack=noack)
+            if isinstance(resp, list):
+                return resp
+            raise TypeError("Redis XREADGROUP did not return list")
+        except redis.RedisError as e:
+            raise Exception(f"Redis XREADGROUP operation failed: {e}")
+
+    def xack(self, stream: str, group: str, *message_ids) -> int:
+        """Acknowledge processed messages in Redis Stream"""
+        try:
+            resp = self.client.xack(stream, group, *message_ids)
+            if isinstance(resp, int):
+                return resp
+            raise TypeError("Redis XACK did not return int")
+        except redis.RedisError as e:
+            raise Exception(f"Redis XACK operation failed: {e}")
+
+    def xlen(self, stream: str) -> int:
+        """Get length of Redis Stream"""
+        try:
+            resp = self.client.xlen(stream)
+            if isinstance(resp, int):
+                return resp
+            raise TypeError("Redis XLEN did not return int")
+        except redis.RedisError as e:
+            raise Exception(f"Redis XLEN operation failed: {e}")
+
+    def xpending(self, stream: str, group: str) -> dict:
+        """Get pending messages info for consumer group"""
+        try:
+            resp = self.client.xpending(stream, group)
+            if isinstance(resp, dict):
+                return resp
+            raise TypeError("Redis XPENDING did not return dict")
+        except redis.RedisError as e:
+            raise Exception(f"Redis XPENDING operation failed: {e}")
+
+    def xinfo_stream(self, stream: str) -> dict:
+        """Get information about Redis Stream"""
+        try:
+            resp = self.client.xinfo_stream(stream)
+            if isinstance(resp, dict):
+                return resp
+            raise TypeError("Redis XINFO STREAM did not return dict")
+        except redis.RedisError as e:
+            raise Exception(f"Redis XINFO STREAM operation failed: {e}")
+
+    def xinfo_groups(self, stream: str) -> list:
+        """Get consumer groups information for Redis Stream"""
+        try:
+            resp = self.client.xinfo_groups(stream)
+            if isinstance(resp, list):
+                return resp
+            raise TypeError("Redis XINFO GROUPS did not return list")
+        except redis.RedisError as e:
+            raise Exception(f"Redis XINFO GROUPS operation failed: {e}")
 
     def close(self):
         """Close Redis connection"""
