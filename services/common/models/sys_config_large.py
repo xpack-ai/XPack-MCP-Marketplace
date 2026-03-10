@@ -9,8 +9,6 @@ class SysConfigLarge(Base):
     __tablename__ = "sys_config_large"
     
     __table_args__ = (
-        {"mysql_engine": "InnoDB", "mysql_charset": "utf8mb4"},
-        {"mysql_comment": "System configuration table for large values"},
         {"mysql_indexes": [{"name": "idx_key_tenant_id", "columns": ["key", "tenant_id"]}]},
     )
 
