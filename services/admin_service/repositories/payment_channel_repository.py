@@ -9,21 +9,24 @@ class PaymentChannelRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def payment_channel_list(self) -> Tuple[int, List[PaymentChannel]]:
+    def payment_channel_list(self,tenant_id: str = "default") -> Tuple[int, List[PaymentChannel]]:
         """Return total count and all payment channels."""
-        return self.db.query(PaymentChannel).count(),self.db.query(PaymentChannel).all()
+        query = self.db.query(PaymentChannel).filter(PaymentChannel.tenant_id == tenant_id)
+        return query.count(), query.all()
 
-    def payment_channel_get(self, id: str) -> Optional[PaymentChannel]:
+    def payment_channel_get(self, id: str, tenant_id: str = "default") -> Optional[PaymentChannel]:
         """Fetch a payment channel by primary ID."""
-        return self.db.query(PaymentChannel).filter(PaymentChannel.id == id).first()
+        query = self.db.query(PaymentChannel).filter(PaymentChannel.id == id).filter(PaymentChannel.tenant_id == tenant_id)
+        return query.first()
 
-    def payment_channel_available_list(self) -> List[PaymentChannel]:
+    def payment_channel_available_list(self, tenant_id: str = "default") -> List[PaymentChannel]:
         """List enabled payment channels."""
-        return self.db.query(PaymentChannel).filter(PaymentChannel.status == 1).all()
+        query = self.db.query(PaymentChannel).filter(PaymentChannel.status == 1).filter(PaymentChannel.tenant_id == tenant_id)
+        return query.all()
 
-    def update_status(self, id: str, status: int) -> Optional[PaymentChannel]:
+    def update_status(self, id: str, status: int, tenant_id: str = "default") -> Optional[PaymentChannel]:
         """Update channel status and refresh updated_at; returns updated entity or None."""
-        payment_channel = self.payment_channel_get(id)
+        payment_channel = self.payment_channel_get(id, tenant_id)
         if payment_channel:
             payment_channel.status = status
             payment_channel.updated_at = datetime.now(timezone.utc)
@@ -31,9 +34,9 @@ class PaymentChannelRepository:
             return payment_channel
         return None
 
-    def update_config(self, id: str, config: str) -> Optional[PaymentChannel]:
+    def update_config(self, id: str, config: str, tenant_id: str = "default") -> Optional[PaymentChannel]:
         """Update channel config and refresh updated_at; returns updated entity or None."""
-        payment_channel = self.payment_channel_get(id)
+        payment_channel = self.payment_channel_get(id, tenant_id)
         if payment_channel:
             payment_channel.config = config
             payment_channel.updated_at = datetime.now(timezone.utc)

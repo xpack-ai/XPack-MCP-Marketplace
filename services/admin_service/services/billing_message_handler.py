@@ -44,6 +44,7 @@ class BillingMessageHandler:
         Returns:
             bool: Whether processing was successful
         """
+        call_log_id: Optional[str] = None
         try:
             # Parse message
             billing_message = self._parse_message(message_data)
@@ -61,12 +62,17 @@ class BillingMessageHandler:
             start_utc = start_dt.replace(tzinfo=timezone.utc) if start_dt.tzinfo is None else start_dt.astimezone(timezone.utc)
             # Store as naive UTC datetime to match MySQL DATETIME behavior
             stats_date = start_utc.replace(minute=0, second=0, microsecond=0, tzinfo=None)
-            self.stats_repo.increment(billing_message.service_id, stats_date, 1)
+            self.stats_repo.increment_fallback(billing_message.service_id,billing_message.tenant_id, stats_date, 1)
 
             # Process billing logic
             if billing_message.call_success and billing_message.unit_price > 0:
                 success = self._process_billing(billing_message, call_log_id)
                 if not success:
+                    # Ensure previous failed operations don't leave session in error state
+                    try:
+                        self.db.rollback()
+                    except Exception:
+                        pass
                     # Update record status to failed
                     self.call_log_repo.update_status(call_log_id, ProcessStatus.FAILED, "Billing processing failed")
                     return False
@@ -78,6 +84,16 @@ class BillingMessageHandler:
 
         except Exception as e:
             logger.error(f"Failed to process billing message: {str(e)}", exc_info=True)
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
+            # Best-effort mark the call log as failed when possible
+            if call_log_id:
+                try:
+                    self.call_log_repo.update_status(call_log_id, ProcessStatus.FAILED, "Billing processing exception")
+                except Exception:
+                    logger.exception("Failed to update call log status after exception")
             return False
 
     def _parse_message(self, message_data: dict) -> Optional[BillingMessage]:
@@ -99,6 +115,7 @@ class BillingMessageHandler:
             return BillingMessage(
                 user_id=message_data["user_id"],
                 service_id=message_data["service_id"],
+                tenant_id=message_data["tenant_id"],
                 api_id=message_data["api_id"],
                 tool_name=message_data["tool_name"],
                 input_params=message_data["input_params"], 
@@ -132,6 +149,7 @@ class BillingMessageHandler:
                 id=log_id,
                 user_id=billing_message.user_id,
                 service_id=billing_message.service_id,
+                tenant_id=billing_message.tenant_id,
                 api_id=billing_message.api_id,
                 tool_name=billing_message.tool_name,
                 input_params=billing_message.input_params,
@@ -230,6 +248,7 @@ class BillingMessageHandler:
 
         except Exception as e:
             logger.error(f"Billing processing failed - User ID: {billing_message.user_id}: {str(e)}", exc_info=True)
+            self.db.rollback()
             return False
 
     def _update_wallet_cache(self, user_id: str, new_balance: Decimal) -> None:

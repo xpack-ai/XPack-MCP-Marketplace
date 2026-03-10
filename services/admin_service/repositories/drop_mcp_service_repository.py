@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from services.common.models.mcp_service import DropMCPService
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 """Repository for MCP services: CRUD, pagination, and public listing."""
@@ -22,12 +22,18 @@ class DropMcpServiceRepository:
         self.db.refresh(mcp_service)
         return mcp_service
     
-    def all(self) -> Dict[str, DropMCPService]:
+    def all(self, tenant_id: Optional[str] = None) -> Dict[str, DropMCPService]:
         """Retrieve all services."""
-        services = self.db.query(DropMCPService).all()
+        query = self.db.query(DropMCPService)
+        if tenant_id:
+            query = query.filter(DropMCPService.tenant_id == tenant_id)
+        services = query.all()
         return {service.id: service for service in services}
     
-    def all_by_service_ids(self, service_ids: List[str]) -> Dict[str, DropMCPService]:
+    def all_by_service_ids(self, service_ids: List[str], tenant_id: Optional[str] = None) -> Dict[str, DropMCPService]:
         """Retrieve all services by service IDs."""
-        services = self.db.query(DropMCPService).filter(DropMCPService.id.in_(service_ids)).all()
+        query = self.db.query(DropMCPService).filter(DropMCPService.id.in_(service_ids))
+        if tenant_id:
+            query = query.filter(DropMCPService.tenant_id == tenant_id)
+        services = query.all()
         return {service.id: service for service in services}

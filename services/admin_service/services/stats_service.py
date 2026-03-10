@@ -20,7 +20,7 @@ class StatsService:
         self.mcp_service_repository = McpServiceRepository(db)
         self.drop_mcp_service_repository = DropMcpServiceRepository(db)
     
-    def get_registered_user_stats(self, start: datetime, end: datetime) -> dict:
+    def get_registered_user_stats(self, start: datetime, end: datetime, tenant_id: str = "default") -> dict:
         """
         Get registered stats
 
@@ -35,7 +35,7 @@ class StatsService:
             "today": self.user_repository.get_registered_user_count(today_start),
             "days": self.user_repository.get_registered_user_trend(start, end)
         }
-    def get_deposit_stats(self, start: datetime, end: datetime) -> dict:
+    def get_deposit_stats(self, start: datetime, end: datetime, tenant_id: str = "default") -> dict:
         """
         Get deposit stats
 
@@ -50,7 +50,7 @@ class StatsService:
             "today": self.user_wallet_repository.stats_deposit_amount(today_start),
             "days": self.user_wallet_repository.stats_deposit_amount_trend(start,end)
         }
-    def get_call_stats(self, start: datetime, end: datetime) -> dict:
+    def get_call_stats(self, start: datetime, end: datetime, tenant_id: str = "default") -> dict:
         """
         Get call stats
 
@@ -62,12 +62,12 @@ class StatsService:
         pass30 = today_start - timedelta(days=30)
         
         return {
-            "total": self.stats_mcp_service_date_repository.stats_call_count(start, end),
-            "today": self.stats_mcp_service_date_repository.stats_call_count(today_start),
-            "days": self.stats_mcp_service_date_repository.stats_call_count_trend(start, end)
+            "total": self.stats_mcp_service_date_repository.stats_call_count(tenant_id,start, end),
+            "today": self.stats_mcp_service_date_repository.stats_call_count(tenant_id,today_start),
+            "days": self.stats_mcp_service_date_repository.stats_call_count_trend(tenant_id,start, end)
         }
         
-    def get_call_stats_group_by_service(self, start: datetime, end: datetime) -> list:
+    def get_call_stats_group_by_service(self, start: datetime, end: datetime, tenant_id: str = "default") -> list:
         """
         Get call stats group by service
 
@@ -79,7 +79,7 @@ class StatsService:
         stats_map = {item["service_id"]: int(item.get("count", 0)) for item in stats}
 
         # Iterate all services, fill missing call count as 0, sort by calls desc
-        services = self.mcp_service_repository.get_all()
+        services = self.mcp_service_repository.get_all(tenant_id)
         result = []
         for service in services:
             result.append({
@@ -98,7 +98,7 @@ class StatsService:
             if call_count != 0:
                 drop_service_ids.append(key) 
         # Add deleted services
-        deleted_services = self.drop_mcp_service_repository.all_by_service_ids(drop_service_ids)
+        deleted_services = self.drop_mcp_service_repository.all_by_service_ids(drop_service_ids, tenant_id)
         for id,item in deleted_services.items():
             result.append({
                 "id": id,

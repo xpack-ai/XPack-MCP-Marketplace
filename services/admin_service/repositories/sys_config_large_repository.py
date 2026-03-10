@@ -11,24 +11,24 @@ class SysConfigLargeRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self, keys: List[str] = []) -> Dict[str, str]:
+    def get_all(self, keys: List[str] = [], tenant_id: str = "default") -> Dict[str, str]:
         """Return mapping of key->value, optionally filtered by provided keys."""
         if keys:
-            return {item.key: item.value for item in self.db.query(SysConfigLarge).filter(SysConfigLarge.key.in_(keys)).all()}
-        return {item.key: item.value for item in self.db.query(SysConfigLarge).all()}
+            return {item.key: item.value for item in self.db.query(SysConfigLarge).filter(SysConfigLarge.tenant_id == tenant_id, SysConfigLarge.key.in_(keys)).all()}
+        return {item.key: item.value for item in self.db.query(SysConfigLarge).filter(SysConfigLarge.tenant_id == tenant_id).all()}
         
-    def get_by_key(self, key: str) -> Optional[SysConfigLarge]:
+    def get_by_key(self, key: str, tenant_id: str = "default") -> Optional[SysConfigLarge]:
         """Get SysConfigLarge entity by unique key."""
-        return self.db.query(SysConfigLarge).filter(SysConfigLarge.key == key).first()
-    def get_value_by_key(self, key: str) -> Optional[str]:
+        return self.db.query(SysConfigLarge).filter(SysConfigLarge.tenant_id == tenant_id, SysConfigLarge.key == key).first()
+    def get_value_by_key(self, key: str, tenant_id: str = "default") -> Optional[str]:
         """Get value string for given key, or None if missing."""
-        sys_config = self.get_by_key(key)
+        sys_config = self.get_by_key(key, tenant_id)
         if sys_config:
             return sys_config.value
         return None
-    def set_value_by_key(self, key: str, value: str,description:str) -> Optional[SysConfigLarge]:
+    def set_value_by_key(self, key: str, value: str,description:str, tenant_id: str = "default") -> Optional[SysConfigLarge]:
         """Set or create value and description for a key; returns entity."""
-        sys_config = self.get_by_key(key)
+        sys_config = self.get_by_key(key, tenant_id)
         if sys_config:
             sys_config.value = value
             sys_config.description = description
@@ -36,6 +36,7 @@ class SysConfigLargeRepository:
             self.db.refresh(sys_config)
             return sys_config
         sys_config = SysConfigLarge(
+            tenant_id=tenant_id,
             id=str(uuid.uuid4()),
             key=key, 
             value=value,
@@ -46,9 +47,9 @@ class SysConfigLargeRepository:
         self.db.add(sys_config)
         self.db.commit()
         return sys_config
-    def delete_by_key(self, key: str) -> bool:
+    def delete_by_key(self, key: str, tenant_id: str = "default") -> bool:
         """Delete config by key; returns True if deleted, else False."""
-        sys_config = self.get_by_key(key)
+        sys_config = self.get_by_key(key, tenant_id)    
         if sys_config:
             self.db.delete(sys_config)
             self.db.commit()

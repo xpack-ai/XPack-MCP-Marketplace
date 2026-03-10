@@ -218,13 +218,13 @@ class ResourceGroupService:
         return count
 
 
-    def bind_services(self, gid: str, service_ids: List[str]) -> int:
+    def bind_services(self, gid: str, service_ids: List[str], tenant_id: str = "default") -> int:
         valid_ids: List[str] = []
         group = self.group_repo.get_by_id(gid)
         if not group:
             raise ValueError("Resource group not found")
         for sid in service_ids:
-            if self.mcp_repo.get_by_id(sid):
+            if self.mcp_repo.get_by_id(sid, tenant_id=tenant_id):
                 valid_ids.append(sid)
         try:
             created = self.map_repo.bind_services(gid, valid_ids, commit=False)
@@ -285,18 +285,18 @@ class ResourceGroupService:
             total += 1
             
         return result,total
-    def get_bind_service_ids(self, gid: str) -> List[str]:
+    def get_bind_service_ids(self, gid: str, tenant_id: str = "default") -> List[str]:
         if gid == "deny-all":
             return []
         elif gid == "allow-all":
-            return [s.id for s in self.mcp_repo.get_all()]
+            return [s.id for s in self.mcp_repo.get_all(tenant_id=tenant_id)]
         return self.map_repo.list_service_ids(gid)
 
-    def get_bind_services(self, gid: str, page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[dict], int]:
+    def get_bind_services(self, gid: str, tenant_id: str = "default", page: int = 1, page_size: int = 10, keyword: Optional[str] = None) -> Tuple[List[dict], int]:
         if gid == "deny-all":
             return [],0
         elif gid == "allow-all":
-            services,total = self.mcp_repo.get_all_paginated(page=page, page_size=page_size, keyword=keyword)
+            services,total = self.mcp_repo.get_all_paginated(tenant_id=tenant_id, page=page, page_size=page_size, keyword=keyword)
             return [
                 {
                     "id": s.id,
@@ -318,7 +318,7 @@ class ResourceGroupService:
             ],total
         if keyword:
             
-            services = self.mcp_repo.get_all(keyword=keyword)
+            services = self.mcp_repo.get_all(tenant_id=tenant_id, keyword=keyword)
             if not services:
                 return [],0
             service_map = {s.id: s for s in services}
@@ -345,7 +345,7 @@ class ResourceGroupService:
             ],total
         else:
             sids,total = self.map_repo.list_service_ids_paginated(gid, page=page, page_size=page_size)  
-            services = self.mcp_repo.get_by_ids(ids=sids)
+            services = self.mcp_repo.get_by_ids(ids=sids, tenant_id=tenant_id)
             service_map = {s.id: s for s in services}
             return [
                 {
@@ -366,11 +366,11 @@ class ResourceGroupService:
                 }
                 for s in (service_map[sid] for sid in sids if sid in service_map)
             ],total
-    def get_unbind_services(self, gid: str) -> List[dict]:
+    def get_unbind_services(self, gid: str,tenant_id: str = "default") -> List[dict]:
         if gid == "deny-all" or gid == "allow-all":
             return []
         sids = self.map_repo.list_service_ids(gid)
-        services = self.mcp_repo.get_all_not_include(ids=sids)
+        services = self.mcp_repo.get_all_not_include(ids=sids,tenant_id=tenant_id)
         return [
             {
                 "id": s.id,

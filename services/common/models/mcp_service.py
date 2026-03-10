@@ -14,6 +14,7 @@ class McpService(Base):
         autoincrement=False,
         comment="Primary key",
     )
+    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, default="default", comment="Tenant ID")
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Service name")
     slug_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Unique slug name for the service")
     short_description: Mapped[str] = mapped_column(String, nullable=False, comment="Short description of the service")
@@ -58,6 +59,7 @@ class DropMCPService(Base):
         autoincrement=False,
         comment="Primary key, service UUID",
     )
+    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, default="default", comment="Tenant ID")
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Service name")
     slug_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Unique service identifier (slug format)")
     short_description: Mapped[str] = mapped_column(String, nullable=False, comment="Brief service description")
