@@ -125,38 +125,23 @@ class BillingService:
             call_end_time: Call end time
         """
         try:
-            message = BillingMessage(
-                user_id=call_log.user_id,
-                service_id=call_log.service_id,
-                api_id=call_log.api_id,
-                tool_name=call_log.tool_name,
-                input_params=call_log.input_params,
-                input_token=call_log.input_token,
-                output_token=call_log.output_token,
-                charge_type=call_log.charge_type,
-                call_success=call_success,
-                unit_price=call_log.unit_price,
-                call_start_time=call_log.call_start_time,
-                call_end_time=call_end_time,
-                apikey_id=call_log.apikey_id,
-            )
-
             # Serialize message
             message_json = json.dumps(
                 {
-                    "user_id": message.user_id,
-                    "service_id": message.service_id,
-                    "api_id": message.api_id,
-                    "tool_name": message.tool_name,
-                    "input_params": message.input_params,
-                    "call_success": message.call_success,
-                    "unit_price": str(message.unit_price),
-                    "input_token": str(message.input_token),
-                    "output_token": str(message.output_token),
-                    "charge_type": message.charge_type, 
-                    "call_start_time": message.call_start_time.isoformat(),
-                    "call_end_time": message.call_end_time.isoformat() if message.call_end_time else None,
-                    "apikey_id": message.apikey_id,
+                    "user_id": call_log.user_id,
+                    "service_id": call_log.service_id,
+                    "tenant_id": call_log.tenant_id,
+                    "api_id": call_log.api_id,
+                    "tool_name": call_log.tool_name,
+                    "input_params": call_log.input_params,
+                    "call_success": call_success,
+                    "unit_price": str(call_log.unit_price),
+                    "input_token": str(call_log.input_token),
+                    "output_token": str(call_log.output_token),
+                    "charge_type": call_log.charge_type, 
+                    "call_start_time": call_log.call_start_time.isoformat(),
+                    "call_end_time": call_end_time.isoformat() if call_end_time else None,
+                    "apikey_id": call_log.apikey_id,
                 }
             )
 

@@ -28,7 +28,7 @@ class McpServerFactory:
         self.tool_service = McpToolService()
         self.billing_service = billing_service
 
-    async def create_server(self, service_id: str, user_id: Optional[str] = None, apikey_id: Optional[str] = None) -> Server:
+    async def create_server(self, service_id: str,tenant_id: str, user_id: Optional[str] = None, apikey_id: Optional[str] = None) -> Server:
         """
         Create MCP server for specified service_id
 
@@ -65,7 +65,7 @@ class McpServerFactory:
                 logger.error(error_msg)
                 return [types.TextContent(type="text", text=error_msg)], {}
             
-            return await self._handle_call_tool_with_billing(service_id, name, arguments, user_id, apikey_id)
+            return await self._handle_call_tool_with_billing(service_id, tenant_id, name, arguments, user_id, apikey_id)
 
         logger.info("MCP server instance created successfully")
         return app
@@ -102,12 +102,13 @@ class McpServerFactory:
         finally:
             db.close()
 
-    async def _handle_call_tool_with_billing(self, service_id: str, name: str, arguments: dict, user_id: str, apikey_id: Optional[str] = None) -> tuple[List[types.Content], dict]:
+    async def _handle_call_tool_with_billing(self, service_id: str, tenant_id: str, name: str, arguments: dict, user_id: str, apikey_id: Optional[str] = None) -> tuple[List[types.Content], dict]:
         """
         Handle tool call with billing logic
 
         Args:
             service_id: Service ID
+            tenant_id: Tenant ID
             name: Tool name
             arguments: Tool arguments
             user_id: User ID
@@ -146,10 +147,10 @@ class McpServerFactory:
             # If tool API id not found, skip sending billing message to avoid FK errors
             if not api_id_for_log:
                 return [types.TextContent(type="text", text=error_msg)], {}
-
             call_log = ApiCallLogInfo(
                 user_id=user_id,
                 service_id=service_id,
+                tenant_id=tenant_id,
                 api_id=api_id_for_log,
                 tool_name=name,
                 input_params=json.dumps(arguments),
@@ -246,6 +247,7 @@ class McpServerFactory:
             call_log = ApiCallLogInfo(
                 user_id=user_id,
                 service_id=service_id,
+                tenant_id=tenant_id,
                 api_id=tool_config.id,
                 tool_name=name,
                 input_params=json.dumps(arguments),

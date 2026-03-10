@@ -7,6 +7,14 @@ from datetime import datetime
 
 class SysConfigLarge(Base):
     __tablename__ = "sys_config_large"
+    
+    __table_args__ = (
+        {"mysql_engine": "InnoDB", "mysql_charset": "utf8mb4"},
+        {"mysql_comment": "System configuration table for large values"},
+        {"mysql_indexes": [{"name": "idx_key_tenant_id", "columns": ["key", "tenant_id"]}]},
+    )
+
+
 
     id: Mapped[str] = mapped_column(
         String(36),
@@ -15,6 +23,7 @@ class SysConfigLarge(Base):
         comment="Primary key",
     )
     key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Configuration key")
+    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="Tenant ID")
     value: Mapped[str] = mapped_column(String, nullable=False, comment="Configuration value")
     description: Mapped[str] = mapped_column(String, nullable=False, comment="Configuration description")
     created_at: Mapped[datetime] = mapped_column(

@@ -15,25 +15,25 @@ class PaymentChannelService:
         self.db = db
         self.payment_channel_repository = PaymentChannelRepository(db)
     
-    def list(self) -> Tuple[int, List[PaymentChannel]]:
-        return self.payment_channel_repository.payment_channel_list()
+    def list(self, tenant_id: str = "default") -> Tuple[int, List[PaymentChannel]]:
+        return self.payment_channel_repository.payment_channel_list(tenant_id)
 
-    def available_list(self) -> List[PaymentChannel]:
+    def available_list(self, tenant_id: str = "default") -> List[PaymentChannel]:   
         """Get list of available payment channels"""
         return self.payment_channel_repository.payment_channel_available_list()
     
-    def get(self, id: str) -> Optional[PaymentChannel]:
-        return self.payment_channel_repository.payment_channel_get(id)
+    def get(self, id: str, tenant_id: str = "default") -> Optional[PaymentChannel]:
+        return self.payment_channel_repository.payment_channel_get(id, tenant_id)
     
-    def update_status(self, id: str, status: int) -> Optional[PaymentChannel]:
-        return self.payment_channel_repository.update_status(id, status)
+    def update_status(self, id: str, status: int, tenant_id: str = "default") -> Optional[PaymentChannel]:
+        return self.payment_channel_repository.update_status(id, status, tenant_id) 
     
-    def update_config(self, id: str, config: str) -> Optional[PaymentChannel]:
-        return self.payment_channel_repository.update_config(id, config)
+    def update_config(self, id: str, config: str, tenant_id: str = "default") -> Optional[PaymentChannel]:
+        return self.payment_channel_repository.update_config(id, config, tenant_id)
 
-    def get_config(self, id: str) -> Optional[dict]:
+    def get_config(self, id: str, tenant_id: str = "default") -> Optional[dict]:
         """Get payment channel config by ID"""
-        channel_config = self.payment_channel_repository.payment_channel_get(id)
+        channel_config = self.payment_channel_repository.payment_channel_get(id, tenant_id)
         if channel_config is None:
             return None
         # Support encrypted-at-rest config
@@ -49,10 +49,10 @@ class PaymentChannelService:
         return config
 
     
-    def get_stripe_config(self) -> Optional[Dict[str, Any]]:
+    def get_stripe_config(self, tenant_id: str = "default") -> Optional[Dict[str, Any]]:
         """Get Stripe payment channel config"""
         try:
-            stripe_channel = self.payment_channel_repository.payment_channel_get("stripe")
+            stripe_channel = self.payment_channel_repository.payment_channel_get("stripe", tenant_id)
             
             if not stripe_channel:
                 logger.warning("Stripe payment channel config does not exist")
