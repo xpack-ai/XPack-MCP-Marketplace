@@ -11,9 +11,12 @@ class McpServiceRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def update_enabled(self, id: str, enabled: int, tenant_id: str) -> McpService:
+    def update_enabled(self, id: str, enabled: int, tenant_id: Optional[str] = None) -> McpService:
         """Enable or disable a service by ID; raises if not found."""
-        service = self.db.query(McpService).filter(McpService.id == id, McpService.tenant_id == tenant_id).first()
+        query = self.db.query(McpService).filter(McpService.id == id)
+        if tenant_id:
+            query = query.filter(McpService.tenant_id == tenant_id)
+        service = query.first()
         if not service:
             raise ValueError("Service not found")
         service.enabled = enabled
@@ -21,18 +24,24 @@ class McpServiceRepository:
         self.db.refresh(service)
         return service
 
-    def delete(self, id: str, tenant_id: str) -> Optional[McpService]:
+    def delete(self, id: str, tenant_id: Optional[str] = None) -> Optional[McpService]:
         """Delete a service by ID; returns deleted entity or None."""
-        service = self.db.query(McpService).filter(McpService.id == id, McpService.tenant_id == tenant_id).first()
+        query = self.db.query(McpService).filter(McpService.id == id)
+        if tenant_id:
+            query = query.filter(McpService.tenant_id == tenant_id)
+        service = query.first()
         if not service:
             return None
         self.db.delete(service)
         self.db.commit()
         return service
 
-    def update(self, mcp_service: McpService, tenant_id: str) -> McpService:
+    def update(self, mcp_service: McpService, tenant_id: Optional[str] = None) -> McpService:
         """Update mutable fields for an existing service; returns refreshed entity."""
-        existing_service = self.db.query(McpService).filter(McpService.id == mcp_service.id, McpService.tenant_id == tenant_id).first()
+        query = self.db.query(McpService).filter(McpService.id == mcp_service.id)
+        if tenant_id:
+            query = query.filter(McpService.tenant_id == tenant_id)
+        existing_service = query.first()
         if not existing_service:
             raise ValueError("Service not found")
 
@@ -63,23 +72,30 @@ class McpServiceRepository:
             query = query.filter(McpService.tenant_id == tenant_id)
         return query.all()
 
-    def get_by_slug_name(self, slug_name: str, tenant_id: str) -> Optional[McpService]:
+    def get_by_slug_name(self, slug_name: str, tenant_id: Optional[str] = None) -> Optional[McpService]:
         """Get a service by unique slug name."""
-        return self.db.query(McpService).filter(McpService.slug_name == slug_name, McpService.tenant_id == tenant_id).first()           
+        query = self.db.query(McpService).filter(McpService.slug_name == slug_name)
+        if tenant_id:
+            query = query.filter(McpService.tenant_id == tenant_id)
+        return query.first()           
 
-    def get_all(self, tenant_id: str, keyword: Optional[str] = None) -> List[McpService]:
+    def get_all(self, tenant_id: Optional[str] = None, keyword: Optional[str] = None) -> List[McpService]:
         """List all services ordered by creation time descending."""
-        query = self.db.query(McpService).order_by(McpService.created_at.desc())
+        query = self.db.query(McpService)
+        if tenant_id:
+            query = query.filter(McpService.tenant_id == tenant_id)
         if keyword:
             keyword = f"%{keyword}%"
             query = query.filter((McpService.name.like(keyword)) | (McpService.short_description.like(keyword)))
-        return query.filter(McpService.tenant_id == tenant_id).all()
+        return query.order_by(McpService.created_at.desc()).all()
 
-    def get_all_paginated(self, tenant_id: str, page: int = 1, page_size: int = 10, keyword: Optional[str] = None,filter_status: Optional[list] = None) -> Tuple[List[McpService], int]:
+    def get_all_paginated(self, tenant_id: Optional[str] = None, page: int = 1, page_size: int = 10, keyword: Optional[str] = None,filter_status: Optional[list] = None) -> Tuple[List[McpService], int]:
         """Get service list with pagination"""
         offset = (page - 1) * page_size
 
-        query = self.db.query(McpService).filter(McpService.tenant_id == tenant_id)
+        query = self.db.query(McpService)
+        if tenant_id:
+            query = query.filter(McpService.tenant_id == tenant_id)
         if keyword:
             keyword = f"%{keyword}%"
             query = query.filter((McpService.name.like(keyword)) | (McpService.short_description.like(keyword)))
@@ -92,9 +108,12 @@ class McpServiceRepository:
 
         return services, total
 
-    def get_all_not_include(self, ids: List[str], tenant_id: str) -> List[McpService]:
+    def get_all_not_include(self, ids: List[str], tenant_id: Optional[str] = None) -> List[McpService]:
         """Get all services not include in ids"""
-        return self.db.query(McpService).order_by(McpService.created_at.desc()).filter(McpService.id.not_in(ids), McpService.tenant_id == tenant_id).all()
+        query = self.db.query(McpService).filter(McpService.id.not_in(ids))
+        if tenant_id:
+            query = query.filter(McpService.tenant_id == tenant_id)
+        return query.order_by(McpService.created_at.desc()).all()
 
     def create(self, mcp_service: McpService) -> McpService:
         """Create a service; set timestamps if missing and persist."""

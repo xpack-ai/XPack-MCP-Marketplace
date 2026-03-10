@@ -94,17 +94,17 @@ class McpManagerService:
             logger.warning(f"Failed to delete service price cache - Service ID: {service_id}: {str(e)}")
 
 
-    def update_enabled(self, id: str, enabled: int, tenant_id: str = "default") -> McpService:
+    def update_enabled(self, id: str, enabled: int, tenant_id: Optional[str] = None) -> McpService:
         return self.mcp_service_repository.update_enabled(id, enabled, tenant_id)
 
-    def delete(self, id: str, tenant_id: str = "default") -> Optional[McpService]:
+    def delete(self, id: str, tenant_id: Optional[str] = None) -> Optional[McpService]:
         service = self.mcp_service_repository.get_by_id(id, tenant_id)
         if not service:
             raise ValueError("Service not found")
         self._delete_service_price_cache(id)
         service = self.drop_mcp_service_repository.create(DropMCPService(
             id=id,
-            tenant_id=tenant_id,
+            tenant_id=service.tenant_id,
             name=service.name,
             slug_name=service.slug_name,
             short_description=service.short_description,
@@ -114,7 +114,7 @@ class McpManagerService:
             raise ValueError("Failed to create drop service")
         return self.mcp_service_repository.delete(id, tenant_id)
 
-    def update(self, body: dict, tenant_id: str = "default") -> bool:
+    def update(self, body: dict, tenant_id: Optional[str] = None) -> bool:
         # Update mcp_service
         service_id = body.get("id")
         if not service_id:
@@ -292,10 +292,10 @@ class McpManagerService:
 
         return True
 
-    def get_by_id(self, id: str, tenant_id: str = "default") -> Optional[McpService]:
+    def get_by_id(self, id: str, tenant_id: Optional[str] = None) -> Optional[McpService]:
         return self.mcp_service_repository.get_by_id(id, tenant_id=tenant_id)
 
-    def get_service_info(self, id: str, tenant_id: str = "default") -> Optional[dict]:
+    def get_service_info(self, id: str, tenant_id: Optional[str] = None) -> Optional[dict]:
         """Get service details including API list"""
         service = self.mcp_service_repository.get_by_id(id, tenant_id=tenant_id)
         if not service:
