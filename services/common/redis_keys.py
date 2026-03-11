@@ -24,9 +24,9 @@ class RedisKeys:
         return f"xpack:openapi:parse:{parse_id}"
 
     @staticmethod
-    def sys_config_key(config_key: str, tenant_id: str = "default") -> str:
+    def sys_config_key(config_key: str) -> str:
         """Generate system config cache key"""
-        return f"xpack:sys_config:{tenant_id}:{config_key}"
+        return f"xpack:sys_config:{config_key}"
 
     @staticmethod
     def mcp_service_id_key(service_id: str) -> str:

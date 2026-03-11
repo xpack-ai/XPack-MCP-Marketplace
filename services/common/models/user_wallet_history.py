@@ -32,7 +32,6 @@ class UserWalletHistory(Base):
     user_id: Mapped[str] = mapped_column(
         String(36), nullable=False, comment="User unique ID (UUID format)"
     )
-    
     payment_method: Mapped[PaymentMethod] = mapped_column(
         Enum(PaymentMethod, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,

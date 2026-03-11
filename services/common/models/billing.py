@@ -10,7 +10,6 @@ from typing import Optional
 class BillingMessage:
     user_id: str
     service_id: str
-    tenant_id: str
     api_id: str
     tool_name: str
     input_params: str

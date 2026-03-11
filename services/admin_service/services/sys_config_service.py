@@ -22,19 +22,19 @@ class SysConfigService:
             logger.warning(f"Redis connection failed, cache will be disabled: {e}")
             self.redis_client = None
 
-    def get_all(self, keys: List[str] = [], is_large: bool= False, tenant_id: str = "default") -> Dict[str, str]:
+    def get_all(self, keys: List[str] = [], is_large: bool= False) -> Dict[str, str]:
         if is_large:
-            return self.sys_config_large_repository.get_all(keys, tenant_id)
-        return  self.sys_config_repository.get_all(keys, tenant_id)
+            return self.sys_config_large_repository.get_all(keys)
+        return  self.sys_config_repository.get_all(keys)
 
-    def get_value_by_key(self, key: str, is_large:bool = False, tenant_id: str = "default") -> str:
+    def get_value_by_key(self, key: str, is_large:bool = False) -> str:
         if is_large:
-            sys_config = self.sys_config_large_repository.get_by_key(key, tenant_id)
+            sys_config = self.sys_config_large_repository.get_by_key(key)
             if sys_config:
                 return sys_config.value
             return ""
         """Get config value, prioritize cache, fallback to database if cache miss"""
-        cache_key = RedisKeys.sys_config_key(key, tenant_id)
+        cache_key = RedisKeys.sys_config_key(key)
 
         if self.redis_client:
             try:
@@ -46,7 +46,7 @@ class SysConfigService:
                 logger.warning(f"Failed to get cache for key {key}: {e}")
 
         try:
-            value = self.sys_config_repository.get_value_by_key(key, tenant_id)
+            value = self.sys_config_repository.get_value_by_key(key)
 
             if self.redis_client:
                 try:
@@ -61,34 +61,34 @@ class SysConfigService:
             logger.error(f"Failed to get sys_config {key} from database: {e}")
             return ""
 
-    def delete_by_key(self, key: str, tenant_id: str = "default") -> bool:
+    def delete_by_key(self, key: str) -> bool:
         """Delete config and clear cache"""
-        result = self.sys_config_repository.delete_by_key(key, tenant_id)
+        result = self.sys_config_repository.delete_by_key(key)
         if result:
             self._clear_cache(key)
         return result
 
-    def set_value_by_key(self, key: str, value: str, description: str, is_large:bool = False, tenant_id: str = "default"):
+    def set_value_by_key(self, key: str, value: str, description: str, is_large:bool = False):
         if is_large:
-            self.sys_config_large_repository.set_value_by_key(key=key, value=value, description=description, tenant_id=tenant_id)
+            self.sys_config_large_repository.set_value_by_key(key=key, value=value, description=description)
             return 
         """Set config value and clear cache"""
-        result = self.sys_config_repository.set_value_by_key(key=key, value=value, description=description, tenant_id=tenant_id)
+        result = self.sys_config_repository.set_value_by_key(key=key, value=value, description=description)
         if result:
-            self._clear_cache(key, tenant_id)
+            self._clear_cache(key)
         return
 
-    def _clear_cache(self, key: str, tenant_id: str = "default") -> None:
+    def _clear_cache(self, key: str) -> None:
         """Clear cache for specified config"""
         if self.redis_client:
             try:
-                cache_key = RedisKeys.sys_config_key(key, tenant_id)
+                cache_key = RedisKeys.sys_config_key(key)
                 self.redis_client.delete(cache_key)
                 logger.debug(f"Cleared cache for sys_config {key}")
             except Exception as e:
                 logger.warning(f"Failed to clear cache for key {key}: {e}")
 
-    def get_multiple_values(self, keys: List[str], tenant_id: str = "default") -> Dict[str, Optional[str]]:
+    def get_multiple_values(self, keys: List[str]) -> Dict[str, Optional[str]]:
         """Get multiple config values with optimized performance"""
         result = {}
         cache_miss_keys = []
@@ -96,7 +96,7 @@ class SysConfigService:
         if self.redis_client and keys:
             for key in keys:
                 try:
-                    cache_key = RedisKeys.sys_config_key(key, tenant_id)
+                    cache_key = RedisKeys.sys_config_key(key)
                     cached_value = self.redis_client.get(cache_key)
                     if cached_value is not None:
                         result[key] = None if cached_value == "__NULL__" else cached_value
@@ -112,12 +112,12 @@ class SysConfigService:
         if cache_miss_keys:
             try:
                 for key in cache_miss_keys:
-                    value = self.sys_config_repository.get_value_by_key(key, tenant_id)
+                    value = self.sys_config_repository.get_value_by_key(key)
                     result[key] = value
 
                     if self.redis_client:
                         try:
-                            cache_key = RedisKeys.sys_config_key(key, tenant_id)
+                            cache_key = RedisKeys.sys_config_key(key)
                             cache_value = "__NULL__" if value is None else value
                             self.redis_client.set(cache_key, cache_value, ex=3600)
                             logger.debug(f"Cached sys_config {key} for 1 hour")

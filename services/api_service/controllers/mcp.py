@@ -5,7 +5,9 @@ Supports both service_id (UUID) and slug_name service identifiers
 
 from typing import Optional
 from datetime import datetime, timezone
+from sqlalchemy import false
 from starlette.requests import Request
+from starlette.responses import Response
 import asyncio
 import time
 import hashlib
@@ -54,8 +56,8 @@ class McpController:
         
         try:
             # Extract service_id from URL path (supports both ID and slug_name)
-            service_id,tenant_id = self._extract_service_id(request)
-            if not service_id or not tenant_id:
+            service_id = self._extract_service_id(request)
+            if not service_id:
                 logger.error("Missing service_id parameter or service not found")
                 # For SSE connection errors, we need to send response directly via ASGI interface
                 await self._send_error_response(request, 400, "Missing service_id parameter or service not found")
@@ -79,7 +81,7 @@ class McpController:
             apikey_for_log = apikey[:10] if apikey else None
 
             # Create MCP server instance (pass user_id and apikey_id for billing and logging)
-            mcp_server = await self.server_factory.create_server(service_id,tenant_id, user_id, apikey_id)
+            mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
 
             # Register connection to manager
             connection_key = connection_manager.register_connection(service_id, user_id, client_ip)
@@ -147,9 +149,9 @@ class McpController:
 
             try:
                 # Extract service_id from URL path (supports both ID and slug_name)
-                service_id,tenant_id = self._extract_service_id(req)
-                if not service_id or not tenant_id:
-                    response_body = b"Missing service_id or tenant_id parameter or service not found"
+                service_id = self._extract_service_id(req)
+                if not service_id:
+                    response_body = b"Missing service_id parameter or service not found"
                     await send({
                         'type': 'http.response.start',
                         'status': 400,
@@ -195,7 +197,7 @@ class McpController:
                     return
 
                 # Create MCP server instance (pass user_id and apikey_id for billing and logging)
-                mcp_server = await self.server_factory.create_server(service_id,tenant_id, user_id, apikey_id)
+                mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
 
                 # Register connection to manager
                 connection_key = connection_manager.register_connection(service_id, user_id, client_ip)
@@ -270,9 +272,9 @@ class McpController:
 
             try:
                 # Extract service_id from URL path (supports both ID and slug_name)
-                service_id,tenant_id = self._extract_service_id(req)
-                if not service_id or not tenant_id:
-                    response_body = b"Missing service_id or tenant_id parameter or service not found"
+                service_id = self._extract_service_id(req)
+                if not service_id:
+                    response_body = b"Missing service_id parameter or service not found"
                     await send({
                         'type': 'http.response.start',
                         'status': 400,
@@ -388,7 +390,7 @@ class McpController:
 
                 try:
                     # Get or create a persistent StreamableHTTP transport and MCP server
-                    transport = await self._ensure_http_session(session_key, service_id,tenant_id, user_id, apikey_id)
+                    transport = await self._ensure_http_session(session_key, service_id, user_id, apikey_id)
                     logger.debug(f"method: {req.method}, content_type: {content_type}")
                     # Note session activity
                     self._note_session_activity(session_key)
@@ -518,7 +520,7 @@ class McpController:
             logger.exception("Origin validation error")
             return False
 
-    async def _ensure_http_session(self, session_key: str, service_id: str, tenant_id: str, user_id: str, apikey_id: str) -> StreamableHTTPServerTransport:
+    async def _ensure_http_session(self, session_key: str, service_id: str, user_id: str, apikey_id: str) -> StreamableHTTPServerTransport:
         """Ensure a persistent StreamableHTTP transport and MCP server exist for the session.
 
         - Create or reuse the transport
@@ -537,7 +539,7 @@ class McpController:
             # If no task or the task is finished, restart
             mcp_server = self._http_servers.get(session_key)
             if mcp_server is None:
-                mcp_server = await self.server_factory.create_server(service_id,tenant_id, user_id, apikey_id)
+                mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
                 self._http_servers[session_key] = mcp_server
             init_options = mcp_server.create_initialization_options()
             init_options.server_name = f"mcp-service-{service_id}"
@@ -602,11 +604,11 @@ class McpController:
             except Exception:
                 logger.exception("Error while waiting for server task to finish")
 
-    def _extract_service_id(self, request: Request) -> tuple[Optional[str], Optional[str]]:
+    def _extract_service_id(self, request: Request) -> Optional[str]:
         """Extract service ID from request path, supporting both ID and slug_name."""
         service_identifier = request.path_params.get("service_id")
         if not service_identifier:
-            return None, None
+            return None
             
         # Try to find service by service_identifier, supports both ID and slug_name modes
         db = None
@@ -621,20 +623,20 @@ class McpController:
             service = service_repository.get_by_id(service_identifier)
             if service:
                 logger.debug(f"Service found (by ID): {service.name} ({service.id})")
-                return service.id,service.tenant_id
+                return service.id
             
             # If not found by ID, try by slug_name
             service = service_repository.get_by_slug_name(service_identifier)
             if service:
                 logger.debug(f"Service found (by slug_name): {service.name} ({service.id})")
-                return service.id,service.tenant_id
+                return service.id
                 
             logger.warning(f"Service not found: {service_identifier}")
-            return None, None
+            return None
             
         except Exception as e:
             logger.error(f"Error occurred while querying service: {str(e)}", exc_info=True)
-            return None, None
+            return None
         finally:
             if db is not None:
                 db.close()

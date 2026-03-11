@@ -14,14 +14,13 @@ class StatsMcpServiceDateRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def insert(self, service_id: str, tenant_id: str, stats_date: datetime, call_count: int = 1, ) -> StatsMcpServiceDate:
+    def insert(self, service_id: str, stats_date: datetime, call_count: int = 1) -> StatsMcpServiceDate:
         """Insert a new hourly stats record.
 
         Raises on duplicate primary key; use update or upsert if unsure.
         """
         record = StatsMcpServiceDate()
         record.service_id = service_id
-        record.tenant_id = tenant_id
         record.stats_date = stats_date
         record.call_count = call_count
         self.db.add(record)
@@ -29,7 +28,7 @@ class StatsMcpServiceDateRepository:
         self.db.refresh(record)
         return record
 
-    def update(self, service_id: str, tenant_id: str, stats_date: datetime, call_count: int, ) -> Optional[StatsMcpServiceDate]:
+    def update(self, service_id: str, stats_date: datetime, call_count: int) -> Optional[StatsMcpServiceDate]:
         """Update existing hourly stats record's call_count.
 
         Returns the updated record, or None if not found.
@@ -39,7 +38,6 @@ class StatsMcpServiceDateRepository:
             .filter(
                 StatsMcpServiceDate.service_id == service_id,
                 StatsMcpServiceDate.stats_date == stats_date,
-                StatsMcpServiceDate.tenant_id == tenant_id,
             )
             .first()
         )
@@ -84,7 +82,7 @@ class StatsMcpServiceDateRepository:
         """Get total call count for a service within optional date range."""
         day_col = func.date(StatsMcpServiceDate.stats_date)
         query = self.db.query(func.coalesce(func.sum(StatsMcpServiceDate.call_count), 0)).filter(
-            StatsMcpServiceDate.service_id == service_id,
+            StatsMcpServiceDate.service_id == service_id
         )
         if start_date is not None:
             query = query.filter(day_col >= start_date)
@@ -99,26 +97,26 @@ class StatsMcpServiceDateRepository:
         Implementation uses MySQL's ON DUPLICATE KEY UPDATE to avoid race conditions.
         If the row does not exist, it will be inserted with call_count=inc; otherwise, call_count is increased.
         """
-        table: Table = cast(Table, StatsMcpServiceDate.__table__)
-        try:
-            stmt = mysql_insert(table).values(
-                service_id=service_id,
-                stats_date=stats_date,
-                call_count=inc,
-                created_at=func.current_timestamp(),
-                updated_at=func.current_timestamp(),
-            )
-            ondup = stmt.on_duplicate_key_update(
-                call_count=table.c.call_count + inc,
-                updated_at=func.current_timestamp(),
-            )
-            self.db.execute(ondup)
-            self.db.commit()
-        except Exception:
-            self.db.rollback()
-            raise
+        # Logger for debug purposes
+        print(f"Incrementing call count for service {service_id} on {stats_date} by {inc}")
 
-    def increment_fallback(self, service_id: str,tenant_id: str, stats_date: datetime, inc: int = 1) -> None:
+        # Cast mapped table for typing compatibility with mysql_insert
+        table: Table = cast(Table, StatsMcpServiceDate.__table__)
+        stmt = mysql_insert(table).values(
+            service_id=service_id,
+            stats_date=stats_date,
+            call_count=inc,
+            created_at=func.current_timestamp(),
+            updated_at=func.current_timestamp(),
+        )
+        ondup = stmt.on_duplicate_key_update(
+            call_count=table.c.call_count + inc,
+            updated_at=func.current_timestamp(),
+        )
+        self.db.execute(ondup)
+        self.db.commit()
+
+    def increment_fallback(self, service_id: str, stats_date: datetime, inc: int = 1) -> None:
         """Fallback increment strategy without dialect-specific upsert.
 
         Tries to insert; on duplicate key, rolls back and performs an in-place atomic update: call_count = call_count + inc.
@@ -126,12 +124,11 @@ class StatsMcpServiceDateRepository:
         """
         try:
             # Try insert first
-            self.insert(service_id, tenant_id, stats_date, inc)
+            self.insert(service_id, stats_date, inc)
         except IntegrityError:
             # Record exists, perform atomic UPDATE
             self.db.rollback()
             self.db.query(StatsMcpServiceDate).filter(
-                StatsMcpServiceDate.tenant_id == tenant_id,
                 StatsMcpServiceDate.service_id == service_id,
                 StatsMcpServiceDate.stats_date == stats_date,
             ).update(
@@ -145,7 +142,6 @@ class StatsMcpServiceDateRepository:
     
     def stats_call_count(
         self,
-        tenant_id: str,
         start_at: Optional[datetime] = None,
         end_at: Optional[datetime] = None,
     ) -> int:
@@ -170,17 +166,12 @@ class StatsMcpServiceDateRepository:
         if end_at is not None:
             end_local = end_at.astimezone().replace(tzinfo=None) if end_at.tzinfo is not None else end_at
             query = query.filter(local_dt <= end_local)
-        
-        query = query.filter(
-            StatsMcpServiceDate.tenant_id == tenant_id,
-        )
-        
+
         total = query.scalar()
         return int(total or 0)
 
     def stats_call_count_trend(
         self,
-        tenant_id: str,
         start_at: Optional[datetime] = None,
         end_at: Optional[datetime] = None,
     ) -> list:
@@ -200,7 +191,7 @@ class StatsMcpServiceDateRepository:
             self.db.query(
                 day_col.label("stats_day"),
                 func.coalesce(func.sum(StatsMcpServiceDate.call_count), 0).label("total_count"),
-            ).filter(StatsMcpServiceDate.tenant_id == tenant_id)
+            )
         )
 
         # Apply local-time range filters to match grouping
