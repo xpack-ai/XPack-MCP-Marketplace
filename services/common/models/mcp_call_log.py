@@ -25,6 +25,7 @@ class McpCallLog(Base):
     )
     user_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="User ID")
     service_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="MCP service ID")
+    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="Tenant ID")
     api_id: Mapped[str] = mapped_column(String(100), nullable=False, comment="API tool ID")
     tool_name: Mapped[str] = mapped_column(String(200), nullable=False, comment="Tool name")
     input_params: Mapped[str] = mapped_column(Text, nullable=True, comment="Call parameters")

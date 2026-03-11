@@ -94,16 +94,17 @@ class McpManagerService:
             logger.warning(f"Failed to delete service price cache - Service ID: {service_id}: {str(e)}")
 
 
-    def update_enabled(self, id: str, enabled: int) -> McpService:
-        return self.mcp_service_repository.update_enabled(id, enabled)
+    def update_enabled(self, id: str, enabled: int, tenant_id: Optional[str] = None) -> McpService:
+        return self.mcp_service_repository.update_enabled(id, enabled, tenant_id)
 
-    def delete(self, id: str) -> Optional[McpService]:
-        service = self.mcp_service_repository.get_by_id(id)
+    def delete(self, id: str, tenant_id: Optional[str] = None) -> Optional[McpService]:
+        service = self.mcp_service_repository.get_by_id(id, tenant_id)
         if not service:
             raise ValueError("Service not found")
         self._delete_service_price_cache(id)
         service = self.drop_mcp_service_repository.create(DropMCPService(
             id=id,
+            tenant_id=service.tenant_id,
             name=service.name,
             slug_name=service.slug_name,
             short_description=service.short_description,
@@ -111,9 +112,9 @@ class McpManagerService:
         ))
         if not service:
             raise ValueError("Failed to create drop service")
-        return self.mcp_service_repository.delete(id)
+        return self.mcp_service_repository.delete(id, tenant_id)
 
-    def update(self, body: dict) -> bool:
+    def update(self, body: dict, tenant_id: Optional[str] = None) -> bool:
         # Update mcp_service
         service_id = body.get("id")
         if not service_id:
@@ -123,14 +124,14 @@ class McpManagerService:
         update_type = body.get("update_type", "default")
 
         # Get existing service
-        existing_service = self.mcp_service_repository.get_by_id(service_id)
+        existing_service = self.mcp_service_repository.get_by_id(service_id, tenant_id=tenant_id)
         if not existing_service:
             raise ValueError("Service not found")
 
         # If it's an openapi type update, need to migrate data from temporary table first
         if update_type == "openapi":
             # 1. Verify temporary data exists
-            temp_service = self.temp_mcp_service_repository.get_by_id(service_id)
+            temp_service = self.temp_mcp_service_repository.get_by_id(service_id,tenant_id=tenant_id)
             if not temp_service:
                 raise ValueError("No temporary data found for OpenAPI update")
 
@@ -175,7 +176,7 @@ class McpManagerService:
                 self.mcp_tool_api_repository.create(new_api)
 
             # 5. Clean up temporary table data
-            self.temp_mcp_service_repository.delete_by_service_id(service_id)
+            self.temp_mcp_service_repository.delete_by_service_id(service_id,tenant_id=tenant_id)
             self.temp_mcp_tool_api_repository.delete_by_service_id(service_id)
 
         # Execute regular update logic (applies to both types)
@@ -291,12 +292,12 @@ class McpManagerService:
 
         return True
 
-    def get_by_id(self, id: str) -> Optional[McpService]:
-        return self.mcp_service_repository.get_by_id(id)
+    def get_by_id(self, id: str, tenant_id: Optional[str] = None) -> Optional[McpService]:
+        return self.mcp_service_repository.get_by_id(id, tenant_id=tenant_id)
 
-    def get_service_info(self, id: str) -> Optional[dict]:
+    def get_service_info(self, id: str, tenant_id: Optional[str] = None) -> Optional[dict]:
         """Get service details including API list"""
-        service = self.mcp_service_repository.get_by_id(id)
+        service = self.mcp_service_repository.get_by_id(id, tenant_id=tenant_id)
         if not service:
             return None
 
@@ -322,15 +323,15 @@ class McpManagerService:
 
         return service_info
 
-    def get_all(self) -> List[McpService]:
-        return self.mcp_service_repository.get_all()
+    def get_all(self, tenant_id: str = "default") -> List[McpService]:
+        return self.mcp_service_repository.get_all(tenant_id)
 
-    def get_all_paginated(self, page: int = 1, page_size: int = 10,keyword: Optional[str] = None,filter_status: Optional[list] = None) -> Tuple[List[McpService], int]:
+    def get_all_paginated(self, tenant_id: str = "default", page: int = 1, page_size: int = 10,keyword: Optional[str] = None,filter_status: Optional[list] = None) -> Tuple[List[McpService], int]:
         """Get service list with pagination"""
-        return self.mcp_service_repository.get_all_paginated(page=page, page_size=page_size,keyword=keyword,filter_status=filter_status)
+        return self.mcp_service_repository.get_all_paginated(tenant_id=tenant_id, page=page, page_size=page_size,keyword=keyword,filter_status=filter_status)
 
-    def get_tags_list(self, enabled_only: bool = False) -> List[str]:
-        tags_strings = self.mcp_service_repository.get_tags_strings(enabled_only=enabled_only)
+    def get_tags_list(self,  enabled_only: bool = False) -> List[str]:
+        tags_strings = self.mcp_service_repository.get_tags_strings( enabled_only=enabled_only)
         tag_counts: dict[str, int] = {}
         canonical: dict[str, str] = {}
 
@@ -354,7 +355,7 @@ class McpManagerService:
         )
         return [canonical[normalized] for normalized in sorted_normalized]
 
-    def create_service_from_openapi(self, openapi_data: OpenApiForAI) -> str:
+    def create_service_from_openapi(self, openapi_data: OpenApiForAI, tenant_id: str = "default") -> str:
         # Convert OpenApiForAI info to McpService object and McpToolApi object list, return service ID or exception.
         try:
             # Generate service ID
@@ -373,7 +374,7 @@ class McpManagerService:
             while True:
                 # Check if slug_name already exists
                 try:
-                    existing_service = self.mcp_service_repository.get_by_slug_name(slug_name)
+                    existing_service = self.mcp_service_repository.get_by_slug_name(slug_name,tenant_id=tenant_id)
                     if not existing_service:
                         break
                 except AttributeError:
@@ -425,7 +426,7 @@ class McpManagerService:
             logger.error(f"Failed to create service from OpenAPI: {str(e)}")
             raise ValueError(f"Failed to create service from OpenAPI: {str(e)}")
 
-    def update_service_from_openapi(self, service_id: str, openapi_data: OpenApiForAI) -> dict:
+    def update_service_from_openapi(self, service_id: str, openapi_data: OpenApiForAI, tenant_id: str = "default") -> dict:
         """
         Update existing service based on OpenAPI data, save updated data to temporary table
 
@@ -441,12 +442,12 @@ class McpManagerService:
         """
         try:
             # 1. Check if original service exists
-            existing_service = self.mcp_service_repository.get_by_id(service_id)
+            existing_service = self.mcp_service_repository.get_by_id(service_id, tenant_id=tenant_id)
             if not existing_service:
-                raise ValueError(f"Service with ID {service_id} not found")
+                raise ValueError(f"Service with ID {service_id} not found, tenant_id: {tenant_id}")
 
             # 2. Clean up old temporary data for this service
-            self.temp_mcp_service_repository.delete_by_service_id(service_id)
+            self.temp_mcp_service_repository.delete_by_service_id(service_id, tenant_id=existing_service.tenant_id)
             self.temp_mcp_tool_api_repository.delete_by_service_id(service_id)
 
             # 3. Create updated temporary service record
@@ -513,9 +514,9 @@ class McpManagerService:
             logger.error(f"Failed to update service from OpenAPI: {str(e)}")
             raise ValueError(f"Failed to update service from OpenAPI.")
 
-    def get_public_services_paginated(self, keyword: str, page: int = 1, page_size: int = 10, tag: Optional[str] = None) -> Tuple[List[dict], int]:
+    def get_public_services_paginated(self, keyword: str, tenant_id: Optional[str] = None, page: int = 1, page_size: int = 10, tag: Optional[str] = None) -> Tuple[List[dict], int]:
         """Get public services list with pagination, returns formatted data with API info"""
-        services, total = self.mcp_service_repository.get_public_services_paginated(keyword, page, page_size, tag)
+        services, total = self.mcp_service_repository.get_public_services_paginated(keyword, tenant_id, page, page_size, tag)
 
         service_list = []
         for service in services:
@@ -548,13 +549,14 @@ class McpManagerService:
 
         return service_list, total
 
-    def get_public_service_info(self, id: str) -> Optional[dict]:
+    def get_public_service_info(self, id: str, tenant_id: str = "default") -> Optional[dict]:
         """Get public service details (only returns enabled services and APIs)"""
-        service = self.mcp_service_repository.get_by_id(id)
+        service = self.mcp_service_repository.get_by_id(id, tenant_id=tenant_id)
         if not service:
-            service = self.mcp_service_repository.get_by_slug_name(id)
-            if not service:
-                return None
+            return None
+        #     service = self.mcp_service_repository.get_by_slug_name(id)
+        #     if not service:
+        #         return None
         if service.enabled != 1:
             return None
 

@@ -162,8 +162,8 @@ class AuthService:
         # Cache user access token
         return user_access_token.token
 
-    def account_login(self, account: str, password: str) -> Optional[str]:
-        user = self.user_repository.get_by_account(account)
+    def account_login(self, account: str, password: str,role_id: int = 1) -> Optional[str]:
+        user = self.user_repository.get_by_account(account,role_id)
         if user is None:
             logger.warning(f"not found user, account: {account}")
             return None

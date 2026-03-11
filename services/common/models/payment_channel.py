@@ -12,6 +12,7 @@ class PaymentChannel(Base):
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
     """
     id: Mapped[str] = mapped_column(String(36), primary_key=True, autoincrement=False, comment="Primary key")
+    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="Tenant ID")
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Channel name")
     status: Mapped[int] = mapped_column(Integer, nullable=False, comment="Channel status, 0: disabled, 1: enabled")
     # Store encrypted JSON envelope for channel configuration (AES-GCM). See secure_config.py
