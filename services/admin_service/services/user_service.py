@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class UserService:
-    def __init__(self, db: Session = SessionLocal()):
+    def __init__(self, db: Session = SessionLocal(), tenant_id: Optional[str] = None):
+        self.tenant_id = tenant_id
         self.user_repository = UserRepository(db)
         self.user_wallet_repository = UserWalletRepository(db)
 
@@ -27,7 +28,7 @@ class UserService:
 
     def create(self, email: str, register_type: str, role_id: int = 2) -> Optional[User]:
         """Create new user"""
-        user = self.user_repository.create(email=email, register_type=register_type, role_id=role_id)
+        user = self.user_repository.create(email=email, register_type=register_type, role_id=role_id, tenant_id=self.tenant_id)
         if user:
             self.user_wallet_repository.create(user_id=user.id)
             return user
@@ -39,7 +40,10 @@ class UserService:
 
     def get_user_list(self, offset: int, limit: int, keyword: Optional[str] = None) -> Tuple[int, List[User]]:
         """Get user list"""
-        return self.user_repository.get_user_list(offset, limit, keyword)
+        if self.tenant_id:
+            return self.user_repository.get_user_list_by_tenant(offset, limit, self.tenant_id)
+        else:
+            return self.user_repository.get_user_list(offset, limit, keyword)
 
     def get_admin_user(self) -> Optional[User]:
         """Get admin user"""

@@ -28,7 +28,7 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
-    def create(self, email: str, register_type: str, role_id: int = 2, group_id: str = "", password: Optional[str] = None) -> Optional[User]:
+    def create(self, email: str, register_type: str, role_id: int = 2, group_id: str = "", password: Optional[str] = None, tenant_id: Optional[str] = None) -> Optional[User]:
         from uuid import uuid4
         from services.common.models.user import RegisterType
 
@@ -36,6 +36,7 @@ class UserRepository:
         now = datetime.now(timezone.utc)
         user = User(
             id=str(uuid4()),
+            tenant_id=tenant_id or "",
             name=name,
             email=email,
             password=password,
@@ -53,12 +54,13 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
-    def create_google_user(self, email: str, name: str, google_id: str, role_id: int = 2) -> Optional[User]:
+    def create_google_user(self, email: str, name: str, google_id: str, role_id: int = 2, tenant_id: Optional[str] = None) -> Optional[User]:
         from uuid import uuid4
         from services.common.models.user import RegisterType
 
         user = User(
             id=str(uuid4()),
+            tenant_id=tenant_id or "",
             name=name,
             email=email,
             avatar=None,
@@ -114,7 +116,6 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(admin_user)
         return admin_user
-    
     def get_registered_user_count(self, start_at: Optional[datetime] = None, end_at: Optional[datetime] = None) -> int:
         """
         Get total number of registered users
@@ -220,3 +221,18 @@ class UserRepository:
         if commit:
             self.db.commit()
         return users
+
+    def get_user_list_by_tenant(self, offset: int, limit: int, tenant_id: str, keyword: Optional[str] = None) -> Tuple[int, List[User]]:
+        """获取指定租户的用户列表 - 多租户支持"""
+        query = self.db.query(User).filter(User.is_deleted == 0, User.role_id == 2, User.tenant_id == tenant_id)
+        if keyword:
+            query = query.filter(User.email.like(f"%{keyword}%"))
+        total = query.count()
+
+        users = (
+            query
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+        return total, users
