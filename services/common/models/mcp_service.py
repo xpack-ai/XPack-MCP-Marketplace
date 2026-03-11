@@ -36,6 +36,8 @@ class McpService(Base):
     enabled: Mapped[int] = mapped_column(Integer, nullable=True, comment="Service status: 0=disabled, 1=enabled")
     tags: Mapped[str] = mapped_column(String, nullable=True, comment="Tags")
     service_type: Mapped[str] = mapped_column(String(255), nullable=True, comment="Service type",default="openapi")
+    category_id: Mapped[str] = mapped_column(String(36), nullable=True, comment="Category ID")
+    sort: Mapped[int] = mapped_column(Integer, nullable=True,default=0, comment="Sort order")
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=True,

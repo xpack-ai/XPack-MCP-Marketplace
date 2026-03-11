@@ -44,7 +44,8 @@ class McpServiceRepository:
         existing_service = query.first()
         if not existing_service:
             raise ValueError("Service not found")
-
+        
+        existing_service.category_id = mcp_service.category_id or ""
         existing_service.name = mcp_service.name
         existing_service.slug_name = mcp_service.slug_name
         existing_service.short_description = mcp_service.short_description
