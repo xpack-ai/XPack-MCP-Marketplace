@@ -14,7 +14,6 @@ class TempMcpService(Base):
         autoincrement=False,
         comment="Primary key",
     )
-    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="Tenant ID")
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Service name")
     slug_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Unique slug name for the service")
     short_description: Mapped[str] = mapped_column(String, nullable=False, comment="Short description of the service")

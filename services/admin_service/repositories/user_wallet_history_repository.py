@@ -323,7 +323,6 @@ class UserWalletHistoryRepository:
         Get list of orders based on filters.
 
         Args:
-            tenant_id: Tenant ID filter
             payment_method: Payment method filter
             status: Order status filter (0=new, 1=completed, 2=refunded)
             start: Start date for filtering

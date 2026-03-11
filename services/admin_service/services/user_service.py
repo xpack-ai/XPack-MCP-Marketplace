@@ -48,10 +48,6 @@ class UserService:
     def update_admin(self, name: str, password: str) -> Optional[User]:
         """Update admin user info"""
         return self.user_repository.update_admin_user(name=name, password=password)
-    
-    def update_password(self, user_id: str, password: str) -> Optional[User]:
-        """Update user password"""
-        return self.user_repository.update_password(user_id=user_id, password=password)
         
     def update_resource_group(self, user_id: str, group_id: str) -> Optional[User]:
         """Update user resource group"""

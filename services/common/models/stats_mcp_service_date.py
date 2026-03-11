@@ -15,21 +15,12 @@ class StatsMcpServiceDate(Base):
         comment="统计时间（精确到小时，UTC）",
     )
 
-    tenant_id: Mapped[str] = mapped_column(
-        String(100),
-        primary_key=True,
-        nullable=False,
-        default="default",
-        comment="租户ID",
-    )
-
     service_id: Mapped[str] = mapped_column(
         String(100),
         primary_key=True,
         nullable=False,
         comment="服务ID",
     )
-    
 
     call_count: Mapped[int] = mapped_column(
         Integer,

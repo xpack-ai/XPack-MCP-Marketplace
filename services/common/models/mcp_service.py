@@ -14,7 +14,6 @@ class McpService(Base):
         autoincrement=False,
         comment="Primary key",
     )
-    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, default="default", comment="Tenant ID")
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Service name")
     slug_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Unique slug name for the service")
     short_description: Mapped[str] = mapped_column(String, nullable=False, comment="Short description of the service")
@@ -36,8 +35,6 @@ class McpService(Base):
     enabled: Mapped[int] = mapped_column(Integer, nullable=True, comment="Service status: 0=disabled, 1=enabled")
     tags: Mapped[str] = mapped_column(String, nullable=True, comment="Tags")
     service_type: Mapped[str] = mapped_column(String(255), nullable=True, comment="Service type",default="openapi")
-    category_id: Mapped[str] = mapped_column(String(36), nullable=True, comment="Category ID")
-    sort: Mapped[int] = mapped_column(Integer, nullable=True,default=0, comment="Sort order")
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=True,
@@ -61,7 +58,6 @@ class DropMCPService(Base):
         autoincrement=False,
         comment="Primary key, service UUID",
     )
-    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, default="default", comment="Tenant ID")
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Service name")
     slug_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Unique service identifier (slug format)")
     short_description: Mapped[str] = mapped_column(String, nullable=False, comment="Brief service description")

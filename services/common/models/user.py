@@ -21,8 +21,6 @@ class User(Base):
         autoincrement=False,
         comment="Primary key, auto-incremented ID",
     )
-    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, comment="Tenant ID")
-
     name: Mapped[str] = mapped_column(String(100), nullable=False, comment="Username")
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, comment="Email address")
     password: Mapped[str] = mapped_column(String(255), nullable=True, comment="Password hash")
