@@ -28,10 +28,8 @@ class UserWalletHistoryService:
     def success_deposit_order_list(self, offset: int, limit: int, keyword: Optional[str] = None, sort_amount: Optional[str] = "desc", filter_payment_type: Optional[list] = None) -> Tuple[int, List[UserWalletHistory]]:
         userIds = None
         if keyword:
-            
             users = self.user_repository.get_all_user(keyword, include_deleted=True)
             userIds = [user.id for user in users]
-            print(f"users,{userIds},keyword:{keyword}")
             if len(userIds) == 0:
                 return 0, []
         return self.user_wallet_history_repository.success_deposit_order_list(offset, limit, userIds, sort_amount, filter_payment_type)

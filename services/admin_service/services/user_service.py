@@ -67,4 +67,13 @@ class UserService:
         except Exception as e:
             logger.error(f"Failed to update user resource group for user_id {user_id}: {e}", exc_info=True)
             return None
+
+    def get_all_user(self,keyword: Optional[str] = None,include_deleted: bool = False) -> List[User]:
+        """Get all user"""
+        return self.user_repository.get_all_user(keyword, include_deleted)
+
+    def get_all_user_ids(self,keyword: Optional[str] = None,include_deleted: bool = False) -> List[str]:
+        """Get all user IDs"""
+        users = self.get_all_user(keyword, include_deleted)
+        return [user.id for user in users]
           
