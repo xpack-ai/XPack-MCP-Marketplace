@@ -36,6 +36,7 @@ class SysConfigRepository:
             return sys_config
         sys_config = SysConfig(
             id=str(uuid.uuid4()),
+            tenant_id=tenant_id,
             key=key, 
             value=value,
             description=description,
