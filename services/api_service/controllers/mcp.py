@@ -622,9 +622,9 @@ class McpController:
             if service:
                 logger.debug(f"Service found (by ID): {service.name} ({service.id})")
                 return service.id,service.tenant_id
-            
+            tenant_id = request.query_params.get("tenant") or "default"
             # If not found by ID, try by slug_name
-            service = service_repository.get_by_slug_name(service_identifier)
+            service = service_repository.get_by_slug_name(tenant_id, service_identifier)
             if service:
                 logger.debug(f"Service found (by slug_name): {service.name} ({service.id})")
                 return service.id,service.tenant_id

@@ -128,7 +128,7 @@ def health_check():
     return {"status": "healthy", "service": "mcp-streamable-http"}
 
 @app.get("/mcp/status/{service_id}")
-def mcp_service_status(service_id: str):
+def mcp_service_status(service_id: str, tenant: str = "default"):
     """
     Check MCP service status for specified service
     Supports both service_id (UUID) and slug_name
@@ -151,7 +151,7 @@ def mcp_service_status(service_id: str):
             service_name = service.name
         else:
             # If not found by ID, try by slug_name
-            service = service_repository.get_by_slug_name(service_id)
+            service = service_repository.get_by_slug_name(tenant, service_id)
             if service:
                 actual_service_id = service.id
                 service_name = service.name

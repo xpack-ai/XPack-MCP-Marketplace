@@ -20,6 +20,9 @@ from services.common.database import get_db
 from services.api_service.repositories.mcp_service_repository import McpServiceRepository
 from services.api_service.repositories.user_wallet_repository import UserWalletRepository
 from services.common.logging_config import get_logger
+from services.common.redis_keys import RedisKeys
+
+
 
 logger = get_logger(__name__)
 
@@ -37,7 +40,7 @@ class BillingService:
         self.redis = redis_client
         self.rabbitmq = rabbitmq_client
 
-    async def check_and_pre_deduct(self, user_id: str, service_id: str, tool_name: str) -> PreDeductResult:
+    async def check_and_pre_deduct(self,  user_id: str,tenant_id: str, service_id: str, tool_name: str) -> PreDeductResult:
         """
         Check balance and perform pre-deduction
 
@@ -51,7 +54,7 @@ class BillingService:
         """
         try:
             # Get service price information
-            price, input_token_price, output_token_price, charge_type = await self._get_service_price(service_id)
+            price, input_token_price, output_token_price, charge_type = await self._get_service_price(tenant_id,service_id)
             service_price = price
             match charge_type:
                 case ChargeType.FREE:
@@ -153,7 +156,7 @@ class BillingService:
             logger.error(f"Failed to send billing message: {str(e)}", exc_info=True)
             # Consider saving failed messages to local queue for retry
 
-    async def _get_service_price(self, service_id: str) -> Tuple[Decimal, Decimal, Decimal, ChargeType]:
+    async def _get_service_price(self, tenant_id: str, service_id: str) -> Tuple[Decimal, Decimal, Decimal, ChargeType]:
         """
         Get service price and charge type
 
@@ -164,7 +167,7 @@ class BillingService:
             Tuple[Decimal, ChargeType]: Price and charge type
         """
         # Try to get from Redis cache
-        cache_key = f"xpack:service:price:{service_id}"
+        cache_key = RedisKeys.mcp_service_price_key(service_id)
         cached_data = self.redis.get(cache_key)
         if cached_data:
             try:

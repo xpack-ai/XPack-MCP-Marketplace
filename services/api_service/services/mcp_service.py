@@ -3,20 +3,18 @@ import ast
 import mcp.types as types
 from typing import List, Optional
 
-from sqlalchemy import false
 from services.common.models.mcp_tool_api import McpToolApi
 from services.common.models.mcp_service import McpService as McpServiceModel
 from services.api_service.repositories.mcp_tool_api_repository import McpToolApiRepository
 from services.api_service.repositories.mcp_service_repository import McpServiceRepository
 from services.common.logging_config import get_logger
 
-
 class McpService:
     """MCP service business logic layer"""
 
-    def __init__(self, tool_api_repository: McpToolApiRepository, service_repository: McpServiceRepository):
-        self.tool_api_repository = tool_api_repository
-        self.service_repository = service_repository
+    def __init__(self, db):
+        self.tool_api_repository = McpToolApiRepository(db)
+        self.service_repository = McpServiceRepository(db)
         self.logger = get_logger(__name__)
 
     def _safe_parse_params(self, params_str: str, tool_name: str, param_type: str) -> list:
