@@ -8,6 +8,7 @@ from mcp.shared._httpx_utils import create_mcp_http_client
 from services.api_service.utils.http_client import HttpRequestBuilder
 from services.common.logging_config import get_logger
 from services.common.models.mcp_service import McpService
+from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 
@@ -15,8 +16,9 @@ logger = get_logger(__name__)
 class McpToolService:
     """MCP tool service class"""
     
-    def __init__(self):
+    def __init__(self, db: Optional[Session] = None):
         self.http_builder = HttpRequestBuilder()
+        self.db = db
     
     async def execute_tool(self, tool_config, arguments: dict, call_params: dict, service: Optional[McpService] = None) -> tuple[List[types.Content],dict,bool]:
         """
