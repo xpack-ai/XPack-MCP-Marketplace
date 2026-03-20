@@ -207,6 +207,7 @@ class McpServerFactory:
             logger.debug(f"Call params: {call_params}")
             service = mcp_service.get_service_by_id(service_id)
             # Execute tool
+            self.tool_service.db = db
             result,response_data,call_success = await self.tool_service.execute_tool(tool_config, arguments, call_params,service)
             if call_success:
                 validation_ok, validation_msg = self._validate_output_schema(tool_config, response_data)
