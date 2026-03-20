@@ -1,5 +1,6 @@
 """Repository for MCP services in API service: cached reads by ID/slug."""
 from sqlalchemy.orm import Session
+from services.common.redis_keys import RedisKeys
 from services.common.models.mcp_service import McpService
 from services.common.utils.cache_utils import CacheUtils
 from typing import Optional, List
@@ -14,11 +15,11 @@ class McpServiceRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_by_id(self, service_id: str, force_update: bool = False) -> Optional[McpService]:
+    def get_by_id(self,  service_id: str,  force_update: bool = False) -> Optional[McpService]:
         """
         Get single MCP service by service ID 
         """
-        cache_key = f"xpack:mcp_service:id:{service_id}"
+        cache_key = RedisKeys.mcp_service_id_key(service_id)
         if not force_update:
             # Try to get from cache using SQLAlchemy-specific method
             cached_model = CacheUtils.get_sqlalchemy_cache(cache_key, McpService)
@@ -34,11 +35,11 @@ class McpServiceRepository:
 
         return None
 
-    def get_by_slug_name(self, slug_name: str) -> Optional[McpService]:
+    def get_by_slug_name(self, tenant_id: str, slug_name: str) -> Optional[McpService]:
         """
         Get single MCP service by slug name
         """
-        cache_key = f"xpack:mcp_service:slug:{slug_name}"
+        cache_key = RedisKeys.mcp_service_slug_key(tenant_id, slug_name)
 
         # Try to get from cache using SQLAlchemy-specific method
         cached_model = CacheUtils.get_sqlalchemy_cache(cache_key, McpService)

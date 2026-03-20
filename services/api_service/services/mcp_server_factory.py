@@ -123,7 +123,7 @@ class McpServerFactory:
         logger.debug(f"Tool arguments: {arguments}")
 
         # 1. Pre-deduction check
-        pre_deduct_result = await self.billing_service.check_and_pre_deduct(user_id, service_id, name)
+        pre_deduct_result = await self.billing_service.check_and_pre_deduct(user_id, tenant_id, service_id, name)
         if not pre_deduct_result.success:
             logger.warning(f"Pre-deduction failed: {pre_deduct_result.message}")
             error_msg = f"Billing check failed: {pre_deduct_result.message}"
@@ -205,9 +205,9 @@ class McpServerFactory:
             # Get service authentication info
             call_params = mcp_service.get_service_call_params(service_id)
             logger.debug(f"Call params: {call_params}")
-
+            service = mcp_service.get_service_by_id(service_id)
             # Execute tool
-            result,response_data,call_success = await self.tool_service.execute_tool(tool_config, arguments, call_params)
+            result,response_data,call_success = await self.tool_service.execute_tool(tool_config, arguments, call_params,service)
             if call_success:
                 validation_ok, validation_msg = self._validate_output_schema(tool_config, response_data)
                 
@@ -327,6 +327,4 @@ class McpServerFactory:
         Returns:
             McpService: MCP service instance
         """
-        tool_api_repository = McpToolApiRepository(db)
-        service_repository = McpServiceRepository(db)
-        return McpService(tool_api_repository, service_repository)
+        return McpService(db)

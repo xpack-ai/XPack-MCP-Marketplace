@@ -2,11 +2,12 @@
 MCP tool service - Business logic for executing MCP tool calls
 """
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import mcp.types as types
 from mcp.shared._httpx_utils import create_mcp_http_client
 from services.api_service.utils.http_client import HttpRequestBuilder
 from services.common.logging_config import get_logger
+from services.common.models.mcp_service import McpService
 
 logger = get_logger(__name__)
 
@@ -17,7 +18,7 @@ class McpToolService:
     def __init__(self):
         self.http_builder = HttpRequestBuilder()
     
-    async def execute_tool(self, tool_config, arguments: dict, call_params: dict) -> tuple[List[types.Content],dict,bool]:
+    async def execute_tool(self, tool_config, arguments: dict, call_params: dict, service: Optional[McpService] = None) -> tuple[List[types.Content],dict,bool]:
         """
         Execute tool call
         

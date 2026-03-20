@@ -3,6 +3,11 @@ class RedisKeys:
     @staticmethod
     def all_users_key() -> str:
         return "xpack:all_users"
+    
+    @staticmethod
+    def mcp_service_price_key(service_id: str) -> str:
+        """Generate MCP service price cache key"""
+        return f"xpack:service:price:{service_id}"
 
     @staticmethod
     def user_access_token_key(token: str) -> str:
@@ -34,9 +39,9 @@ class RedisKeys:
         return f"xpack:mcp_service:id:{service_id}"
 
     @staticmethod
-    def mcp_service_slug_key(slug_name: str) -> str:
+    def mcp_service_slug_key(tenant_id:str,slug_name: str) -> str:
         """Generate MCP service cache key by slug name"""
-        return f"xpack:mcp_service:slug:{slug_name}"
+        return f"xpack:mcp_service:slug:{tenant_id}:{slug_name}"
 
     @staticmethod
     def user_apikey_key(apikey_hash: str) -> str:

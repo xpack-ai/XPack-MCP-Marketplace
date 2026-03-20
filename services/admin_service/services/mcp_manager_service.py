@@ -15,6 +15,7 @@ from services.common.models.temp_mcp_service import TempMcpService, ChargeType a
 from services.common.models.temp_mcp_tool_api import TempMcpToolApi, HttpMethod as TempHttpMethod
 from services.admin_service.services.openapi_helper import OpenApiForAI
 from services.common.redis import redis_client 
+from services.common.redis_keys import RedisKeys
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ class McpManagerService:
             new_balance: New balance
         """
         try:
-            cache_key = f"xpack:service:price:{service_id}"
+            cache_key = RedisKeys.mcp_service_price_key(service_id)
             self.redis.delete(cache_key)  # 5 minutes expiration
         except Exception as e:
             logger.warning(f"Failed to delete service price cache - Service ID: {service_id}: {str(e)}")
