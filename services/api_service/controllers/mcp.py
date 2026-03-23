@@ -638,7 +638,7 @@ class McpController:
         finally:
             if db is not None:
                 db.close()
-    def _check_invoke_permission(self, user_id: str, service_id: str) -> bool:
+    def _check_invoke_permission(self, user_id: str, service_id: str, apikey_id: str) -> bool:
         db = None
         try:
             # Create database session
