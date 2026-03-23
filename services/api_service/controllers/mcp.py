@@ -562,7 +562,7 @@ class McpController:
             is_json_response_enabled=False,
             event_store=event_store,
         )
-        mcp_server = await self.server_factory.create_server(service_id, user_id, apikey_id)
+        mcp_server = await self.server_factory.create_server(service_id,tenant_id, user_id, apikey_id)
         self._http_transports[session_key] = transport
         self._http_servers[session_key] = mcp_server
 
