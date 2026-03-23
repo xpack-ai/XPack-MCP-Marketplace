@@ -181,7 +181,7 @@ class McpController:
                 user_id, apikey_id = user_info
                 
                 # Check invoke permission
-                if not self._check_invoke_permission(user_id, service_id):
+                if not self._check_invoke_permission(user_id, service_id,apikey_id):
                     response_body = b"Invoke permission denied"
                     await send({
                         'type': 'http.response.start',
@@ -364,7 +364,7 @@ class McpController:
                     await send({'type': 'http.response.body', 'body': response_body})
                     return
                 user_id, apikey_id = user_info
-                if not self._check_invoke_permission(user_id, service_id):
+                if not self._check_invoke_permission(user_id, service_id,apikey_id):
                     response_body = b"Invoke permission denied"
                     await send({
                         'type': 'http.response.start',
