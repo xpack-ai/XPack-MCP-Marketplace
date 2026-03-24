@@ -84,9 +84,11 @@ class UserRepository:
         self.db.refresh(user)
         return user
     
-    def get_all_user(self,keyword: Optional[str] = None,include_deleted: bool = False) -> List[User]:
+    def get_all_user(self,keyword: Optional[str] = None,include_deleted: bool = False, all_role: bool=False) -> List[User]:
         """Get all user"""
-        query = self.db.query(User).filter(User.role_id == 2)
+        query = self.db.query(User)
+        if not all_role:
+            query = query.filter(User.role_id == 2)
         if not include_deleted:
             query = query.filter(User.is_deleted == 0)
         if keyword:
