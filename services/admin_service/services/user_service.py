@@ -68,12 +68,12 @@ class UserService:
             logger.error(f"Failed to update user resource group for user_id {user_id}: {e}", exc_info=True)
             return None
 
-    def get_all_user(self,keyword: Optional[str] = None,include_deleted: bool = False) -> List[User]:
+    def get_all_user(self,keyword: Optional[str] = None,include_deleted: bool = False, all_role: bool=False) -> List[User]:
         """Get all user"""
-        return self.user_repository.get_all_user(keyword, include_deleted)
+        return self.user_repository.get_all_user(keyword, include_deleted, all_role)
 
-    def get_all_user_ids(self,keyword: Optional[str] = None,include_deleted: bool = False) -> List[str]:
+    def get_all_user_ids(self,keyword: Optional[str] = None,include_deleted: bool = False, all_role: bool=False) -> List[str]:
         """Get all user IDs"""
-        users = self.get_all_user(keyword, include_deleted)
+        users = self.get_all_user(keyword, include_deleted, all_role)
         return [user.id for user in users]
           
