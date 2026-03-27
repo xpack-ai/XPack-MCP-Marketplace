@@ -60,10 +60,8 @@ def get_public_mcp_tags(
 
 @router.get("/mcp_service_info", summary="Get public MCP service information")
 def get_public_mcp_service_info(
-    request: Request,
     id: str = Query(..., description="Service ID"),
     mcp_manager_service: McpManagerService = Depends(get_mcp_manager),
-    resource_group_service: ResourceGroupService = Depends(get_resource_group_service),
 ):
     """Get detailed information of a public MCP service by ID."""
 
