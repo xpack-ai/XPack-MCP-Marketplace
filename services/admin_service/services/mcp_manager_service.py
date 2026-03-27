@@ -554,10 +554,9 @@ class McpManagerService:
         """Get public service details (only returns enabled services and APIs)"""
         service = self.mcp_service_repository.get_by_id(id, tenant_id=tenant_id)
         if not service:
-            return None
-        #     service = self.mcp_service_repository.get_by_slug_name(id)
-        #     if not service:
-        #         return None
+            service = self.mcp_service_repository.get_by_slug_name(id)
+            if not service:
+                return None
         if service.enabled != 1:
             return None
 
