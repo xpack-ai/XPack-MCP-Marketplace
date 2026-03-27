@@ -12,6 +12,7 @@ import os
 from services.common.config import Config
 from services.common.database import get_db
 from services.admin_service.services.billing_message_handler import BillingMessageHandler
+from services.common.rabbitmq import rabbitmq_client
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,8 @@ class BillingMessageConsumer:
         self.connection = None
         self.channel = None
         self.consuming = False
+        # retry times from env, default 3
+        self.max_retries = int(os.getenv("BILLING_RETRY_TIMES", "3"))
         self._setup_connection()
 
     def _setup_connection(self):
@@ -140,9 +143,21 @@ class BillingMessageConsumer:
                     channel.basic_ack(delivery_tag=method.delivery_tag)
                     logger.info(f"Message processed and acknowledged: {message_data.get('user_id')}")
                 else:
-                    # If failed, ack and drop (avoid infinite retry)
-                    channel.basic_ack(delivery_tag=method.delivery_tag)
-                    logger.error(f"Message processing failed, message dropped: {message_data.get('user_id')}")
+                    # Retry with limited attempts
+                    retry_count = self._get_retry_count(properties)
+                    if retry_count < self.max_retries:
+                        try:
+                            rabbitmq_client.publish(self.queue_name, json.dumps(message_data), persistent=True, headers={"x-retry-count": retry_count + 1})
+                            channel.basic_ack(delivery_tag=method.delivery_tag)
+                            logger.warning(f"Message processing failed, requeued for retry {retry_count + 1}/{self.max_retries}: {message_data.get('user_id')}")
+                        except Exception as pub_err:
+                            logger.error(f"Failed to requeue message for retry: {pub_err}", exc_info=True)
+                            # Requeue original message
+                            channel.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
+                    else:
+                        # Exceeded retries; ack and drop
+                        channel.basic_ack(delivery_tag=method.delivery_tag)
+                        logger.error(f"Message processing failed, retries exceeded; message dropped: {message_data.get('user_id')}")
 
             finally:
                 db.close()

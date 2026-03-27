@@ -11,17 +11,20 @@ class McpCallLogRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, call_log: McpCallLog) -> McpCallLog:
+    def create(self, call_log: McpCallLog, commit: bool = True) -> McpCallLog:
         self.db.add(call_log)
-        self.db.commit()
-        self.db.refresh(call_log)
+        if commit:
+            self.db.commit()
+            self.db.refresh(call_log)
+        else:
+            self.db.flush()
         return call_log
 
     def get_by_id(self, log_id: str) -> Optional[McpCallLog]:
         return self.db.query(McpCallLog).filter(McpCallLog.id == log_id).first()
 
     def update_status(
-        self, log_id: str, status: ProcessStatus, error_msg: Optional[str] = None, wallet_history_id: Optional[str] = None
+        self, log_id: str, status: ProcessStatus, error_msg: Optional[str] = None, wallet_history_id: Optional[str] = None, commit: bool = True
     ) -> bool:
         log_record = self.get_by_id(log_id)
         if log_record:
@@ -30,7 +33,10 @@ class McpCallLogRepository:
                 log_record.error_msg = error_msg
             if wallet_history_id:
                 log_record.wallet_history_id = wallet_history_id
-            self.db.commit()
+            if commit:
+                self.db.commit()
+            else:
+                self.db.flush()
             return True
         return False
 

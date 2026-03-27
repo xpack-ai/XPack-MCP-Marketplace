@@ -30,7 +30,7 @@ class RabbitMQClient:
             logger.error(f"Failed to establish RabbitMQ connection: {str(e)}")
             raise
 
-    def publish(self, queue: str, message: str, persistent: bool = True):
+    def publish(self, queue: str, message: str, persistent: bool = True, headers: dict | None = None):
         """Publish message to queue"""
         try:
             # Ensure connection is available
@@ -46,7 +46,9 @@ class RabbitMQClient:
             # Publish message
             properties = None
             if persistent:
-                properties = pika.BasicProperties(delivery_mode=2)
+                properties = pika.BasicProperties(delivery_mode=2, headers=headers or None)
+            elif headers:
+                properties = pika.BasicProperties(headers=headers)
 
             self.channel.basic_publish(exchange="", routing_key=queue, body=message, properties=properties)
             logger.info(f"Message successfully published to queue: {queue}, message length: {len(message)} bytes")
@@ -61,7 +63,10 @@ class RabbitMQClient:
 
                 # Retry sending
                 self.channel.queue_declare(queue=queue, durable=True)
-                properties = pika.BasicProperties(delivery_mode=2) if persistent else None
+                if persistent:
+                    properties = pika.BasicProperties(delivery_mode=2, headers=headers or None)
+                else:
+                    properties = pika.BasicProperties(headers=headers or None)
                 self.channel.basic_publish(exchange="", routing_key=queue, body=message, properties=properties)
                 logger.info(f"Message retry successful to queue {queue}")
             except Exception as retry_error:
