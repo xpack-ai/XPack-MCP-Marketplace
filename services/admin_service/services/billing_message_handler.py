@@ -73,16 +73,16 @@ class BillingMessageHandler:
             if not self.call_log_repo.update_status(call_log_id, ProcessStatus.PROCESSED, commit=False):
                 tx.rollback()
                 return False
+            tx.commit()
+            logger.info(f"Billing message processed successfully - User ID: {billing_message.user_id}, Tool: {billing_message.tool_name}")
             # Update wallet cache after successful commit
             try:
                 wallet = self.wallet_repo.get_by_user_id(billing_message.user_id)
                 if wallet:
                     self._update_wallet_cache(billing_message.user_id, Decimal(str(wallet.balance)))
             except Exception:
-                tx.rollback()
                 pass
-            tx.commit()
-            logger.info(f"Billing message processed successfully - User ID: {billing_message.user_id}, Tool: {billing_message.tool_name}")
+            
             return True
         except Exception as e:
             logger.error(f"Failed to process billing message: {str(e)}", exc_info=True)
