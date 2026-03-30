@@ -91,7 +91,7 @@ class StatsMcpServiceDateRepository:
         total = query.scalar()
         return int(total or 0)
 
-    def increment(self, service_id: str, stats_date: datetime, inc: int = 1, commit: bool = True) -> bool:
+    def increment(self, service_id: str, stats_date: datetime, inc: int = 1, commit: bool = True):
         """Atomically increment call_count for (service_id, stats_date) under high concurrency.
 
         Implementation uses MySQL's ON DUPLICATE KEY UPDATE to avoid race conditions.
@@ -114,10 +114,8 @@ class StatsMcpServiceDateRepository:
         self.db.execute(ondup)
         if commit:
             self.db.commit()
-            return True
         else:
             self.db.flush()
-            return False
 
     def increment_fallback(self, service_id: str, stats_date: datetime, inc: int = 1) -> None:
         """Fallback increment strategy without dialect-specific upsert.

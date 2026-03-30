@@ -3,6 +3,7 @@ Billing message handler service
 """
 
 import json
+from re import finditer
 import uuid
 import logging
 from datetime import datetime, timezone
@@ -60,9 +61,7 @@ class BillingMessageHandler:
             start_dt = billing_message.call_start_time
             start_utc = start_dt.replace(tzinfo=timezone.utc) if start_dt.tzinfo is None else start_dt.astimezone(timezone.utc)
             stats_date = start_utc.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
-            if not self.stats_repo.increment(billing_message.service_id, stats_date, 1, commit=False):
-                tx.rollback()
-                return False
+            self.stats_repo.increment(billing_message.service_id, stats_date, 1, commit=False)
 
             if billing_message.call_success and billing_message.unit_price > 0:
                 success = self._process_billing(billing_message, call_log_id, commit=False)
@@ -96,6 +95,9 @@ class BillingMessageHandler:
                 except Exception:
                     logger.exception("Failed to update call log status after exception")
             return False
+        finally:
+            if tx.is_active:
+                tx.rollback()
 
     def _parse_message(self, message_data: dict) -> Optional[BillingMessage]:
         """
@@ -163,7 +165,7 @@ class BillingMessageHandler:
                 updated_at=datetime.now(timezone.utc),
             )
 
-            created_log = self.call_log_repo.create(call_log)
+            created_log = self.call_log_repo.create(call_log, commit=False)
             return created_log.id
 
         except Exception as e:
