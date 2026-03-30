@@ -32,13 +32,16 @@ class UserWalletRepository:
         """Get user wallet with row-level lock for update"""
         return self.db.query(UserWallet).filter(UserWallet.user_id == user_id).with_for_update().first()
 
-    def update_balance(self, user_id: str, new_balance: float) -> bool:
+    def update_balance(self, user_id: str, new_balance: float, commit: bool = True) -> bool:
         """Update user balance"""
         wallet = self.get_by_user_id(user_id)
         if wallet:
             wallet.balance = new_balance
             wallet.updated_at = datetime.now(timezone.utc)
-            self.db.commit()
+            if commit:
+                self.db.commit()
+            else:
+                self.db.flush()
             return True
         return False
 

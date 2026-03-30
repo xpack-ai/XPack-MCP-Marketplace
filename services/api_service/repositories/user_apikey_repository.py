@@ -37,7 +37,7 @@ class UserApiKeyRepository:
             return cached_model
 
         # Query from database if not in cache
-        user_apikey = self.db.query(UserApiKey).filter(UserApiKey.apikey == apikey).first()
+        user_apikey = self.db.query(UserApiKey).filter(UserApiKey.apikey == apikey, UserApiKey.is_deleted == 0).first()
         if user_apikey:
             # Cache the result using new SQLAlchemy-specific method
             CacheUtils.set_sqlalchemy_cache(cache_key, user_apikey, 300)

@@ -3,6 +3,7 @@ Billing message handler service
 """
 
 import json
+from re import finditer
 import uuid
 import logging
 from datetime import datetime, timezone
@@ -44,41 +45,59 @@ class BillingMessageHandler:
         Returns:
             bool: Whether processing was successful
         """
+        call_log_id: Optional[str] = None
+        tx = self.db.begin()
         try:
-            # Parse message
             billing_message = self._parse_message(message_data)
             if not billing_message:
+                tx.rollback()
                 return False
 
-            # Create API call log
             call_log_id = self._create_call_log(billing_message)
             if not call_log_id:
+                tx.rollback()
                 return False
-            
-            # Update stats_mcp_service_date record
-            # Bucket stats by hour (UTC), aligned to full hours
+
             start_dt = billing_message.call_start_time
             start_utc = start_dt.replace(tzinfo=timezone.utc) if start_dt.tzinfo is None else start_dt.astimezone(timezone.utc)
-            # Store as naive UTC datetime to match MySQL DATETIME behavior
-            stats_date = start_utc.replace(minute=0, second=0, microsecond=0, tzinfo=None)
-            self.stats_repo.increment(billing_message.service_id, stats_date, 1)
+            stats_date = start_utc.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+            self.stats_repo.increment(billing_message.service_id, stats_date, 1, commit=False)
 
-            # Process billing logic
             if billing_message.call_success and billing_message.unit_price > 0:
-                success = self._process_billing(billing_message, call_log_id)
+                success = self._process_billing(billing_message, call_log_id, commit=False)
                 if not success:
-                    # Update record status to failed
-                    self.call_log_repo.update_status(call_log_id, ProcessStatus.FAILED, "Billing processing failed")
+                    self.call_log_repo.update_status(call_log_id, ProcessStatus.FAILED, "Billing processing failed", commit=False)
+                    tx.rollback()
                     return False
-            
-            # Update record status to processed
-            self.call_log_repo.update_status(call_log_id, ProcessStatus.PROCESSED)
-            logger.info(f"Billing message processed successfully - User ID: {billing_message.user_id}, Tool: {billing_message.tool_name}")
-            return True
 
+            if not self.call_log_repo.update_status(call_log_id, ProcessStatus.PROCESSED, commit=False):
+                tx.rollback()
+                return False
+            tx.commit()
+            logger.info(f"Billing message processed successfully - User ID: {billing_message.user_id}, Tool: {billing_message.tool_name}")
+            # Update wallet cache after successful commit
+            try:
+                wallet = self.wallet_repo.get_by_user_id(billing_message.user_id)
+                if wallet:
+                    self._update_wallet_cache(billing_message.user_id, Decimal(str(wallet.balance)))
+            except Exception:
+                pass
+            return True
         except Exception as e:
             logger.error(f"Failed to process billing message: {str(e)}", exc_info=True)
+            try:
+                tx.rollback()
+            except Exception:
+                pass
+            if call_log_id:
+                try:
+                    self.call_log_repo.update_status(call_log_id, ProcessStatus.FAILED, "Billing processing exception")
+                except Exception:
+                    logger.exception("Failed to update call log status after exception")
             return False
+        finally:
+            if tx.is_active:
+                tx.rollback()
 
     def _parse_message(self, message_data: dict) -> Optional[BillingMessage]:
         """
@@ -146,14 +165,14 @@ class BillingMessageHandler:
                 updated_at=datetime.now(timezone.utc),
             )
 
-            created_log = self.call_log_repo.create(call_log)
+            created_log = self.call_log_repo.create(call_log, commit=False)
             return created_log.id
 
         except Exception as e:
             logger.error(f"Failed to create API call log record: {str(e)}")
             return None
 
-    def _process_billing(self, billing_message: BillingMessage, call_log_id: str) -> bool:
+    def _process_billing(self, billing_message: BillingMessage, call_log_id: str, commit: bool = True) -> bool:
         """
         Process actual billing logic
 
@@ -183,7 +202,7 @@ class BillingMessageHandler:
 
             # Execute deduction
             new_balance = current_balance - amount
-            success = self.wallet_repo.update_balance(user_id, float(new_balance))
+            success = self.wallet_repo.update_balance(user_id, float(new_balance), commit=commit)
             if not success:
                 logger.error(f"Failed to update user wallet balance - User ID: {user_id}")
                 return False
@@ -206,22 +225,15 @@ class BillingMessageHandler:
                 updated_at=now,
             )
 
-            created_history = self.wallet_history_repo.add_consume_record(wallet_history)
+            created_history = self.wallet_history_repo.add_consume_record(wallet_history, commit=commit)
             if not created_history:
                 logger.error(f"Failed to create wallet history record - User ID: {user_id}")
-                # Rollback balance update
-                self.wallet_repo.update_balance(user_id, float(current_balance))
                 return False
 
             logger.info(f"Wallet history record created successfully - User ID: {user_id}, History ID: {history_id}, Created at: {now}")
 
             # Update API call record's actual deduction amount and associated history record ID
-            self.call_log_repo.update_status(call_log_id, ProcessStatus.PROCESSED, None, history_id)
-
-            
-
-            # Update wallet balance cache in Redis
-            self._update_wallet_cache(user_id, new_balance)
+            self.call_log_repo.update_status(call_log_id, ProcessStatus.PROCESSED, None, history_id, commit=commit)
 
             logger.info(
                 f"Billing processing completed successfully - User ID: {user_id}, Amount deducted: {amount}, Balance: {current_balance} -> {new_balance}"

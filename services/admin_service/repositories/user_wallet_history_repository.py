@@ -296,7 +296,7 @@ class UserWalletHistoryRepository:
         )
         return total, history
 
-    def add_consume_record(self, wallet_history: UserWalletHistory) -> Optional[UserWalletHistory]:
+    def add_consume_record(self, wallet_history: UserWalletHistory, commit: bool = True) -> Optional[UserWalletHistory]:
         """
         Add consume record to database.
 
@@ -310,12 +310,18 @@ class UserWalletHistoryRepository:
             # Add the wallet history record to database
             # The created_at and updated_at fields should be set by the caller
             self.db.add(wallet_history)
-            self.db.commit()
-            self.db.refresh(wallet_history)
+            if commit:
+                self.db.commit()
+                self.db.refresh(wallet_history)
+            else:
+                self.db.flush()
             return wallet_history
         except Exception as e:
             self.logging.error(f"Failed to add consume record: {str(e)}")
-            self.db.rollback()
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
             return None
 
     def order_list(self, payment_method: str, status: int, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[UserWalletHistory]:

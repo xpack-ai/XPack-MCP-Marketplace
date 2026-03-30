@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from typing import Optional, List, Tuple, cast
 from sqlalchemy.orm import Session
-from sqlalchemy import func, literal_column
+from sqlalchemy import Boolean, func, literal_column
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.sql.schema import Table
@@ -91,14 +91,12 @@ class StatsMcpServiceDateRepository:
         total = query.scalar()
         return int(total or 0)
 
-    def increment(self, service_id: str, stats_date: datetime, inc: int = 1) -> None:
+    def increment(self, service_id: str, stats_date: datetime, inc: int = 1, commit: bool = True):
         """Atomically increment call_count for (service_id, stats_date) under high concurrency.
 
         Implementation uses MySQL's ON DUPLICATE KEY UPDATE to avoid race conditions.
         If the row does not exist, it will be inserted with call_count=inc; otherwise, call_count is increased.
         """
-        # Logger for debug purposes
-        print(f"Incrementing call count for service {service_id} on {stats_date} by {inc}")
 
         # Cast mapped table for typing compatibility with mysql_insert
         table: Table = cast(Table, StatsMcpServiceDate.__table__)
@@ -114,7 +112,10 @@ class StatsMcpServiceDateRepository:
             updated_at=func.current_timestamp(),
         )
         self.db.execute(ondup)
-        self.db.commit()
+        if commit:
+            self.db.commit()
+        else:
+            self.db.flush()
 
     def increment_fallback(self, service_id: str, stats_date: datetime, inc: int = 1) -> None:
         """Fallback increment strategy without dialect-specific upsert.
