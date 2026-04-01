@@ -82,6 +82,7 @@ class BillingMessageHandler:
                     self._update_wallet_cache(billing_message.user_id, Decimal(str(wallet.balance)))
             except Exception:
                 pass
+            
             return True
         except Exception as e:
             logger.error(f"Failed to process billing message: {str(e)}", exc_info=True)
