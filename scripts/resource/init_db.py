@@ -3,7 +3,7 @@ import sys
 import re
 from pathlib import Path
 from dotenv import load_dotenv
-import mysql.connector
+import pymysql
 from typing import Optional, List, Tuple, Union
 
 # 加载环境变量
@@ -29,12 +29,13 @@ def get_db_connection(db_config: Optional[DBConfig] = None):
     if db_config is None:
         db_config = DBConfig()
     
-    return mysql.connector.connect(
+    return pymysql.connect(
         host=db_config.MYSQL_HOST,
         port=db_config.MYSQL_PORT,
         user=db_config.MYSQL_USER,
         password=db_config.MYSQL_PASSWORD,
-        database=db_config.MYSQL_DB
+        database=db_config.MYSQL_DB,
+        charset='utf8mb4'
     )
 
 def get_current_version(db_config: Optional[DBConfig] = None) -> Optional[str]:
@@ -50,19 +51,17 @@ def get_current_version(db_config: Optional[DBConfig] = None) -> Optional[str]:
         conn = get_db_connection(db_config)
         cursor = conn.cursor()
         
-        # 查询version配置
         cursor.execute("SELECT value FROM sys_config WHERE `key` = 'version'")
         result = cursor.fetchone()
         
         cursor.close()
         conn.close()
         
-        if result and len(result) > 0:
-            # 将元组的第一个元素转换为字符串并返回
-            return str(result['value'] if isinstance(result, dict) else result[0])
+        if result:
+            return str(result[0])
         return None
         
-    except mysql.connector.Error as err:
+    except pymysql.Error as err:
         # 如果表不存在或其他数据库错误，返回None
         print(f"查询版本信息失败: {err}")
         return None
@@ -124,7 +123,7 @@ def execute_sql_file(file_path: str, db_config: Optional[DBConfig] = None) -> bo
                 try:
                     cursor.execute(sql)
                     print(f"  -> 成功")
-                except mysql.connector.Error as e:
+                except pymysql.Error as e:
                     print(f"  -> SET语句执行错误: {e}")
                     # SET语句失败不影响后续执行
                 continue
@@ -144,7 +143,7 @@ def execute_sql_file(file_path: str, db_config: Optional[DBConfig] = None) -> bo
             try:
                 cursor.execute(sql)
                 print(f"  -> 成功")
-            except mysql.connector.Error as e:
+            except pymysql.Error as e:
                 if "Duplicate column name" in str(e):
                     print(f"  -> 忽略重复列错误: {e}")
                     continue
@@ -166,7 +165,7 @@ def execute_sql_file(file_path: str, db_config: Optional[DBConfig] = None) -> bo
     except FileNotFoundError:
         print(f"错误: SQL 文件不存在: {file_path}")
         return False
-    except mysql.connector.Error as err:
+    except pymysql.Error as err:
         print(f"数据库错误: {err}")
         if sql:
             print(f"出错的SQL语句: {sql}")
