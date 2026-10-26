@@ -20,7 +20,7 @@ jobs:
           node-version: '22.16'
       - name: Pnpm install and build
         run: |
-          npm install -g pnpm
+          npm install -g pnpm@9
           ./scripts/frontend_build.sh
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
