@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS `user_apikey` (
   `expire_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Expiration timestamp',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation timestamp',
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp',
+  `is_deleted` TINYINT NOT NULL DEFAULT 0 COMMENT 'Logical deletion: 0 (normal), 1 (deleted)',
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uk_apikey` (`apikey`) COMMENT 'Unique API key index',
   FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE

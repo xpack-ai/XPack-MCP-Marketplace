@@ -70,6 +70,43 @@ class McpServerFactory:
         logger.info("MCP server instance created successfully")
         return app
 
+    async def execute_tool(
+        self,
+        service_id: str,
+        name: str,
+        arguments: dict,
+        user_id: str,
+        apikey_id: Optional[str] = None
+    ) -> tuple[List[types.Content], dict]:
+        """
+        Execute tool directly with billing for stateless 0728 protocol calls.
+        """
+        return await self._handle_call_tool_with_billing(service_id, name, arguments, user_id, apikey_id)
+
+    async def get_server_discover(self, service_id: str) -> dict:
+        """
+        Return server discovery metadata complying with MCP 0728 (2026-07-28) spec.
+        Includes ttlMs and cacheScope for tools list caching.
+        """
+        tools = await self._handle_list_tools(service_id)
+        return {
+            "protocolVersion": "2026-07-28",
+            "capabilities": {
+                "tools": {
+                    "listChanged": False,
+                    "ttlMs": 3600000,  # Cache 1 hour
+                    "cacheScope": "service"
+                },
+                "resources": {},
+                "prompts": {}
+            },
+            "serverInfo": {
+                "name": f"mcp-service-{service_id}",
+                "version": "1.0.0"
+            },
+            "tools": [tool.model_dump(by_alias=True, exclude_none=True) for tool in tools]
+        }
+
     async def _handle_list_tools(self, service_id: str) -> List[types.Tool]:
         """
         Handle tools list query

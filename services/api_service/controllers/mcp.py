@@ -5,6 +5,7 @@ Supports both service_id (UUID) and slug_name service identifiers
 
 from typing import Optional
 from datetime import datetime, timezone
+import json
 from sqlalchemy import false
 from starlette.requests import Request
 from starlette.responses import Response
@@ -165,6 +166,10 @@ class McpController:
 
                 logger.info(f"Received SSE connection request - Service ID: {service_id}, Client: {client_ip}, UA: {user_agent[:50]}...")
 
+                # Validate Accept & Content-Type headers according to MCP Streamable HTTP rules
+                accept = (req.headers.get('accept') or '').lower()
+                content_type = (req.headers.get('content-type') or '').lower()
+
                 # Extract user ID (for billing) - must provide valid apikey
                 user_info = self._extract_user_info(req)
                 if not user_info:
@@ -288,6 +293,9 @@ class McpController:
 
                 logger.info(f"Received StreamableHTTP request - Service ID: {service_id}, Client: {client_ip}, UA: {user_agent[:50]}...")
 
+                accept = (req.headers.get('accept') or '').lower()
+                content_type = (req.headers.get('content-type') or '').lower()
+
                 # Security: validate Origin to prevent DNS rebinding (MCP spec requirement)
                 origin = req.headers.get('origin')
                 if origin and not self._is_origin_allowed(origin, req):
@@ -304,9 +312,42 @@ class McpController:
                     await send({'type': 'http.response.body', 'body': response_body})
                     return
 
-                # Validate Accept & Content-Type headers according to MCP Streamable HTTP rules
+                # Extract user ID (for billing) - must provide valid apikey
+                user_info = self._extract_user_info(req)
+                if not user_info:
+                    response_body = b"Missing or invalid apikey parameter"
+                    await send({
+                        'type': 'http.response.start',
+                        'status': 401,
+                        'headers': [
+                            [b'content-type', b'text/plain'],
+                            [b'content-length', str(len(response_body)).encode()],
+                        ],
+                    })
+                    await send({'type': 'http.response.body', 'body': response_body})
+                    return
+                user_id, apikey_id = user_info
+                if not self._check_invoke_permission(user_id, service_id):
+                    response_body = b"Invoke permission denied"
+                    await send({
+                        'type': 'http.response.start',
+                        'status': 403,
+                        'headers': [
+                            [b'content-type', b'text/plain'],
+                            [b'content-length', str(len(response_body)).encode()],
+                        ],
+                    })
+                    await send({'type': 'http.response.body', 'body': response_body})
+                    return
+
+                # MCP 0728 (2026-07-28) Stateless Handler for POST JSON-RPC requests
+                if req.method == 'POST' and ('application/json' in content_type or req.headers.get("mcp-method") or req.headers.get("mcp-protocol-version")):
+                    stateless_handled = await self._handle_stateless_mcp_request(req, send, service_id, user_id, apikey_id)
+                    if stateless_handled:
+                        return
+
+                # Validate Accept & Content-Type headers according to legacy MCP Streamable HTTP rules
                 accept = (req.headers.get('accept') or '').lower()
-                content_type = (req.headers.get('content-type') or '').lower()
                 if req.method == 'GET':
                     if 'text/event-stream' not in accept:
                         logger.warning("Missing Accept: text/event-stream for GET SSE")
@@ -350,34 +391,6 @@ class McpController:
                         })
                         await send({'type': 'http.response.body', 'body': response_body})
                         return
-
-                # Extract user ID (for billing) - must provide valid apikey
-                user_info = self._extract_user_info(req)
-                if not user_info:
-                    response_body = b"Missing or invalid apikey parameter"
-                    await send({
-                        'type': 'http.response.start',
-                        'status': 401,
-                        'headers': [
-                            [b'content-type', b'text/plain'],
-                            [b'content-length', str(len(response_body)).encode()],
-                        ],
-                    })
-                    await send({'type': 'http.response.body', 'body': response_body})
-                    return
-                user_id, apikey_id = user_info
-                if not self._check_invoke_permission(user_id, service_id):
-                    response_body = b"Invoke permission denied"
-                    await send({
-                        'type': 'http.response.start',
-                        'status': 403,
-                        'headers': [
-                            [b'content-type', b'text/plain'],
-                            [b'content-length', str(len(response_body)).encode()],
-                        ],
-                    })
-                    await send({'type': 'http.response.body', 'body': response_body})
-                    return
                 raw_client_id = req.headers.get('x-client-instance-id') or req.headers.get('x-client-id')
                 client_instance_id = (re.sub(r'[^a-zA-Z0-9._-]', '', raw_client_id)[:32]) if raw_client_id else None
                 ua = user_agent or ""
@@ -679,14 +692,22 @@ class McpController:
 
 
     def _extract_user_info(self, request: Request) -> Optional[tuple[str, str]]:
-        """Extract user ID and apikey ID from request by validating apikey parameter."""
-        # Get apikey from URL query parameters
+        """Extract user ID and apikey ID from request by validating apikey parameter or headers."""
+        # Get apikey from URL query parameters or Headers
         apikey = request.query_params.get("apikey")
         if not apikey:
             apikey = request.query_params.get("authkey")
-            if not apikey:
-                logger.warning("Apikey not found in URL parameters")
-                return None
+        if not apikey:
+            auth_header = request.headers.get("authorization", "")
+            if auth_header.startswith("Bearer "):
+                apikey = auth_header[7:].strip()
+            elif auth_header:
+                apikey = auth_header.strip()
+        if not apikey:
+            apikey = request.headers.get("x-api-key")
+        if not apikey:
+            logger.warning("Apikey not found in URL parameters or Headers")
+            return None
 
         logger.debug(f"Validating apikey: {apikey[:10]}...")  # Only log first 10 characters for debugging
 
@@ -775,3 +796,117 @@ class McpController:
             pass
         finally:
             logger.info("Session GC task stopped")
+
+    async def _handle_stateless_mcp_request(
+        self,
+        req: Request,
+        send,
+        service_id: str,
+        user_id: str,
+        apikey_id: str
+    ) -> bool:
+        """
+        Handle MCP 0728 (2026-07-28) stateless HTTP JSON-RPC request.
+        Returns True if request was handled directly, False if it should fallback to legacy session transport.
+        """
+        mcp_method_hdr = req.headers.get("mcp-method")
+        protocol_hdr = req.headers.get("mcp-protocol-version")
+        
+        try:
+            body_bytes = await req.body()
+            if not body_bytes:
+                return False
+            payload = json.loads(body_bytes.decode("utf-8"))
+        except Exception:
+            return False
+
+        if not isinstance(payload, dict):
+            return False
+
+        method = mcp_method_hdr or payload.get("method")
+        req_id = payload.get("id")
+
+        if not method:
+            return False
+
+        logger.info(f"Handling MCP 0728 stateless request - Service ID: {service_id}, Method: {method}, ReqID: {req_id}")
+
+        result = None
+        error = None
+
+        try:
+            if method in ("server/discover", "discover"):
+                result = await self.server_factory.get_server_discover(service_id)
+            elif method in ("tools/list", "list_tools"):
+                tools = await self.server_factory._handle_list_tools(service_id)
+                result = {
+                    "tools": [t.model_dump(by_alias=True, exclude_none=True) for t in tools]
+                }
+            elif method in ("tools/call", "call_tool"):
+                params = payload.get("params") or {}
+                tool_name = req.headers.get("mcp-name") or params.get("name")
+                arguments = params.get("arguments") or {}
+                if not tool_name:
+                    error = {"code": -32602, "message": "Missing tool name in params or header"}
+                else:
+                    contents, extra = await self.server_factory.execute_tool(
+                        service_id, tool_name, arguments, user_id, apikey_id
+                    )
+                    content_list = []
+                    for c in contents:
+                        if hasattr(c, "model_dump"):
+                            content_list.append(c.model_dump(by_alias=True, exclude_none=True))
+                        elif isinstance(c, dict):
+                            content_list.append(c)
+                        else:
+                            content_list.append({"type": "text", "text": str(c)})
+                    result = {
+                        "content": content_list,
+                        "isError": False
+                    }
+            elif method == "initialize":
+                result = {
+                    "protocolVersion": "2026-07-28",
+                    "capabilities": {
+                        "tools": {
+                            "listChanged": False,
+                            "ttlMs": 3600000,
+                            "cacheScope": "service"
+                        }
+                    },
+                    "serverInfo": {
+                        "name": f"mcp-service-{service_id}",
+                        "version": "1.0.0"
+                    }
+                }
+            elif method in ("notifications/initialized", "ping"):
+                result = {}
+            elif method in ("resources/list", "prompts/list"):
+                result = {method.split("/")[0]: []}
+            else:
+                error = {"code": -32601, "message": f"Method not found: {method}"}
+        except Exception as e:
+            logger.error(f"Error handling stateless MCP method {method}: {str(e)}", exc_info=True)
+            error = {"code": -32603, "message": f"Internal error: {str(e)}"}
+
+        response_payload = {
+            "jsonrpc": "2.0",
+            "id": req_id
+        }
+        if error is not None:
+            response_payload["error"] = error
+        else:
+            response_payload["result"] = result
+
+        resp_bytes = json.dumps(response_payload).encode("utf-8")
+        await send({
+            'type': 'http.response.start',
+            'status': 200,
+            'headers': [
+                [b'content-type', b'application/json; charset=utf-8'],
+                [b'content-length', str(len(resp_bytes)).encode()],
+                [b'mcp-protocol-version', b'2026-07-28'],
+            ],
+        })
+        await send({'type': 'http.response.body', 'body': resp_bytes})
+        return True

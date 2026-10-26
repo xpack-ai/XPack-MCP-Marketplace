@@ -199,7 +199,7 @@ def mcp_connections_stats():
 mcp_routes = [
     Route("/{service_id}", endpoint=mcp.handle_sse_connection_asgi, methods=["GET"]),  # 保留原有 SSE GET
     Mount("/messages/", app=mcp.get_sse_mount_handler()),  # 保留原有 SSE POST 挂载
-    Route("/{service_id}/streamable-http", endpoint=mcp.handle_streamable_http_asgi, methods=["GET", "POST", "DELETE"]),  # 新增 StreamableHTTP 路由
+    Route("/{service_id}/streamable-http", endpoint=mcp.handle_streamable_http_asgi, methods=["GET", "POST", "DELETE"]),  # StreamableHTTP 路由
 ]
 
 mcp_app = Starlette(routes=mcp_routes)
